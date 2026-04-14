@@ -1,0 +1,2131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>La Bake Maison — Curated Bakeries</title>
+    <link rel="stylesheet" href="theme.css" />
+  </head>
+  <body>
+    <!-- ANNOUNCEMENT BAR -->
+    <div class="announce-bar">
+      <strong>Delivering till late.</strong> &nbsp;Every single day — 7:00 a.m.
+      to 3:00 a.m. &nbsp;·&nbsp; Free delivery on orders above Rs 2,000
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="nav">
+      <div class="nav-ornament"></div>
+      <div class="nav-inner">
+        <div class="nav-brand" onclick="showPage('bakeries')">
+          <div class="nav-logo">La Bake<span>Maison</span></div>
+          <div class="nav-tagline">The Classic Baking Tradition</div>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-links">
+          <button
+            class="nav-link"
+            id="nav-bakeries"
+            onclick="showPage('bakeries')"
+          >
+            Bakeries
+          </button>
+          <button class="nav-link" id="nav-home" onclick="showPage('home')">
+            Home
+          </button>
+          <button
+            class="nav-link"
+            id="nav-cakes"
+            onclick="
+              showPage('home');
+              setTimeout(
+                () =>
+                  document
+                    .getElementById('cakes')
+                    .scrollIntoView({ behavior: 'smooth' }),
+                100,
+              );
+            "
+          >
+            Collection
+          </button>
+          <button
+            class="nav-link"
+            id="nav-build"
+            onclick="showPage('customize')"
+          >
+            Bespoke
+          </button>
+          <button class="nav-link" id="nav-orders" onclick="showPage('orders')">
+            Orders
+          </button>
+        </div>
+        <button class="nav-cta" id="nav-cart" onclick="showPage('cart')">
+          ✦ Cart
+          <span
+            id="cart-count-badge"
+            style="
+              background: var(--gold);
+              color: white;
+              font-size: 9px;
+              padding: 2px 7px;
+              border-radius: 10px;
+              display: none;
+            "
+          ></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════
+     BAKERIES SELECTION PAGE
+════════════════════════════════════════════ -->
+    <div class="page active" id="page-bakeries">
+      <div class="bakeries-page">
+        <div class="bakeries-inner">
+          <div class="bakeries-header">
+            <h1 class="bakeries-title">Select Your Bakery</h1>
+            <p class="bakeries-subtitle">
+              Choose from our curated selection of premium patisseries and
+              bakeries. Each offering unique flavors and signature delicacies.
+            </p>
+          </div>
+
+          <div class="bakeries-grid">
+            <!-- SweetCraft —主要 -->
+            <div class="bakery-card" onclick="showPage('home')">
+              <img
+                src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop"
+                alt="SweetCraft Bakery"
+                class="bakery-image"
+              />
+              <div class="bakery-content">
+                <div class="bakery-badge">Signature</div>
+                <h3 class="bakery-name">SweetCraft</h3>
+                <p class="bakery-category">Luxury Patisserie</p>
+                <p class="bakery-desc">
+                  Est. 1910 — Tradition meets innovation with our signature
+                  cakes, fresh pastries, and artisan macarons crafted with
+                  premium ingredients.
+                </p>
+                <div class="bakery-footer">
+                  <div class="bakery-rating">
+                    <span class="bakery-stars">★★★★★</span>
+                    <span class="bakery-rating-text">4.9</span>
+                  </div>
+                  <button class="bakery-action">Order</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- La Crème Elegante -->
+            <div class="bakery-card">
+              <img
+                src="https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80&auto=format&fit=crop"
+                alt="La Crème Elegante"
+                class="bakery-image"
+              />
+              <div class="bakery-content">
+                <div class="bakery-badge">Popular</div>
+                <h3 class="bakery-name">La Crème Elegante</h3>
+                <p class="bakery-category">French Bakery</p>
+                <p class="bakery-desc">
+                  Authentic French pastries and croissants. Handcrafted daily
+                  with imported butter and finest Belgian chocolate.
+                </p>
+                <div class="bakery-footer">
+                  <div class="bakery-rating">
+                    <span class="bakery-stars">★★★★☆</span>
+                    <span class="bakery-rating-text">4.8</span>
+                  </div>
+                  <button class="bakery-action">Coming</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Artisan's Haven -->
+            <div class="bakery-card">
+              <img
+                src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop"
+                alt="Artisan's Haven"
+                class="bakery-image"
+              />
+              <div class="bakery-content">
+                <div class="bakery-badge">Specialty</div>
+                <h3 class="bakery-name">Artisan's Haven</h3>
+                <p class="bakery-category">Artisan Bakery</p>
+                <p class="bakery-desc">
+                  Sourdough breads, organic pastries, and custom cakes using
+                  locally-sourced ingredients and traditional baking methods.
+                </p>
+                <div class="bakery-footer">
+                  <div class="bakery-rating">
+                    <span class="bakery-stars">★★★★★</span>
+                    <span class="bakery-rating-text">4.7</span>
+                  </div>
+                  <button class="bakery-action">Coming</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Velvet & Bloom -->
+            <div class="bakery-card">
+              <img
+                src="https://images.unsplash.com/photo-1486427867162-7d36b5871f29?w=400&q=80&auto=format&fit=crop"
+                alt="Velvet & Bloom"
+                class="bakery-image"
+              />
+              <div class="bakery-content">
+                <div class="bakery-badge">Modern</div>
+                <h3 class="bakery-name">Velvet & Bloom</h3>
+                <p class="bakery-category">Modern Dessert Café</p>
+                <p class="bakery-desc">
+                  Contemporary dessert designs with Instagram-worthy
+                  presentation. Trendy flavors, vegan options, and plant-based
+                  pastries.
+                </p>
+                <div class="bakery-footer">
+                  <div class="bakery-rating">
+                    <span class="bakery-stars">★★★★☆</span>
+                    <span class="bakery-rating-text">4.6</span>
+                  </div>
+                  <button class="bakery-action">Coming</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Golden Crust -->
+            <div class="bakery-card">
+              <img
+                src=""
+                alt="Golden Crust"
+                class="bakery-image"
+                onerror="
+                  this.style.background = '#D4B46A';
+                  this.style.display = 'flex';
+                  this.style.alignItems = 'center';
+                  this.style.justifyContent = 'center';
+                "
+              />
+              <div class="bakery-content">
+                <div class="bakery-badge">Traditional</div>
+                <h3 class="bakery-name">Golden Crust</h3>
+                <p class="bakery-category">Classic Bakery</p>
+                <p class="bakery-desc">
+                  Since 1985 — Beloved neighborhood bakery serving fresh bread,
+                  classic cakes, and homemade pastries every morning.
+                </p>
+                <div class="bakery-footer">
+                  <div class="bakery-rating">
+                    <span class="bakery-stars">★★★★★</span>
+                    <span class="bakery-rating-text">4.9</span>
+                  </div>
+                  <button class="bakery-action">Coming</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Enchanted Tarts -->
+            <div class="bakery-card">
+              <img
+                src=""
+                alt="Enchanted Tarts"
+                class="bakery-image"
+                onerror="
+                  this.style.background = '#E8C4BF';
+                  this.style.display = 'flex';
+                  this.style.alignItems = 'center';
+                  this.style.justifyContent = 'center';
+                "
+              />
+              <div class="bakery-content">
+                <div class="bakery-badge">Specialty</div>
+                <h3 class="bakery-name">Enchanted Tarts</h3>
+                <p class="bakery-category">Specialty Tarts & Pies</p>
+                <p class="bakery-desc">
+                  Artisanal tarts, hand-made pies, and seasonal fruit desserts.
+                  Each creation a masterpiece of flavor and presentation.
+                </p>
+                <div class="bakery-footer">
+                  <div class="bakery-rating">
+                    <span class="bakery-stars">★★★★☆</span>
+                    <span class="bakery-rating-text">4.8</span>
+                  </div>
+                  <button class="bakery-action">Coming</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════════════ -->
+    <div class="page" id="page-home">
+      <!-- HERO -->
+      <section class="hero">
+        <!-- Left — text -->
+        <div class="hero-left">
+          <div class="hero-kicker">
+            <div class="hero-kicker-line"></div>
+            <div class="hero-kicker-text">
+              Est. Since 1910 — A Baking Legacy
+            </div>
+          </div>
+          <h1 class="hero-title">
+            Baked with<br />
+            <em>Love &</em><br />
+            <span class="hero-title-script">Tradition</span>
+          </h1>
+          <p class="hero-subtitle">
+            Crafted from the finest ingredients, every cake tells a story. From
+            delicate fresh cream to indulgent mousse — experience the art of
+            baking, elevated.
+          </p>
+          <div class="hero-actions">
+            <button
+              class="btn-primary"
+              onclick="
+                document
+                  .getElementById('cakes')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+            >
+              Explore Collection
+            </button>
+            <button class="btn-outline" onclick="showPage('customize')">
+              Build Your Cake
+            </button>
+          </div>
+          <div class="hero-meta">
+            <div class="hero-meta-item">
+              <div class="hero-meta-num">115+</div>
+              <div class="hero-meta-label">Years of Heritage</div>
+            </div>
+            <div class="hero-meta-item">
+              <div class="hero-meta-num">50K+</div>
+              <div class="hero-meta-label">Happy Customers</div>
+            </div>
+            <div class="hero-meta-item">
+              <div class="hero-meta-num">4.9★</div>
+              <div class="hero-meta-label">Average Rating</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right — photo -->
+        <div class="hero-right">
+          <div class="hero-img-main">
+            <img
+              src="https://images.unsplash.com/photo-1557308536-ee471ef2c390?w=900&q=85&auto=format&fit=crop"
+              alt="Elegant layered cake with fresh roses and berries"
+              onerror="
+                this.style.display = 'none';
+                this.parentElement.style.background = '#E8D5C0';
+              "
+            />
+          </div>
+          <div class="hero-img-overlay"></div>
+
+          <!-- Floating cards -->
+          <div class="hero-float-card hero-float-1">
+            <div class="float-label">Customer Rating</div>
+            <div class="float-value">4.9</div>
+            <div class="float-stars">★★★★★</div>
+            <div class="float-sub">50,000+ reviews</div>
+          </div>
+          <div class="hero-float-card hero-float-2">
+            <div class="float-label">A Baking Legacy</div>
+            <div class="float-value">115</div>
+            <div class="float-sub">Years of Craftsmanship</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SERVICES STRIP -->
+      <div class="strip">
+        <div class="strip-inner">
+          <div class="strip-item">
+            <div class="strip-text">
+              <div class="strip-title">Fast Delivery</div>
+              <div class="strip-sub">Delivered to your door</div>
+            </div>
+          </div>
+          <div class="strip-item">
+            <div class="strip-text">
+              <div class="strip-title">7AM – 3AM Daily</div>
+              <div class="strip-sub">Late night cravings covered</div>
+            </div>
+          </div>
+          <div class="strip-item">
+            <div class="strip-text">
+              <div class="strip-title">Gift Packaging</div>
+              <div class="strip-sub">Special gifting collection</div>
+            </div>
+          </div>
+          <div class="strip-item">
+            <div class="strip-text">
+              <div class="strip-title">Nationwide</div>
+              <div class="strip-sub">Deliver anywhere in Pakistan</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORIES -->
+      <section class="section cat-section">
+        <div class="section-inner">
+          <div
+            class="section-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              flex-wrap: wrap;
+              gap: 16px;
+            "
+          >
+            <div>
+              <div class="section-kicker">Our Offerings</div>
+              <h2 class="section-title">Browse <em>Categories</em></h2>
+            </div>
+          </div>
+          <div class="cat-grid">
+            <!-- Cakes — large -->
+            <div
+              class="cat-card span-2"
+              onclick="
+                document
+                  .getElementById('cakes')
+                  .scrollIntoView({ behavior: 'smooth' })
+              "
+            >
+              <img
+                src="https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=900&q=80&auto=format&fit=crop"
+                alt="Luxury celebration cakes"
+                onerror="
+                  this.style.background = '#C4847A';
+                  this.style.display = 'flex';
+                  this.style.alignItems = 'center';
+                  this.style.justifyContent = 'center';
+                  this.textContent = '🎂';
+                "
+              />
+              <div class="cat-card-overlay"></div>
+              <div class="cat-card-body">
+                <div class="cat-card-tag">Signature</div>
+                <div class="cat-card-name">Celebration<br />Cakes</div>
+                <div class="cat-card-count">18 varieties</div>
+              </div>
+            </div>
+            <!-- Donuts -->
+            <div class="cat-card">
+              <img
+                src="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&q=80&auto=format&fit=crop"
+                alt="Artisan donuts"
+                onerror="this.style.background = '#D4B46A'"
+              />
+              <div class="cat-card-overlay"></div>
+              <div class="cat-card-body">
+                <div class="cat-card-tag">Daily Baked</div>
+                <div class="cat-card-name">Donuts</div>
+                <div class="cat-card-count">8 flavors</div>
+              </div>
+            </div>
+            <!-- Gifting -->
+            <div class="cat-card">
+              <img
+                src="https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=600&q=80&auto=format&fit=crop"
+                alt="Luxury gifting boxes"
+                onerror="this.style.background = '#A8C5AF'"
+              />
+              <div class="cat-card-overlay"></div>
+              <div class="cat-card-body">
+                <div class="cat-card-tag">Curated</div>
+                <div class="cat-card-name">Gifting</div>
+                <div class="cat-card-count">20+ sets</div>
+              </div>
+            </div>
+            <!-- Macarons -->
+            <div class="cat-card">
+              <img
+                src="https://images.unsplash.com/photo-1571115176098-24ec42ed204d?w=600&q=80&auto=format&fit=crop"
+                alt="Delicate French macarons"
+                onerror="this.style.background = '#E8C4BF'"
+              />
+              <div class="cat-card-overlay"></div>
+              <div class="cat-card-body">
+                <div class="cat-card-tag">Artisan Crafted</div>
+                <div class="cat-card-name">Macarons</div>
+                <div class="cat-card-count">24 flavors</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CAKE COLLECTION -->
+      <section class="section cakes-section" id="cakes">
+        <div class="section-inner">
+          <div
+            class="section-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              flex-wrap: wrap;
+              gap: 20px;
+              margin-bottom: 0;
+            "
+          >
+            <div>
+              <div class="section-kicker">Our Speciality</div>
+              <h2 class="section-title">Explore the <em>Collection</em></h2>
+            </div>
+            <div class="cake-filters" id="cake-filter">
+              <button
+                class="filter-btn selected"
+                onclick="filterCakes('all', this)"
+              >
+                All
+              </button>
+              <button class="filter-btn" onclick="filterCakes('fresh', this)">
+                Fresh Cream
+              </button>
+              <button class="filter-btn" onclick="filterCakes('mousse', this)">
+                Mousse
+              </button>
+              <button class="filter-btn" onclick="filterCakes('butter', this)">
+                Buttercream
+              </button>
+              <button class="filter-btn" onclick="filterCakes('dry', this)">
+                Dry Cake
+              </button>
+            </div>
+          </div>
+          <div class="cake-grid" id="cake-grid"></div>
+        </div>
+      </section>
+
+      <!-- ABOUT / OUR STORY -->
+      <div class="about-section">
+        <div class="about-inner">
+          <!-- Image column -->
+          <div class="about-img-col">
+            <img
+              src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80&auto=format&fit=crop"
+              alt="Baker crafting artisan pastries"
+              onerror="this.style.background = '#2A1A10'"
+            />
+          </div>
+          <!-- Text column -->
+          <div class="about-text-col">
+            <div class="about-kicker">Our Story</div>
+            <h2 class="about-title">
+              Enter the World<br />of <em>SweetCraft</em>
+            </h2>
+            <p class="about-body">
+              A culture, tradition, lifestyle, and class — with a legacy
+              spanning over a century. Our bakery stands as a testament to
+              generations of craft, passion, and the belief that food is love
+              made edible.
+            </p>
+            <p class="about-body">
+              Every product is a masterful symphony of flavors, expertly crafted
+              to leave you spellbound. From Presidents to families, our
+              creations have graced the finest tables.
+            </p>
+            <div class="about-quote">
+              <p>
+                "Making this world a better place by sharing love, empathy and
+                happiness — one slice at a time."
+              </p>
+            </div>
+            <div class="about-stats">
+              <div class="stat-box">
+                <div class="stat-number">115+</div>
+                <div class="stat-label">Years of Heritage</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">50K+</div>
+                <div class="stat-label">Happy Customers</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">200+</div>
+                <div class="stat-label">Unique Recipes</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Baked Fresh Daily</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEWS -->
+      <section class="section reviews-section">
+        <div class="section-inner">
+          <div
+            class="section-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              flex-wrap: wrap;
+              gap: 16px;
+              margin-bottom: 40px;
+            "
+          >
+            <div>
+              <div class="section-kicker">Testimonials</div>
+              <h2 class="section-title">Loved by <em>Thousands</em></h2>
+            </div>
+            <div style="text-align: right">
+              <div
+                style="
+                  font-family: var(--font-display);
+                  font-size: 48px;
+                  font-weight: 300;
+                  color: var(--ink);
+                  line-height: 1;
+                "
+              >
+                4.9
+              </div>
+              <div
+                style="color: var(--gold); font-size: 18px; letter-spacing: 3px"
+              >
+                ★★★★★
+              </div>
+              <div
+                style="
+                  font-size: 11px;
+                  color: var(--ink-muted);
+                  margin-top: 4px;
+                  letter-spacing: 1px;
+                  text-transform: uppercase;
+                "
+              >
+                Based on 2,400+ reviews
+              </div>
+            </div>
+          </div>
+          <div class="reviews-grid" id="reviews-grid"></div>
+
+          <!-- Write review -->
+          <div class="write-review">
+            <div class="write-review-title">Share Your Experience</div>
+            <div class="write-review-sub">
+              Ordered from us? We'd love to hear what you think.
+            </div>
+            <div class="form-grid">
+              <input class="form-input" placeholder="Your name" id="rv-name" />
+              <input
+                class="form-input"
+                placeholder="Product ordered (e.g. Red Velvet)"
+                id="rv-product"
+              />
+            </div>
+            <div class="star-label">Your Rating</div>
+            <div class="star-picker" id="star-picker">
+              <span
+                class="star-pick"
+                data-v="1"
+                onclick="pickStar(1)"
+                onmouseover="hoverStar(1)"
+                onmouseout="resetStars()"
+                style="color: #d3b89a; cursor: pointer; transition: 0.15s"
+                >★</span
+              >
+              <span
+                class="star-pick"
+                data-v="2"
+                onclick="pickStar(2)"
+                onmouseover="hoverStar(2)"
+                onmouseout="resetStars()"
+                style="color: #d3b89a; cursor: pointer; transition: 0.15s"
+                >★</span
+              >
+              <span
+                class="star-pick"
+                data-v="3"
+                onclick="pickStar(3)"
+                onmouseover="hoverStar(3)"
+                onmouseout="resetStars()"
+                style="color: #d3b89a; cursor: pointer; transition: 0.15s"
+                >★</span
+              >
+              <span
+                class="star-pick"
+                data-v="4"
+                onclick="pickStar(4)"
+                onmouseover="hoverStar(4)"
+                onmouseout="resetStars()"
+                style="color: #d3b89a; cursor: pointer; transition: 0.15s"
+                >★</span
+              >
+              <span
+                class="star-pick"
+                data-v="5"
+                onclick="pickStar(5)"
+                onmouseover="hoverStar(5)"
+                onmouseout="resetStars()"
+                style="color: #d3b89a; cursor: pointer; transition: 0.15s"
+                >★</span
+              >
+            </div>
+            <textarea
+              class="form-textarea"
+              id="rv-text"
+              rows="3"
+              placeholder="Tell us about your experience — the taste, the presentation, the delivery..."
+            ></textarea>
+            <button
+              class="btn-primary"
+              style="margin-top: 16px"
+              onclick="submitReview()"
+            >
+              Submit Review
+            </button>
+            <div
+              id="rv-success"
+              style="
+                display: none;
+                margin-top: 12px;
+                color: var(--sage-dark);
+                font-size: 13px;
+                font-weight: 500;
+                letter-spacing: 0.5px;
+              "
+            >
+              ✓ Thank you! Your review has been posted.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBSCRIBE -->
+      <div class="subscribe-section">
+        <h2 class="subscribe-title">News, Creations & Latest Events</h2>
+        <p class="subscribe-sub">
+          Subscribe to be the first to know about new arrivals and exclusive
+          offers.
+        </p>
+        <div class="subscribe-form">
+          <input
+            class="subscribe-input"
+            type="email"
+            placeholder="Your email address"
+          />
+          <button class="subscribe-btn">Subscribe</button>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="footer">
+        <div class="footer-inner">
+          <div class="footer-ornament"></div>
+          <div class="footer-top">
+            <div>
+              <div class="footer-logo">La Bake<span>Maison</span></div>
+              <div class="footer-tagline">The Classic Baking Tradition</div>
+              <p class="footer-desc">
+                Delivering joy, one bite at a time. Baked fresh daily with the
+                finest ingredients and over a century of love.
+              </p>
+              <div class="footer-contact">
+                <div>📞 (051) 111-112-253</div>
+                <div>✉️ hello@sweetcraft.pk</div>
+              </div>
+            </div>
+            <div>
+              <div class="footer-heading">Categories</div>
+              <ul class="footer-links">
+                <li>
+                  <a
+                    onclick="
+                      document
+                        .getElementById('cakes')
+                        .scrollIntoView({ behavior: 'smooth' })
+                    "
+                    >Cakes</a
+                  >
+                </li>
+                <li><a>Donuts</a></li>
+                <li><a>Gifting</a></li>
+              </ul>
+            </div>
+            <div>
+              <div class="footer-heading">Company</div>
+              <ul class="footer-links">
+                <li><a>About Us</a></li>
+                <li><a>Contact Us</a></li>
+                <li><a>Our Stores</a></li>
+                <li><a>Terms & Conditions</a></li>
+                <li><a>Privacy Policy</a></li>
+              </ul>
+            </div>
+            <div>
+              <div class="footer-heading">Services</div>
+              <ul class="footer-links">
+                <li><a onclick="showPage('customize')">Build My Cake</a></li>
+                <li><a>Art of Gifting</a></li>
+                <li><a>B2B Orders</a></li>
+                <li><a>Pick-up</a></li>
+                <li><a>FAQ's</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <div class="footer-copy">
+              ©2026 La Bake Maison. All Rights Reserved.
+            </div>
+            <div class="footer-copy">
+              Delivering till late. Every single day. 7:00 a.m. – 3:00 a.m.
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+     CUSTOMIZATION PAGE
+════════════════════════════════════════════ -->
+    <div class="page" id="page-customize">
+      <div class="custom-page">
+        <div class="custom-breadcrumb">
+          <span onclick="showPage('home')">Home</span>
+          <span style="color: var(--ink-muted)">›</span>
+          <span onclick="showPage('home')">Collection</span>
+          <span style="color: var(--ink-muted)">›</span>
+          <span style="color: var(--ink); font-weight: 500">Bespoke Cake</span>
+        </div>
+        <h1 class="custom-title">Build Your Cake</h1>
+        <p class="custom-subtitle">
+          Customize every detail — your dream cake, exactly the way you want it.
+        </p>
+
+        <div class="custom-layout">
+          <div class="steps-container">
+            <!-- STEP 1: SIZE -->
+            <div class="step-card open" id="step1">
+              <div class="step-header" onclick="toggleStep('step1')">
+                <div class="step-num" id="snum1">1</div>
+                <div>
+                  <div class="step-title">Choose Your Size</div>
+                  <div class="step-subtitle" id="step1-sub">
+                    Select a cake size
+                  </div>
+                </div>
+                <div class="step-chevron">▾</div>
+              </div>
+              <div class="step-body">
+                <div class="size-grid">
+                  <div
+                    class="opt-card"
+                    onclick="
+                      selectSize(this, 'Small 6&quot;', 600, 'Serves 4–6')
+                    "
+                    data-price="600"
+                  >
+                    <div class="opt-card-icon">🎂</div>
+                    <div class="opt-card-name">Small 6"</div>
+                    <div class="opt-card-serves">Serves 4–6</div>
+                    <div class="opt-card-price">Rs 600</div>
+                  </div>
+                  <div
+                    class="opt-card selected"
+                    onclick="
+                      selectSize(this, 'Medium 8&quot;', 850, 'Serves 8–10')
+                    "
+                    data-price="850"
+                  >
+                    <div class="opt-card-icon">🎂</div>
+                    <div class="opt-card-name">Medium 8"</div>
+                    <div class="opt-card-serves">Serves 8–10</div>
+                    <div class="opt-card-price">Rs 850</div>
+                  </div>
+                  <div
+                    class="opt-card out-of-stock"
+                    style="position: relative"
+                    data-price="1100"
+                  >
+                    <div class="opt-card-icon">🎂</div>
+                    <div class="opt-card-name">Large 10"</div>
+                    <div class="opt-card-serves">Serves 12–15</div>
+                    <div class="opt-card-price">Rs 1,100</div>
+                    <div class="opt-oos-badge">Out of Stock</div>
+                  </div>
+                  <div
+                    class="opt-card"
+                    onclick="selectSize(this, 'Sheet Cake', 1400, 'Serves 20+')"
+                    data-price="1400"
+                  >
+                    <div class="opt-card-icon">🎂</div>
+                    <div class="opt-card-name">Sheet Cake</div>
+                    <div class="opt-card-serves">Serves 20+</div>
+                    <div class="opt-card-price">Rs 1,400</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2: LAYERS -->
+            <div class="step-card open" id="step2">
+              <div class="step-header" onclick="toggleStep('step2')">
+                <div class="step-num" id="snum2">2</div>
+                <div>
+                  <div class="step-title">Number of Layers</div>
+                  <div class="step-subtitle" id="step2-sub">
+                    2 Layers selected
+                  </div>
+                </div>
+                <div class="step-chevron">▾</div>
+              </div>
+              <div class="step-body">
+                <div class="layer-opts">
+                  <div class="layer-btn" onclick="selectLayers(this, 1, 0)">
+                    <div class="layer-btn-label">1 Layer</div>
+                    <div class="layer-btn-price">Included</div>
+                  </div>
+                  <div
+                    class="layer-btn selected"
+                    onclick="selectLayers(this, 2, 150)"
+                  >
+                    <div class="layer-btn-label">2 Layers</div>
+                    <div class="layer-btn-price">+Rs 150</div>
+                  </div>
+                  <div class="layer-btn" onclick="selectLayers(this, 3, 280)">
+                    <div class="layer-btn-label">3 Layers</div>
+                    <div class="layer-btn-price">+Rs 280</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 3: FROSTING -->
+            <div class="step-card open" id="step3">
+              <div class="step-header" onclick="toggleStep('step3')">
+                <div class="step-num" id="snum3">3</div>
+                <div>
+                  <div class="step-title">Choose Your Frosting</div>
+                  <div class="step-subtitle" id="step3-sub">
+                    Strawberry · Blush Pink
+                  </div>
+                </div>
+                <div class="step-chevron">▾</div>
+              </div>
+              <div class="step-body">
+                <div class="frost-label">Flavor</div>
+                <div class="frost-flavors">
+                  <button
+                    class="frost-btn"
+                    onclick="selectFrost(this, 'Vanilla', 0)"
+                  >
+                    Vanilla (base)
+                  </button>
+                  <button
+                    class="frost-btn"
+                    onclick="selectFrost(this, 'Chocolate', 80)"
+                  >
+                    Chocolate +Rs 80
+                  </button>
+                  <button
+                    class="frost-btn selected"
+                    onclick="selectFrost(this, 'Strawberry', 100)"
+                  >
+                    Strawberry +Rs 100
+                  </button>
+                  <button
+                    class="frost-btn"
+                    onclick="selectFrost(this, 'Lemon', 90)"
+                  >
+                    Lemon +Rs 90
+                  </button>
+                  <button class="frost-btn oos">Cream Cheese +Rs 120</button>
+                </div>
+                <div class="frost-label" style="margin-top: 16px">
+                  Frosting Color
+                </div>
+                <div
+                  class="color-swatches"
+                  style="margin-top: 10px"
+                  id="color-swatches"
+                >
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch selected"
+                      style="background: #fff5ec"
+                      onclick="selectColor(this, 'Cream')"
+                    ></div>
+                    <div class="color-swatch-label">Cream</div>
+                  </div>
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch"
+                      style="background: #f2c4b0"
+                      onclick="selectColor(this, 'Blush Pink')"
+                    ></div>
+                    <div class="color-swatch-label">Blush</div>
+                  </div>
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch"
+                      style="background: #c8dff0"
+                      onclick="selectColor(this, 'Baby Blue')"
+                    ></div>
+                    <div class="color-swatch-label">Blue</div>
+                  </div>
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch"
+                      style="background: #b8d8b9"
+                      onclick="selectColor(this, 'Mint')"
+                    ></div>
+                    <div class="color-swatch-label">Mint</div>
+                  </div>
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch"
+                      style="background: #d4b8e0"
+                      onclick="selectColor(this, 'Lavender')"
+                    ></div>
+                    <div class="color-swatch-label">Lavender</div>
+                  </div>
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch"
+                      style="background: #f5cba7"
+                      onclick="selectColor(this, 'Peach')"
+                    ></div>
+                    <div class="color-swatch-label">Peach</div>
+                  </div>
+                  <div class="swatch-wrap">
+                    <div
+                      class="color-swatch"
+                      style="background: #f1948a"
+                      onclick="selectColor(this, 'Coral')"
+                    ></div>
+                    <div class="color-swatch-label">Coral</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 4: TOPPINGS -->
+            <div class="step-card open" id="step4">
+              <div class="step-header" onclick="toggleStep('step4')">
+                <div class="step-num" id="snum4">4</div>
+                <div>
+                  <div class="step-title">Add Toppings</div>
+                  <div class="step-subtitle" id="step4-sub">None selected</div>
+                </div>
+                <div class="step-chevron">▾</div>
+              </div>
+              <div class="step-body">
+                <div class="toppings-grid">
+                  <div
+                    class="topping-card"
+                    onclick="toggleTopping(this, 'Sprinkles', 60)"
+                  >
+                    <div class="check">✓</div>
+                    <div class="topping-icon">🌈</div>
+                    <div class="topping-name">Sprinkles</div>
+                    <div class="topping-price">+Rs 60</div>
+                  </div>
+                  <div
+                    class="topping-card"
+                    onclick="toggleTopping(this, 'Fresh Fruits', 150)"
+                  >
+                    <div class="check">✓</div>
+                    <div class="topping-icon">🍓</div>
+                    <div class="topping-name">Fresh Fruits</div>
+                    <div class="topping-price">+Rs 150</div>
+                  </div>
+                  <div
+                    class="topping-card"
+                    onclick="toggleTopping(this, 'Choco Shavings', 120)"
+                  >
+                    <div class="check">✓</div>
+                    <div class="topping-icon">🍫</div>
+                    <div class="topping-name">Choco Shavings</div>
+                    <div class="topping-price">+Rs 120</div>
+                  </div>
+                  <div
+                    class="topping-card"
+                    onclick="toggleTopping(this, 'Edible Glitter', 80)"
+                  >
+                    <div class="check">✓</div>
+                    <div class="topping-icon">✨</div>
+                    <div class="topping-name">Edible Glitter</div>
+                    <div class="topping-price">+Rs 80</div>
+                  </div>
+                  <div
+                    class="topping-card"
+                    onclick="toggleTopping(this, 'Fondant Flowers', 200)"
+                  >
+                    <div class="check">✓</div>
+                    <div class="topping-icon">🌸</div>
+                    <div class="topping-name">Fondant Flowers</div>
+                    <div class="topping-price">+Rs 200</div>
+                  </div>
+                  <div class="topping-card out-of-stock">
+                    <div class="topping-icon">🫧</div>
+                    <div class="topping-name">Sugar Pearls</div>
+                    <div class="topping-price" style="color: var(--ink-muted)">
+                      Out of Stock
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 5: MESSAGE -->
+            <div class="step-card open" id="step5">
+              <div class="step-header" onclick="toggleStep('step5')">
+                <div class="step-num" id="snum5">5</div>
+                <div>
+                  <div class="step-title">Message on Cake</div>
+                  <div class="step-subtitle" id="step5-sub">
+                    No message added
+                  </div>
+                </div>
+                <div class="step-chevron">▾</div>
+              </div>
+              <div class="step-body">
+                <textarea
+                  class="msg-input"
+                  id="cake-msg"
+                  rows="2"
+                  maxlength="30"
+                  placeholder="e.g. Happy Birthday Sarah!"
+                  oninput="updateMsg()"
+                ></textarea>
+                <div class="msg-counter"><span id="msg-count">0</span>/30</div>
+                <div class="font-previews">
+                  <div
+                    class="font-preview selected"
+                    onclick="selectFont(this, 'cursive')"
+                  >
+                    <div
+                      class="font-preview-text"
+                      style="
+                        font-family: &quot;Cormorant Garamond&quot;, serif;
+                        font-style: italic;
+                      "
+                    >
+                      Happy Birthday
+                    </div>
+                    <div class="font-preview-label">Cursive Script</div>
+                  </div>
+                  <div class="font-preview" onclick="selectFont(this, 'serif')">
+                    <div
+                      class="font-preview-text"
+                      style="font-family: &quot;Cormorant Garamond&quot;, serif"
+                    >
+                      Happy Birthday
+                    </div>
+                    <div class="font-preview-label">Elegant Serif</div>
+                  </div>
+                  <div class="font-preview" onclick="selectFont(this, 'sans')">
+                    <div
+                      class="font-preview-text"
+                      style="
+                        font-family: &quot;Jost&quot;, sans-serif;
+                        font-size: 13px;
+                      "
+                    >
+                      Happy Birthday
+                    </div>
+                    <div class="font-preview-label">Clean Print</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 6: DECORATIONS -->
+            <div class="step-card open" id="step6">
+              <div class="step-header" onclick="toggleStep('step6')">
+                <div class="step-num" id="snum6">6</div>
+                <div>
+                  <div class="step-title">Candles & Decorations</div>
+                  <div class="step-subtitle" id="step6-sub">None selected</div>
+                </div>
+                <div class="step-chevron">▾</div>
+              </div>
+              <div class="step-body">
+                <div class="deco-grid">
+                  <div
+                    class="deco-item"
+                    onclick="toggleDeco(this, 'Birthday Candles', 80)"
+                  >
+                    <div class="deco-emoji">🕯️</div>
+                    <div>
+                      <div class="deco-name">Birthday Candles</div>
+                      <div class="deco-price">+Rs 80</div>
+                    </div>
+                  </div>
+                  <div
+                    class="deco-item"
+                    onclick="toggleDeco(this, 'Sparkler', 120)"
+                  >
+                    <div class="deco-emoji">✨</div>
+                    <div>
+                      <div class="deco-name">Sparkler</div>
+                      <div class="deco-price">+Rs 120</div>
+                    </div>
+                  </div>
+                  <div
+                    class="deco-item"
+                    onclick="toggleDeco(this, 'Ribbon Border', 60)"
+                  >
+                    <div class="deco-emoji">🎀</div>
+                    <div>
+                      <div class="deco-name">Ribbon Border</div>
+                      <div class="deco-price">+Rs 60</div>
+                    </div>
+                  </div>
+                  <div class="deco-item" id="deco-numcandle">
+                    <div class="deco-emoji">🔢</div>
+                    <div>
+                      <div class="deco-name">Number Candle</div>
+                      <div class="deco-price">+Rs 100 each</div>
+                    </div>
+                    <div class="deco-qty">
+                      <button
+                        class="qty-btn"
+                        onclick="changeNumCandle(-1, event)"
+                      >
+                        −
+                      </button>
+                      <span class="qty-num" id="num-candle-qty">1</span>
+                      <button
+                        class="qty-btn"
+                        onclick="changeNumCandle(1, event)"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- end steps -->
+
+          <!-- SIDEBAR -->
+          <div class="order-sidebar">
+            <div class="order-card">
+              <div class="order-card-header">
+                <span style="font-size: 20px; opacity: 0.7">✦</span>
+                <div class="order-card-title">Your Bespoke Cake</div>
+              </div>
+
+              <div class="order-preview" id="cake-preview-area">
+                <svg
+                  id="preview-svg"
+                  viewBox="0 0 200 180"
+                  width="180"
+                  height="160"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <ellipse
+                    cx="100"
+                    cy="170"
+                    rx="80"
+                    ry="8"
+                    fill="rgba(28,20,16,0.08)"
+                  />
+                  <ellipse cx="100" cy="164" rx="78" ry="7" fill="#C9B49A" />
+                  <ellipse cx="100" cy="161" rx="76" ry="6" fill="#E8D5C0" />
+                  <g id="preview-tiers"></g>
+                  <g id="preview-candles"></g>
+                  <g id="preview-toppings"></g>
+                  <g id="preview-msg-group"></g>
+                </svg>
+              </div>
+
+              <div class="order-lines" id="order-lines">
+                <div class="order-line">
+                  <span id="line-base-name">Base cake (Medium 8")</span
+                  ><span id="line-base-price">Rs 850</span>
+                </div>
+                <div class="order-line" id="line-layers">
+                  <span>+ 2 Layers</span><span>Rs 150</span>
+                </div>
+                <div class="order-line" id="line-frost">
+                  <span id="line-frost-name">+ Strawberry frosting</span
+                  ><span id="line-frost-price">Rs 100</span>
+                </div>
+                <div class="order-line" id="line-toppings">
+                  <span>+ Toppings (0)</span><span>Rs 0</span>
+                </div>
+                <div class="order-line" id="line-msg" style="display: none">
+                  <span>+ Message</span><span>Rs 0</span>
+                </div>
+                <div class="order-line" id="line-deco">
+                  <span>+ Decorations (0)</span><span>Rs 0</span>
+                </div>
+                <div
+                  class="order-line"
+                  id="line-discount"
+                  style="display: none"
+                >
+                  <span id="line-discount-name" style="color: var(--sage-dark)"
+                    >Discount</span
+                  >
+                  <span id="line-discount-val" style="color: var(--sage-dark)"
+                    >−Rs 0</span
+                  >
+                </div>
+                <div class="order-line total">
+                  <span>Total</span><span id="order-total">Rs 1,100</span>
+                </div>
+              </div>
+
+              <div class="voucher-row">
+                <input
+                  class="voucher-input"
+                  id="voucher-input"
+                  type="text"
+                  placeholder="Voucher code"
+                  maxlength="12"
+                />
+                <button class="voucher-btn" onclick="applyVoucher()">
+                  Apply
+                </button>
+              </div>
+              <div class="voucher-msg" id="voucher-msg"></div>
+
+              <div class="order-actions">
+                <button class="btn-cart" onclick="addToCart()">
+                  Add to Cart
+                </button>
+                <button class="btn-save" onclick="saveDesign()">
+                  Save Design &nbsp; ↗ Share
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CART PAGE -->
+    <div class="page" id="page-cart">
+      <div class="cart-page">
+        <h1 class="cart-title">Your Cart</h1>
+        <div id="cart-content"></div>
+      </div>
+    </div>
+
+    <!-- ORDERS PAGE -->
+    <div class="page" id="page-orders">
+      <div class="orders-page">
+        <h1 class="orders-title">My Orders</h1>
+        <p class="orders-sub">
+          Track your order in real time — from our bakery to your doorstep.
+        </p>
+        <div id="orders-list"></div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="added-toast" id="toast">✓ Added to cart</div>
+
+    <script>
+      /* ═══ STATE ═══ */
+      const state = {
+        size: { name: 'Medium 8"', price: 850 },
+        layers: { count: 2, extra: 150 },
+        frost: { flavor: "Strawberry", price: 100 },
+        frostColor: "Cream",
+        toppings: [],
+        message: "",
+        font: "cursive",
+        decos: [],
+        numCandle: 1,
+        discount: 0,
+        voucherCode: "",
+        cart: [],
+      };
+      const VOUCHERS = { SWEET10: 10, CAKE20: 20, BAKE15: 15 };
+
+      /* ═══ ROUTER ═══ */
+      window.showPage = function (name) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById("page-" + name).classList.add("active");
+        document
+          .querySelectorAll(".nav-link")
+          .forEach((l) => l.classList.remove("active"));
+        const el = document.getElementById("nav-" + name);
+        if (el) el.classList.add("active");
+        window.scrollTo(0, 0);
+        if (name === "cart") renderCart();
+        if (name === "orders") renderOrders();
+      };
+
+      /* ═══ STEP TOGGLE ═══ */
+      function toggleStep(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle("open");
+        const body = el.querySelector(".step-body");
+        if (body)
+          body.style.display = el.classList.contains("open") ? "" : "none";
+      }
+
+      /* ═══ SELECTIONS ═══ */
+      function selectSize(el, name, price) {
+        if (el.classList.contains("out-of-stock")) return;
+        el.closest(".size-grid")
+          .querySelectorAll(".opt-card")
+          .forEach((c) => c.classList.remove("selected"));
+        el.classList.add("selected");
+        state.size = { name, price };
+        document.getElementById("step1-sub").textContent =
+          name + " — Rs " + price;
+        updateSummary();
+        updatePreview();
+      }
+      function selectLayers(el, count, extra) {
+        el.closest(".layer-opts")
+          .querySelectorAll(".layer-btn")
+          .forEach((b) => b.classList.remove("selected"));
+        el.classList.add("selected");
+        state.layers = { count, extra };
+        document.getElementById("step2-sub").textContent =
+          count +
+          (count === 1 ? " Layer" : " Layers") +
+          (extra ? " — +Rs " + extra : "");
+        updateSummary();
+        updatePreview();
+      }
+      function selectFrost(el, flavor, price) {
+        el.closest(".frost-flavors")
+          .querySelectorAll(".frost-btn")
+          .forEach((b) => b.classList.remove("selected"));
+        el.classList.add("selected");
+        state.frost = { flavor, price };
+        document.getElementById("step3-sub").textContent =
+          flavor + " · " + state.frostColor;
+        updateSummary();
+        updatePreview();
+      }
+      function selectColor(el, name) {
+        document
+          .querySelectorAll(".color-swatch")
+          .forEach((s) => s.classList.remove("selected"));
+        el.classList.add("selected");
+        state.frostColor = name;
+        document.getElementById("step3-sub").textContent =
+          state.frost.flavor + " · " + name;
+        updatePreview();
+      }
+      function toggleTopping(el, name, price) {
+        if (el.classList.contains("out-of-stock")) return;
+        const idx = state.toppings.findIndex((t) => t.name === name);
+        if (idx >= 0) {
+          state.toppings.splice(idx, 1);
+          el.classList.remove("selected");
+        } else {
+          state.toppings.push({ name, price });
+          el.classList.add("selected");
+        }
+        document.getElementById("step4-sub").textContent = state.toppings.length
+          ? state.toppings.map((t) => t.name).join(", ")
+          : "None selected";
+        updateSummary();
+        updatePreview();
+      }
+      function updateMsg() {
+        const val = document.getElementById("cake-msg").value;
+        state.message = val;
+        document.getElementById("msg-count").textContent = val.length;
+        document.getElementById("step5-sub").textContent =
+          val || "No message added";
+        updateSummary();
+        updatePreview();
+      }
+      function selectFont(el, font) {
+        el.closest(".font-previews")
+          .querySelectorAll(".font-preview")
+          .forEach((f) => f.classList.remove("selected"));
+        el.classList.add("selected");
+        state.font = font;
+      }
+      function toggleDeco(el, name, price) {
+        const idx = state.decos.findIndex((d) => d.name === name);
+        if (idx >= 0) {
+          state.decos.splice(idx, 1);
+          el.classList.remove("selected");
+        } else {
+          state.decos.push({ name, price });
+          el.classList.add("selected");
+        }
+        updateDecoSub();
+        updateSummary();
+        updatePreview();
+      }
+      function changeNumCandle(delta, event) {
+        event.stopPropagation();
+        state.numCandle = Math.max(1, Math.min(9, state.numCandle + delta));
+        document.getElementById("num-candle-qty").textContent = state.numCandle;
+        const el = document.getElementById("deco-numcandle");
+        el.classList.add("selected");
+        const idx = state.decos.findIndex((d) => d.name === "Number Candle");
+        if (idx >= 0) state.decos[idx].price = 100 * state.numCandle;
+        else
+          state.decos.push({
+            name: "Number Candle",
+            price: 100 * state.numCandle,
+          });
+        updateDecoSub();
+        updateSummary();
+        updatePreview();
+      }
+      function updateDecoSub() {
+        document.getElementById("step6-sub").textContent = state.decos.length
+          ? state.decos.map((d) => d.name).join(", ")
+          : "None selected";
+      }
+
+      /* ═══ SUMMARY ═══ */
+      function calcTotal() {
+        const toppingTotal = state.toppings.reduce((s, t) => s + t.price, 0);
+        const decoTotal = state.decos.reduce((s, d) => s + d.price, 0);
+        const subtotal =
+          state.size.price +
+          state.layers.extra +
+          state.frost.price +
+          toppingTotal +
+          decoTotal;
+        const discountAmt = Math.round((subtotal * state.discount) / 100);
+        return { subtotal, discountAmt, total: subtotal - discountAmt };
+      }
+      function updateSummary() {
+        const { discountAmt, total } = calcTotal();
+        const toppingTotal = state.toppings.reduce((s, t) => s + t.price, 0);
+        const decoTotal = state.decos.reduce((s, d) => s + d.price, 0);
+        document.getElementById("line-base-name").textContent =
+          "Base cake (" + state.size.name + ")";
+        document.getElementById("line-base-price").textContent =
+          "Rs " + state.size.price.toLocaleString();
+        const layerEl = document.getElementById("line-layers");
+        layerEl.querySelector("span:first-child").textContent =
+          "+ " +
+          state.layers.count +
+          " Layer" +
+          (state.layers.count > 1 ? "s" : "");
+        layerEl.querySelector("span:last-child").textContent = state.layers
+          .extra
+          ? "Rs " + state.layers.extra
+          : "Included";
+        document.getElementById("line-frost-name").textContent =
+          "+ " + state.frost.flavor + " frosting";
+        document.getElementById("line-frost-price").textContent = state.frost
+          .price
+          ? "Rs " + state.frost.price
+          : "Included";
+        const topEl = document.getElementById("line-toppings");
+        topEl.querySelector("span:first-child").textContent =
+          "+ Toppings (" + state.toppings.length + ")";
+        topEl.querySelector("span:last-child").textContent =
+          "Rs " + toppingTotal;
+        document.getElementById("line-msg").style.display = state.message
+          ? ""
+          : "none";
+        const decoEl = document.getElementById("line-deco");
+        decoEl.querySelector("span:first-child").textContent =
+          "+ Decorations (" + state.decos.length + ")";
+        decoEl.querySelector("span:last-child").textContent = "Rs " + decoTotal;
+        const discEl = document.getElementById("line-discount");
+        if (discountAmt > 0) {
+          discEl.style.display = "";
+          document.getElementById("line-discount-name").textContent =
+            "Voucher (" + state.voucherCode + " −" + state.discount + "%)";
+          document.getElementById("line-discount-val").textContent =
+            "−Rs " + discountAmt;
+        } else discEl.style.display = "none";
+        document.getElementById("order-total").textContent =
+          "Rs " + total.toLocaleString();
+      }
+
+      /* ═══ PREVIEW ═══ */
+      const COLOR_MAP = {
+        Cream: "#FFF5EC",
+        "Blush Pink": "#F2C4B0",
+        "Baby Blue": "#C8DFF0",
+        Mint: "#B8D8B9",
+        Lavender: "#D4B8E0",
+        Peach: "#F5CBA7",
+        Coral: "#F1948A",
+      };
+      function updatePreview() {
+        const color = COLOR_MAP[state.frostColor] || "#FFF5EC";
+        const tierCount = state.layers.count;
+        const tiersG = document.getElementById("preview-tiers");
+        tiersG.innerHTML = "";
+        const heights =
+          tierCount === 1 ? [60] : tierCount === 2 ? [52, 46] : [44, 40, 36];
+        const widths =
+          tierCount === 1
+            ? [160]
+            : tierCount === 2
+              ? [160, 120]
+              : [160, 125, 90];
+        let y = 155;
+        for (let i = 0; i < tierCount; i++) {
+          const w = widths[i],
+            h = heights[i],
+            x = 100 - w / 2;
+          y -= h;
+          tiersG.innerHTML += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="${color}" stroke="rgba(28,20,16,0.08)" stroke-width="1"/>
+    <rect x="${x}" y="${y}" width="${w}" height="7" rx="3" fill="rgba(255,255,255,0.65)"/>`;
+        }
+        const candlesG = document.getElementById("preview-candles");
+        candlesG.innerHTML = "";
+        if (
+          state.decos.find((d) => d.name === "Birthday Candles") ||
+          state.decos.find((d) => d.name === "Number Candle")
+        ) {
+          candlesG.innerHTML = `<rect x="96" y="${y - 28}" width="8" height="26" rx="3" fill="#F9D77E"/>
+    <ellipse cx="100" cy="${y - 29}" rx="5" ry="7" fill="#FFD700"/>
+    <ellipse cx="100" cy="${y - 27}" rx="3" ry="5" fill="#FF8C00"/>`;
+        }
+        const topG = document.getElementById("preview-toppings");
+        topG.innerHTML = "";
+        if (state.toppings.find((t) => t.name === "Fresh Fruits"))
+          topG.innerHTML += `<text x="80" y="${y - 2}" font-size="12">🍓</text><text x="100" y="${y - 2}" font-size="12">🫐</text><text x="120" y="${y - 2}" font-size="12">🍓</text>`;
+        if (state.toppings.find((t) => t.name === "Sprinkles"))
+          topG.innerHTML += `<rect x="75" y="${y + 10}" width="10" height="3" rx="1.5" fill="#F9D77E" transform="rotate(-20,75,${y + 10})"/>
+    <rect x="110" y="${y + 12}" width="10" height="3" rx="1.5" fill="#D4856A" transform="rotate(15,110,${y + 12})"/>`;
+        const msgG = document.getElementById("preview-msg-group");
+        msgG.innerHTML = "";
+        if (state.message) {
+          const ff =
+            state.font === "cursive"
+              ? "Cormorant Garamond,serif"
+              : state.font === "serif"
+                ? "Georgia,serif"
+                : "Jost,sans-serif";
+          msgG.innerHTML = `<text x="100" y="${y + heights[0] - 12}" text-anchor="middle" font-size="9" fill="#1C1410" font-family="${ff}" font-style="${state.font === "cursive" ? "italic" : "normal"}">${state.message.substring(0, 20)}</text>`;
+        }
+      }
+
+      /* ═══ VOUCHER ═══ */
+      function applyVoucher() {
+        const code = document
+          .getElementById("voucher-input")
+          .value.toUpperCase()
+          .trim();
+        const msgEl = document.getElementById("voucher-msg");
+        if (VOUCHERS[code]) {
+          state.discount = VOUCHERS[code];
+          state.voucherCode = code;
+          msgEl.className = "voucher-msg success";
+          msgEl.textContent =
+            "✓ " + code + " applied — " + state.discount + "% off!";
+        } else {
+          state.discount = 0;
+          state.voucherCode = "";
+          msgEl.className = "voucher-msg error";
+          msgEl.textContent = "✗ Invalid voucher code.";
+        }
+        updateSummary();
+      }
+
+      /* ═══ CART ═══ */
+      function addToCart() {
+        const { total } = calcTotal();
+        state.cart.push({
+          id: Date.now(),
+          name: "Custom " + state.size.name + " Cake",
+          detail:
+            state.frost.flavor +
+            " frosting · " +
+            state.frostColor +
+            " · " +
+            state.layers.count +
+            " layer" +
+            (state.layers.count > 1 ? "s" : "") +
+            (state.toppings.length
+              ? " · " + state.toppings.map((t) => t.name).join(", ")
+              : ""),
+          price: total,
+          emoji: "🎂",
+        });
+        updateCartBadge();
+        const toast = document.getElementById("toast");
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      }
+      function updateCartBadge() {
+        const b = document.getElementById("cart-count-badge");
+        b.textContent = state.cart.length;
+        b.style.display = state.cart.length ? "" : "none";
+      }
+      function renderCart() {
+        const el = document.getElementById("cart-content");
+        if (!state.cart.length) {
+          el.innerHTML =
+            '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div class="cart-empty-text">Your cart is empty</div><br><button class="btn-primary" onclick="showPage(\'home\')" style="margin:0 auto;display:block;width:fit-content;">Browse Collection</button></div>';
+          return;
+        }
+        const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+        const delivery = subtotal >= 2000 ? 0 : 150;
+        const total = subtotal + delivery;
+        let html = '<div class="cart-list">';
+        state.cart.forEach((item) => {
+          html += `<div class="cart-item">
+      <div class="cart-item-icon">${item.emoji}</div>
+      <div class="cart-item-info"><div class="cart-item-name">${item.name}</div><div class="cart-item-detail">${item.detail}</div></div>
+      <div class="cart-item-price">Rs ${item.price.toLocaleString()}</div>
+      <button class="cart-item-remove" onclick="removeFromCart(${item.id})">✕</button>
+    </div>`;
+        });
+        html += "</div>";
+        html += `<div class="cart-summary-box">
+    ${delivery === 0 ? '<div class="discount-badge">✦ Free delivery on this order</div>' : ""}
+    <div class="cart-summary-line"><span>Subtotal</span><span>Rs ${subtotal.toLocaleString()}</span></div>
+    <div class="cart-summary-line"><span>Delivery</span><span>${delivery === 0 ? "Free" : "Rs " + delivery}</span></div>
+    <div class="cart-summary-line total"><span>Total</span><span>Rs ${total.toLocaleString()}</span></div>
+    <button class="btn-checkout">Proceed to Checkout</button>
+  </div>`;
+        el.innerHTML = html;
+      }
+      function removeFromCart(id) {
+        state.cart = state.cart.filter((i) => i.id !== id);
+        updateCartBadge();
+        renderCart();
+      }
+      function saveDesign() {
+        alert("✓ Design saved! Share link copied to clipboard.");
+      }
+
+      /* ═══ CAKE DATA + GRID ═══ */
+      const CAKE_IMAGES = {
+        dry: "https://images.unsplash.com/photo-1560180474-e8563fd75bab?w=600&q=80&auto=format&fit=crop",
+        fresh:
+          "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80&auto=format&fit=crop",
+        mousse:
+          "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=600&q=80&auto=format&fit=crop",
+        butter:
+          "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=600&q=80&auto=format&fit=crop",
+      };
+      const CAKE_IMAGES_ALT = {
+        fresh2:
+          "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=600&q=80&auto=format&fit=crop",
+        butter2:
+          "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?w=600&q=80&auto=format&fit=crop",
+        mousse2:
+          "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=600&q=80&auto=format&fit=crop",
+        dry2: "https://images.unsplash.com/photo-1519869325930-281384150729?w=600&q=80&auto=format&fit=crop",
+      };
+
+      const CAKES = [
+        {
+          name: "Moist Sponge Teacake",
+          desc: "Perfectly moist sponge, rich and creamy. Perfect with afternoon tea.",
+          price: 850,
+          img: CAKE_IMAGES.dry,
+          badge: "popular",
+          cat: "dry",
+        },
+        {
+          name: "Fresh Cream Birthday",
+          desc: "Light vanilla sponge layered with fresh whipped cream and fruit.",
+          price: 1200,
+          img: CAKE_IMAGES.fresh,
+          badge: "new",
+          cat: "fresh",
+        },
+        {
+          name: "Chocolate Mousse",
+          desc: "Velvety dark chocolate mousse in a rich cocoa shell.",
+          price: 1400,
+          img: CAKE_IMAGES.mousse,
+          badge: "",
+          cat: "mousse",
+        },
+        {
+          name: "Strawberry Delight",
+          desc: "Fresh strawberries with light cream on a buttery vanilla base.",
+          price: 1100,
+          img: CAKE_IMAGES_ALT.fresh2,
+          badge: "",
+          cat: "fresh",
+        },
+        {
+          name: "Lemon Buttercream",
+          desc: "Zesty lemon sponge with silky smooth lemon buttercream frosting.",
+          price: 950,
+          img: CAKE_IMAGES.butter,
+          badge: "",
+          cat: "butter",
+        },
+        {
+          name: "Red Velvet Dream",
+          desc: "Classic red velvet with cream cheese frosting, timeless and divine.",
+          price: 1350,
+          img: CAKE_IMAGES_ALT.butter2,
+          badge: "popular",
+          cat: "butter",
+        },
+        {
+          name: "Mango Cheesecake",
+          desc: "No-bake mango cheesecake with a buttery biscuit crust.",
+          price: 1600,
+          img: CAKE_IMAGES_ALT.mousse2,
+          badge: "new",
+          cat: "mousse",
+        },
+        {
+          name: "Classic Dry Cake",
+          desc: "Our legendary dry cake, loved through generations. Timeless recipe.",
+          price: 650,
+          img: CAKE_IMAGES_ALT.dry2,
+          badge: "",
+          cat: "dry",
+        },
+      ];
+
+      let filteredCat = "all";
+      function filterCakes(cat, btn) {
+        filteredCat = cat;
+        btn
+          .closest("#cake-filter")
+          .querySelectorAll(".filter-btn")
+          .forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        renderCakeGrid();
+      }
+      function renderCakeGrid() {
+        const grid = document.getElementById("cake-grid");
+        const list =
+          filteredCat === "all"
+            ? CAKES
+            : CAKES.filter((c) => c.cat === filteredCat);
+        grid.innerHTML = list
+          .map(
+            (cake) => `
+    <div class="cake-card">
+      <div class="cake-card-img">
+        ${cake.badge === "new" ? '<div class="cake-badge badge-new">New</div>' : ""}
+        ${cake.badge === "popular" ? '<div class="cake-badge badge-popular">Popular</div>' : ""}
+        <img src="${cake.img}" alt="${cake.name}" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="cake-card-body">
+        <div class="cake-card-name">${cake.name}</div>
+        <div class="cake-card-desc">${cake.desc}</div>
+        <div class="cake-card-footer">
+          <div class="cake-price">Rs ${cake.price.toLocaleString()} <span>/ kg</span></div>
+          <div class="cake-actions">
+            <button class="btn-customize" onclick="showPage('customize')">Customize</button>
+            <button class="btn-add" onclick="quickAdd('${cake.name}',${cake.price})">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+          )
+          .join("");
+      }
+      function quickAdd(name, price) {
+        state.cart.push({
+          id: Date.now(),
+          name,
+          detail: "Standard size",
+          price,
+          emoji: "🎂",
+        });
+        updateCartBadge();
+        const toast = document.getElementById("toast");
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      }
+
+      /* ═══ REVIEWS ═══ */
+      let userRating = 0;
+      const AVATAR_COLORS = [
+        "#E8C4BF",
+        "#C8DFF0",
+        "#B8D8B9",
+        "#D4B8E0",
+        "#F5CBA7",
+        "#C4847A",
+      ];
+      const AVATAR_TEXT = [
+        "#9B5A52",
+        "#185FA5",
+        "#3B6D11",
+        "#7B3A6B",
+        "#854F0B",
+        "#FAF6EF",
+      ];
+      const REVIEWS_DATA = [
+        {
+          name: "Ayesha M.",
+          initials: "AM",
+          product: "Red Velvet Dream",
+          rating: 5,
+          date: "3 days ago",
+          text: "Absolutely stunning cake — the cream cheese frosting was perfectly balanced. Everyone at the birthday party was asking where we got it from!",
+          helpful: 14,
+          color: 0,
+        },
+        {
+          name: "Bilal K.",
+          initials: "BK",
+          product: 'Custom Medium 8" Cake',
+          rating: 5,
+          date: "1 week ago",
+          text: "Used the Build My Cake feature and it was so much fun. The strawberry frosting with blush pink color came out exactly like the preview.",
+          helpful: 22,
+          color: 1,
+        },
+        {
+          name: "Sara F.",
+          initials: "SF",
+          product: "Chocolate Mousse",
+          rating: 5,
+          date: "2 weeks ago",
+          text: "Rich, velvety and not too sweet. The mousse had a beautiful dark chocolate depth to it. Delivery was on time even though it was 11PM!",
+          helpful: 18,
+          color: 2,
+        },
+        {
+          name: "Usman R.",
+          initials: "UR",
+          product: "Mango Cheesecake",
+          rating: 4,
+          date: "2 weeks ago",
+          text: "Very good mango flavour — fresh and not artificial. Crust was perfectly buttery. Slightly melted on arrival but taste was 10/10.",
+          helpful: 9,
+          color: 3,
+        },
+        {
+          name: "Nadia T.",
+          initials: "NT",
+          product: "Fresh Cream Birthday",
+          rating: 5,
+          date: "3 weeks ago",
+          text: "Ordered this for my daughter's birthday and she absolutely loved it. The fresh fruit topping was vibrant and the cream was light.",
+          helpful: 31,
+          color: 4,
+        },
+        {
+          name: "Hamza A.",
+          initials: "HA",
+          product: "Moist Sponge Teacake",
+          rating: 5,
+          date: "1 month ago",
+          text: "This teacake is legendary. Been buying it for 10 years and the taste never changes — exactly what a classic should be.",
+          helpful: 47,
+          color: 5,
+        },
+      ];
+      let allReviews = [...REVIEWS_DATA];
+      function renderReviews() {
+        const grid = document.getElementById("reviews-grid");
+        if (!grid) return;
+        grid.innerHTML = allReviews
+          .map(
+            (r) => `
+    <div class="review-card">
+      <div class="review-header">
+        <div class="review-avatar" style="background:${AVATAR_COLORS[r.color]};color:${AVATAR_TEXT[r.color]};">${r.initials}</div>
+        <div class="review-meta">
+          <div class="review-name">${r.name}</div>
+          <div class="review-product">${r.product}</div>
+          <div class="review-stars">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>
+        </div>
+        <div class="review-date">${r.date}</div>
+      </div>
+      <div class="review-text">${r.text}</div>
+      <div class="review-helpful">
+        <span>Helpful?</span>
+        <button onclick="this.textContent='👍 '+(parseInt(this.textContent.replace(/\\D/g,''))+1);this.disabled=true;">👍 ${r.helpful}</button>
+        <button onclick="this.disabled=true;">👎</button>
+      </div>
+    </div>
+  `,
+          )
+          .join("");
+      }
+      function pickStar(n) {
+        userRating = n;
+        document.querySelectorAll(".star-pick").forEach((s, i) => {
+          s.style.color = i < n ? "#B8973A" : "#D3B89A";
+        });
+      }
+      function hoverStar(n) {
+        document.querySelectorAll(".star-pick").forEach((s, i) => {
+          s.style.color = i < n ? "#D4B46A" : "#D3B89A";
+        });
+      }
+      function resetStars() {
+        document.querySelectorAll(".star-pick").forEach((s, i) => {
+          s.style.color = i < userRating ? "#B8973A" : "#D3B89A";
+        });
+      }
+      function submitReview() {
+        const name = document.getElementById("rv-name").value.trim();
+        const product = document.getElementById("rv-product").value.trim();
+        const text = document.getElementById("rv-text").value.trim();
+        if (!name || !text || userRating === 0) {
+          alert("Please fill your name, rating, and review text.");
+          return;
+        }
+        const initials = name
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase()
+          .substring(0, 2);
+        allReviews.unshift({
+          name,
+          initials,
+          product: product || "SweetCraft Cake",
+          rating: userRating,
+          date: "Just now",
+          text,
+          helpful: 0,
+          color: allReviews.length % 6,
+        });
+        renderReviews();
+        document.getElementById("rv-success").style.display = "block";
+        document.getElementById("rv-name").value = "";
+        document.getElementById("rv-product").value = "";
+        document.getElementById("rv-text").value = "";
+        pickStar(0);
+        userRating = 0;
+        setTimeout(
+          () => (document.getElementById("rv-success").style.display = "none"),
+          3000,
+        );
+      }
+
+      /* ═══ ORDERS ═══ */
+      const SAMPLE_ORDERS = [
+        {
+          id: "SC-20260413-001",
+          date: "Today, 1:42 PM",
+          name: 'Custom Medium 8" Cake',
+          items: [
+            "Strawberry frosting",
+            "Blush Pink",
+            "2 Layers",
+            "Fresh Fruits",
+          ],
+          price: 1310,
+          status: "preparing",
+          timeline: [
+            { label: "Order Placed", icon: "📋", done: true, time: "1:42 PM" },
+            { label: "Confirmed", icon: "✅", done: true, time: "1:45 PM" },
+            {
+              label: "Preparing",
+              icon: "🎂",
+              active: true,
+              time: "In progress",
+            },
+            { label: "Out for Delivery", icon: "🚗", done: false, time: "—" },
+            { label: "Delivered", icon: "📦", done: false, time: "—" },
+          ],
+        },
+        {
+          id: "SC-20260410-087",
+          date: "Apr 10, 2026",
+          name: "Red Velvet Dream",
+          items: ["Standard size"],
+          price: 1350,
+          status: "delivered",
+          timeline: [
+            { label: "Order Placed", icon: "📋", done: true, time: "9:15 PM" },
+            { label: "Confirmed", icon: "✅", done: true, time: "9:18 PM" },
+            { label: "Preparing", icon: "🎂", done: true, time: "9:40 PM" },
+            {
+              label: "Out for Delivery",
+              icon: "🚗",
+              done: true,
+              time: "10:05 PM",
+            },
+            { label: "Delivered", icon: "📦", done: true, time: "10:34 PM" },
+          ],
+        },
+      ];
+      function statusPill(s) {
+        const map = {
+          pending: "Pending",
+          confirmed: "Confirmed",
+          preparing: "Preparing",
+          delivered: "Delivered",
+          cancelled: "Cancelled",
+        };
+        return `<span class="status-pill status-${s}">${map[s] || s}</span>`;
+      }
+      function renderOrders() {
+        const el = document.getElementById("orders-list");
+        if (!el) return;
+        const orders = [
+          ...SAMPLE_ORDERS,
+          ...state.cart.map((item) => ({
+            id: "SC-LIVE-" + item.id,
+            date: "Just added to cart",
+            name: item.name,
+            items: [item.detail],
+            price: item.price,
+            status: "pending",
+            timeline: [
+              { label: "Order Placed", icon: "📋", active: true, time: "Now" },
+              { label: "Confirmed", icon: "✅", done: false, time: "—" },
+              { label: "Preparing", icon: "🎂", done: false, time: "—" },
+              { label: "Out for Delivery", icon: "🚗", done: false, time: "—" },
+              { label: "Delivered", icon: "📦", done: false, time: "—" },
+            ],
+          })),
+        ];
+        el.innerHTML = orders
+          .map(
+            (order) => `
+    <div class="order-status-card">
+      <div class="order-status-header">
+        <div><div class="order-id">${order.id}</div><div class="order-date">${order.date}</div></div>
+        <div class="order-name">${order.name}</div>
+        <div class="order-amount">Rs ${order.price.toLocaleString()}</div>
+        ${statusPill(order.status)}
+      </div>
+      <div class="order-tracker">
+        <div class="tracker-steps">
+          ${order.timeline
+            .map(
+              (step, idx) => `
+            <div class="tracker-step">
+              <div class="tracker-line ${step.done && idx < order.timeline.length - 1 ? "done" : ""}"></div>
+              <div class="tracker-dot ${step.done ? "done" : step.active ? "active" : ""}">${step.done ? "✓" : step.active ? step.icon : ""}</div>
+              <div class="tracker-label ${step.done ? "done" : step.active ? "active" : ""}">${step.label}</div>
+              <div class="tracker-time">${step.time}</div>
+            </div>`,
+            )
+            .join("")}
+        </div>
+      </div>
+      <div class="order-items-row">${order.items.map((it) => `<div class="order-item-chip">🎂 ${it}</div>`).join("")}</div>
+    </div>
+  `,
+          )
+          .join("");
+      }
+
+      /* ═══ INIT ═══ */
+      renderCakeGrid();
+      updateSummary();
+      updatePreview();
+      renderReviews();
+    </script>
+  </body>
+</html>
