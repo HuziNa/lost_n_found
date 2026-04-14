@@ -1,33 +1,31 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
+  name: { type: String, required: true },
 
-    email: { type: String, required: true, unique: true },
-    
-    password: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
 
-    role: { 
-        type: String, 
-        enum: ['customer', 'owner', 'admin'], 
-        default: 'customer' 
-    },
+  password: { type: String, required: true },
 
-    // if they are an owner, we link them to their bakery
-    bakeryManaged: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Bakery' 
-    },
+  role: {
+    type: String,
+    enum: ['customer', 'owner', 'admin'],
+    default: 'customer'
+  },
 
-    // address for delivery
-    address: {
-        street: String,
-        city: { type: String, default: 'Islamabad' }, // Default for NUST area?
-        postalCode: String,
-        houseNumber: String
-    },
+  // if owner
+  bakeryManaged: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bakery'
+  },
 
-    phoneNumber: { type: String, required: true } 
+  phoneNumber: { type: String, required: true },
+
+  address: {
+    street: String,
+    city: String,
+    postalCode: String
+  }
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);
