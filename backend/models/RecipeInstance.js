@@ -12,7 +12,7 @@ const recipeInstanceSchema = new mongoose.Schema({
     {
       ingredient: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ingredient',
+        ref: 'Stock',
         required: true
       },
       quantityUsed: {

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const stockSchema = new mongoose.Schema({
   bakery: { type: mongoose.Schema.Types.ObjectId, ref: 'Bakery', required: true },
 
-  name: { type: String, required: true },
+  ingredientName: { type: String, required: true },
 
   quantityAvailable: { type: Number, required: true },
 
