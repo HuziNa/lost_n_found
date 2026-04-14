@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
         default: 'customer' 
     },
 
-    // if they are an owner, we link them to their bakery
+    // if they are an owner, we link them to their bakeries
     bakeryManaged: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Bakery' 
