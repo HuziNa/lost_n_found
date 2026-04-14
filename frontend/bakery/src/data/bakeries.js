@@ -1,7 +1,4 @@
-import React from "react";
-import BakeryCard from "../components/BakeryCard";
-
-const BAKERIES = [
+export const BAKERIES = [
   {
     id: 1,
     badge: "Signature",
@@ -11,7 +8,6 @@ const BAKERIES = [
     rating: 4.9,
     stars: "★★★★★",
     action: "Order",
-    route: "/home",
     img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop"
   },
   {
@@ -23,7 +19,6 @@ const BAKERIES = [
     rating: 4.8,
     stars: "★★★★☆",
     action: "Coming",
-    route: "#",
     img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80&auto=format&fit=crop"
   },
   {
@@ -35,7 +30,6 @@ const BAKERIES = [
     rating: 4.7,
     stars: "★★★★★",
     action: "Coming",
-    route: "#",
     img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80&auto=format&fit=crop"
   },
   {
@@ -47,7 +41,6 @@ const BAKERIES = [
     rating: 4.6,
     stars: "★★★★☆",
     action: "Coming",
-    route: "#",
     img: "https://images.unsplash.com/photo-1486427867162-7d36b5871f29?w=400&q=80&auto=format&fit=crop"
   },
   {
@@ -59,7 +52,6 @@ const BAKERIES = [
     rating: 4.9,
     stars: "★★★★★",
     action: "Coming",
-    route: "#",
     img: "",
     fallbackBg: "#D4B46A"
   },
@@ -72,30 +64,7 @@ const BAKERIES = [
     rating: 4.8,
     stars: "★★★★☆",
     action: "Coming",
-    route: "#",
     img: "",
     fallbackBg: "#E8C4BF"
   }
 ];
-
-export default function BakeriesPage() {
-  return (
-    <div className="page active" id="page-bakeries">
-      <div className="bakeries-page">
-        <div className="bakeries-inner">
-          <div className="bakeries-header">
-            <h1 className="bakeries-title">Select Your Bakery</h1>
-            <p className="bakeries-subtitle">
-              Choose from our curated selection of premium patisseries and bakeries. Each offering unique flavors and signature delicacies.
-            </p>
-          </div>
-          <div className="bakeries-grid">
-            {BAKERIES.map(bakery => (
-              <BakeryCard key={bakery.id} bakery={bakery} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

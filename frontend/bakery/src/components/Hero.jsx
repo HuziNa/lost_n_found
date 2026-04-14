@@ -9,36 +9,35 @@ export default function Hero() {
       <div className="hero-left">
         <div className="hero-kicker">
           <div className="hero-kicker-line"></div>
-          <div className="hero-kicker-text">Est. Since 1910 — A Baking Legacy</div>
+          <div className="hero-kicker-text">The Premier Baking Platform</div>
         </div>
         <h1 className="hero-title">
-          Baked with<br />
-          <em>Love &</em><br />
-          <span className="hero-title-script">Tradition</span>
+          Discover<br />
+          <em>Artisan</em><br />
+          <span className="hero-title-script">Bakeries</span>
         </h1>
         <p className="hero-subtitle">
-          Crafted from the finest ingredients, every cake tells a story. From
-          delicate fresh cream to indulgent mousse — experience the art of
-          baking, elevated.
+          Curated selection of the finest patisseries in your city.
+          Every bakery tells a story, and every pastry is an experience.
         </p>
         <div className="hero-actions">
           <button
             className="btn-primary"
             onClick={() => {
-              const cakesElement = document.getElementById("cakes");
+              const cakesElement = document.getElementById("bakeries-grid");
               if (cakesElement) cakesElement.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            Explore Collection
+            Discover Bakeries
           </button>
           <button className="btn-outline" onClick={() => navigate("/customize")}>
-            Build Your Cake
+            Bespoke Cake
           </button>
         </div>
         <div className="hero-meta">
           <div className="hero-meta-item">
-            <div className="hero-meta-num">115+</div>
-            <div className="hero-meta-label">Years of Heritage</div>
+            <div className="hero-meta-num">15+</div>
+            <div className="hero-meta-label">Premium Partners</div>
           </div>
           <div className="hero-meta-item">
             <div className="hero-meta-num">50K+</div>
@@ -65,15 +64,15 @@ export default function Hero() {
         <div className="hero-img-overlay"></div>
 
         <div className="hero-float-card hero-float-1">
-          <div className="float-label">Customer Rating</div>
+          <div className="float-label">Global Rating</div>
           <div className="float-value">4.9</div>
           <div className="float-stars">★★★★★</div>
-          <div className="float-sub">50,000+ reviews</div>
+          <div className="float-sub">Platform Wide</div>
         </div>
         <div className="hero-float-card hero-float-2">
-          <div className="float-label">A Baking Legacy</div>
-          <div className="float-value">115</div>
-          <div className="float-sub">Years of Craftsmanship</div>
+          <div className="float-label">Premium Service</div>
+          <div className="float-value">Fast</div>
+          <div className="float-sub">Reliable Delivery</div>
         </div>
       </div>
     </section>

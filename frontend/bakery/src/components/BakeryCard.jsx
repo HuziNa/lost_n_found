@@ -6,8 +6,8 @@ export default function BakeryCard({ bakery }) {
   const [imgError, setImgError] = useState(!bakery.img);
 
   const handleClick = () => {
-    if (bakery.route && bakery.route !== "#") {
-      navigate(bakery.route);
+    if (bakery.action === "Order") {
+      navigate(`/bakery/${bakery.id}`);
     }
   };
 
@@ -48,7 +48,15 @@ export default function BakeryCard({ bakery }) {
             <span className="bakery-stars">{bakery.stars}</span>
             <span className="bakery-rating-text">{bakery.rating}</span>
           </div>
-          <button className="bakery-action">{bakery.action}</button>
+          <button 
+            className="bakery-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
+          >
+            {bakery.action}
+          </button>
         </div>
       </div>
     </div>

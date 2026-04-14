@@ -7,7 +7,7 @@ export default function Navbar() {
   const location = useLocation();
 
   const handleCollectionScroll = (e) => {
-    if (location.pathname === "/home" || location.pathname === "/") {
+    if (location.pathname.startsWith("/bakery")) {
       e.preventDefault();
       const cakesSection = document.getElementById("cakes");
       if (cakesSection) {
@@ -32,21 +32,17 @@ export default function Navbar() {
             to="/"
             className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
           >
-            Bakeries
-          </Link>
-          <Link
-            to="/home"
-            className={`nav-link ${location.pathname === "/home" ? "active" : ""}`}
-          >
             Home
           </Link>
-          <Link
-            to="/home#cakes"
-            className="nav-link"
-            onClick={handleCollectionScroll}
-          >
-            Collection
-          </Link>
+          {location.pathname.startsWith("/bakery") && (
+            <Link
+              to="#cakes"
+              className="nav-link"
+              onClick={handleCollectionScroll}
+            >
+              Collection
+            </Link>
+          )}
           <Link
             to="/customize"
             className={`nav-link ${location.pathname === "/customize" ? "active" : ""}`}

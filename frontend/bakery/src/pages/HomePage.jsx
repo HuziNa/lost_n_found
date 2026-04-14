@@ -1,10 +1,7 @@
 import React from "react";
 import Hero from "../components/Hero";
 import ServicesStrip from "../components/ServicesStrip";
-import CategoriesSection from "../components/CategoriesSection";
-import CakeCollection from "../components/CakeCollection";
-import AboutSection from "../components/AboutSection";
-import ReviewsSection from "../components/ReviewsSection";
+import BakeriesGrid from "../components/BakeriesGrid";
 import SubscribeSection from "../components/SubscribeSection";
 
 export default function HomePage() {
@@ -12,10 +9,7 @@ export default function HomePage() {
     <div className="page active" id="page-home">
       <Hero />
       <ServicesStrip />
-      <CategoriesSection />
-      <CakeCollection />
-      <AboutSection />
-      <ReviewsSection />
+      <BakeriesGrid />
       <SubscribeSection />
     </div>
   );

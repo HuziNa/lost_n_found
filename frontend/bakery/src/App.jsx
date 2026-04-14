@@ -6,8 +6,8 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
 
-import BakeriesPage from "./pages/BakeriesPage";
 import HomePage from "./pages/HomePage";
+import BakeryPage from "./pages/BakeryPage";
 import CustomizePage from "./pages/CustomizePage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
@@ -29,8 +29,9 @@ function App() {
         <AnnouncementBar />
         <Navbar />
         <Routes>
-          <Route path="/" element={<BakeriesPage />} />
-          <Route path="/home" element={<HomePage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/bakery/:id" element={<BakeryPage />} />
+          <Route path="/bakery" element={<BakeryPage />} />
           <Route path="/customize" element={<CustomizePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/orders" element={<OrdersPage />} />
