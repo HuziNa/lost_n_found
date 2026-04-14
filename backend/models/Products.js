@@ -1,113 +1,110 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-// represents a product on storefront
-// two types of products customizable and non customizable
-const productSchema = new mongoose.Schema({
-  bakery: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Bakery",
-    required: true
-  },
+const productSchema = new mongoose.Schema(
+  {
+    bakery: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bakery",
+      required: true,
+    },
 
-  name: {
-    type: String,
-    required: true
-  },
+    name: {
+      type: String,
+      required: true,
+    },
 
-  description: String,
+    description: String,
 
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
-    required: true
-  },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
 
-  basePrice: {
-    type: Number,
-    required: true
-  },
+    basePrice: {
+      type: Number,
+      required: true,
+    },
 
-  productType: {
-    type: String,
-    enum: ["FIXED", "CUSTOM"],
-    required: true
-  },
+    // FIXED → predefined recipe
+    // CUSTOM → user builds it
+    productType: {
+      type: String,
+      enum: ["FIXED", "CUSTOM"],
+      required: true,
+    },
 
-// customizable structure supports: 
-// - cakes (multi-layer)
-// - pizza (crust + toppings)
-// - donuts (filling + glaze)
-// - drinks (size, sugar, ice)
-  customizableStructure: [
-    {
-      name: {
-        type: String,
-        required: true
-      },
+    /**
+     * Flexible customization engine
+     * Works for cakes, pizza, donuts, drinks, etc.
+     */
+    customizableStructure: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
 
-// type defines UI behaviour
-// single select is for single option selection e.g pizza size
-// multi select is for multiple option selection e.g pizza toppings
-// group is for structured block of components e.g cake layers
-      type: {
-        type: String,
-        enum: ["single-select", "multi-select", "group"],
-        required: true
-      },
+        // UI + logic behavior
+        type: {
+          type: String,
+          enum: ["single-select", "multi-select", "group"],
+          required: true,
+        },
 
-// used when type = group. This tells whether layers are repeated or no
-      repeatable: {
-        type: Boolean,
-        default: false
-      },
+        // Used for cake layers
+        repeatable: {
+          type: Boolean,
+          default: false,
+        },
 
-      maxCount: {
-        type: Number
-      },
+        maxCount: Number,
 
-// used to show the selections for single-select and multi-select types. For group type, these are the options for each component block
-      options: [
-        {
-          name: String,
-          extraPrice: {
-            type: Number,
-            default: 0
-          }
-        }
-      ],
-
-// used when type = group. A structured block of components will be repeated
-      components: [
-        {
-          name: {
-            type: String,
-            required: true
+        // Used for single/multi select
+        options: [
+          {
+            name: String,
+            extraPrice: {
+              type: Number,
+              default: 0,
+            },
           },
+        ],
 
-          type: {
-            type: String,
-            enum: ["single-select", "multi-select"],
-            required: true
+        // Used for group (cake layers)
+        components: [
+          {
+            name: {
+              type: String,
+              required: true,
+            },
+
+            type: {
+              type: String,
+              enum: ["single-select", "multi-select"],
+              required: true,
+            },
+
+            options: [
+              {
+                name: String,
+                extraPrice: {
+                  type: Number,
+                  default: 0,
+                },
+              },
+            ],
           },
+        ],
+      },
+    ],
 
-          options: [
-            {
-              name: String,
-              extraPrice: {
-                type: Number,
-                default: 0
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ],
-
-  isActive: {
-    type: Boolean,
-    default: true
-  }
-}, { timestamps: true });
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { timestamps: true }
+);
 
 export default mongoose.model("Product", productSchema);

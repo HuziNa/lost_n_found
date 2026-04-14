@@ -1,38 +1,44 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-
-  bakery: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Bakery',
-    required: true
-  },
-
-  items: [
-    {
+const orderSchema = new mongoose.Schema(
+  {
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'OrderItem'
-    }
-  ],
+      ref: "User",
+      required: true,
+    },
 
-  totalPrice: { type: Number, required: true },
+    bakery: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bakery",
+      required: true,
+    },
 
-  status: {
-    type: String,
-    enum: ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Delivered', 'Cancelled'],
-    default: 'Pending'
+    items: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OrderItem",
+      },
+    ],
+
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["Pending", "Confirmed", "Preparing", "Ready", "Delivered", "Cancelled"],
+      default: "Pending",
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Unpaid", "Paid"],
+      default: "Unpaid",
+    },
   },
+  { timestamps: true }
+);
 
-  paymentStatus: {
-    type: String,
-    enum: ['Unpaid', 'Paid'],
-    default: 'Unpaid'
-  }
-}, { timestamps: true });
-
-export default mongoose.model('Order', orderSchema);
+export default mongoose.model("Order", orderSchema);
