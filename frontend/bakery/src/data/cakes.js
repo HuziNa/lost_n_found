@@ -1,0 +1,88 @@
+export const CAKE_IMAGES = {
+  dry: "https://images.unsplash.com/photo-1560180474-e8563fd75bab?w=600&q=80&auto=format&fit=crop",
+  fresh: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&q=80&auto=format&fit=crop",
+  mousse: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=600&q=80&auto=format&fit=crop",
+  butter: "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=600&q=80&auto=format&fit=crop",
+};
+
+export const CAKE_IMAGES_ALT = {
+  fresh2: "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=600&q=80&auto=format&fit=crop",
+  butter2: "https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?w=600&q=80&auto=format&fit=crop",
+  mousse2: "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=600&q=80&auto=format&fit=crop",
+  dry2: "https://images.unsplash.com/photo-1519869325930-281384150729?w=600&q=80&auto=format&fit=crop",
+};
+
+export const CAKES = [
+  {
+    id: 1,
+    name: "Moist Sponge Teacake",
+    desc: "Perfectly moist sponge, rich and creamy. Perfect with afternoon tea.",
+    price: 850,
+    img: CAKE_IMAGES.dry,
+    badge: "popular",
+    cat: "dry",
+  },
+  {
+    id: 2,
+    name: "Fresh Cream Birthday",
+    desc: "Light vanilla sponge layered with fresh whipped cream and fruit.",
+    price: 1200,
+    img: CAKE_IMAGES.fresh,
+    badge: "new",
+    cat: "fresh",
+  },
+  {
+    id: 3,
+    name: "Chocolate Mousse",
+    desc: "Velvety dark chocolate mousse in a rich cocoa shell.",
+    price: 1400,
+    img: CAKE_IMAGES.mousse,
+    badge: "",
+    cat: "mousse",
+  },
+  {
+    id: 4,
+    name: "Strawberry Delight",
+    desc: "Fresh strawberries with light cream on a buttery vanilla base.",
+    price: 1100,
+    img: CAKE_IMAGES_ALT.fresh2,
+    badge: "",
+    cat: "fresh",
+  },
+  {
+    id: 5,
+    name: "Lemon Buttercream",
+    desc: "Zesty lemon sponge with silky smooth lemon buttercream frosting.",
+    price: 950,
+    img: CAKE_IMAGES.butter,
+    badge: "",
+    cat: "butter",
+  },
+  {
+    id: 6,
+    name: "Red Velvet Dream",
+    desc: "Classic red velvet with cream cheese frosting, timeless and divine.",
+    price: 1350,
+    img: CAKE_IMAGES_ALT.butter2,
+    badge: "popular",
+    cat: "butter",
+  },
+  {
+    id: 7,
+    name: "Mango Cheesecake",
+    desc: "No-bake mango cheesecake with a buttery biscuit crust.",
+    price: 1600,
+    img: CAKE_IMAGES_ALT.mousse2,
+    badge: "new",
+    cat: "mousse",
+  },
+  {
+    id: 8,
+    name: "Classic Dry Cake",
+    desc: "Our legendary dry cake, loved through generations. Timeless recipe.",
+    price: 650,
+    img: CAKE_IMAGES_ALT.dry2,
+    badge: "",
+    cat: "dry",
+  },
+];
