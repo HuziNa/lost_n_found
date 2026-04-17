@@ -1,16 +1,16 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true },
-
     email: { type: String, required: true, unique: true },
-    
     password: { type: String, required: true },
+    address: { type: String },
 
-    role: { 
-        type: String, 
-        enum: ['customer', 'owner', 'admin'], 
-        default: 'customer' 
+    role: {
+      type: String,
+      enum: ["customer", "bakeryOwner", "admin"],
+      required: true,
     },
 
     // if they are an owner, we link them to their bakeries
@@ -18,16 +18,8 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Bakery' 
     },
+  },
+  { timestamps: true }
+);
 
-    // address for delivery
-    address: {
-        street: String,
-        city: { type: String, default: 'Islamabad' }, // Default for NUST area?
-        postalCode: String,
-        houseNumber: String
-    },
-
-    phoneNumber: { type: String, required: true } 
-}, { timestamps: true });
-
-export default mongoose.model('User', userSchema);
+export default mongoose.model("User", userSchema);

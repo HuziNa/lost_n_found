@@ -1,48 +1,44 @@
 import mongoose from "mongoose";
 
+const productIngredientSchema = new mongoose.Schema(
+  {
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
+    quantity: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 const productSchema = new mongoose.Schema(
   {
-    bakery: {
+    bakeryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bakery",
       required: true,
     },
 
-    name: { type: String, required: true },
-    description: String,
-
-    basePrice: { type: Number, required: true },
-
-    category: {
-      type: String,
-      enum: ["Cake", "Cupcake", "Pastry", "Bread", "Pizza"],
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
     },
 
-    isCustomizable: { type: Boolean, default: false },
+    name: { type: String, required: true },
+    basePrice: { type: Number, required: true },
 
-    // ✅ For FIXED products ONLY
-    recipe: [
-      {
-        ingredient: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Ingredient",
-        },
-        amountRequired: Number,
-      },
-    ],
+    type: {
+      type: String,
+      enum: ["fixed", "custom"],
+      required: true,
+    },
 
-    // 🔥 NEW: For CUSTOM products ONLY (base ingredients like dough, eggs etc)
-    baseRecipe: [
-      {
-        ingredient: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Ingredient",
-        },
-        amountRequired: Number,
-      },
-    ],
+    // Used only for FIXED products
+    ingredients: [productIngredientSchema],
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.model("Product", productSchema);
