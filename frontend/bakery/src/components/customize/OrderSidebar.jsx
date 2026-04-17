@@ -12,7 +12,7 @@ const COLOR_MAP = {
 };
 
 export default function OrderSidebar() {
-  const { state, updateState, calcTotal, applyVoucher, addToCart } = useApp();
+  const { state, calcTotal, applyVoucher, addToCart } = useApp();
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
 
@@ -43,7 +43,7 @@ export default function OrderSidebar() {
   const ff = state.font === "cursive" ? "Cormorant Garamond,serif" : state.font === "serif" ? "Georgia,serif" : "Jost,sans-serif";
   const fs = state.font === "cursive" ? "italic" : "normal";
 
-  const { subtotal, discountAmt, total } = calcTotal();
+  const { discountAmt, total } = calcTotal();
   const toppingTotal = state.toppings.reduce((s, t) => s + t.price, 0);
   const decoTotal = state.decos.reduce((s, d) => s + d.price, 0);
 
@@ -171,9 +171,9 @@ export default function OrderSidebar() {
           </div>
         )}
 
-        <div className="sidebar-actions">
-          <button className="btn-save" onClick={saveDesign}>🤍 Save Design</button>
-          <button className="btn-cart" onClick={handleAddToCart}>✦ Add to Cart</button>
+        <div className="order-actions">
+          <button className="btn-outline" onClick={saveDesign}>🤍 Save Design</button>
+          <button className="btn-sage" onClick={handleAddToCart}>✦ Add to Cart</button>
         </div>
       </div>
     </div>

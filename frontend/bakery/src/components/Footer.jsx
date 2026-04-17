@@ -17,7 +17,6 @@ export default function Footer() {
           <div className="footer-heading">Shop</div>
           <ul className="footer-links">
             <li><Link to="/home#cakes">Cakes Collection</Link></li>
-            <li><Link to="/customize">Bespoke Orders</Link></li>
             <li><a href="#">Pastries & Savories</a></li>
             <li><a href="#">Vouchers</a></li>
           </ul>

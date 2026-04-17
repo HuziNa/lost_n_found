@@ -11,6 +11,7 @@ import BakeryPage from "./pages/BakeryPage";
 import CustomizePage from "./pages/CustomizePage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
+import ProductPage from "./pages/ProductPage";
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/bakery/:id" element={<BakeryPage />} />
           <Route path="/bakery" element={<BakeryPage />} />
+          <Route path="/product/:id" element={<ProductPage />} />
           <Route path="/customize" element={<CustomizePage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/orders" element={<OrdersPage />} />

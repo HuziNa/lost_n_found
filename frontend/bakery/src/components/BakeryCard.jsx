@@ -43,13 +43,10 @@ export default function BakeryCard({ bakery }) {
         <h3 className="bakery-name">{bakery.name}</h3>
         <p className="bakery-category">{bakery.category}</p>
         <p className="bakery-desc">{bakery.desc}</p>
-        <div className="bakery-footer">
-          <div className="bakery-rating">
-            <span className="bakery-stars">{bakery.stars}</span>
-            <span className="bakery-rating-text">{bakery.rating}</span>
-          </div>
+        <div className="bakery-footer" style={{ borderTop: 'none', paddingTop: 0 }}>
           <button 
-            className="bakery-action"
+            className="btn-primary"
+            style={{ width: '100%', marginTop: 'auto' }}
             onClick={(e) => {
               e.stopPropagation();
               handleClick();

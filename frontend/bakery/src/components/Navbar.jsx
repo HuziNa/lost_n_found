@@ -22,7 +22,7 @@ export default function Navbar() {
       <div className="nav-inner">
         <Link to="/" className="nav-brand">
           <div className="nav-logo">
-            La Bake<span>Maison</span>
+            <span>Artisan</span> Bakeries
           </div>
           <div className="nav-tagline">The Classic Baking Tradition</div>
         </Link>
@@ -43,12 +43,6 @@ export default function Navbar() {
               Collection
             </Link>
           )}
-          <Link
-            to="/customize"
-            className={`nav-link ${location.pathname === "/customize" ? "active" : ""}`}
-          >
-            Bespoke
-          </Link>
           <Link
             to="/orders"
             className={`nav-link ${location.pathname === "/orders" ? "active" : ""}`}

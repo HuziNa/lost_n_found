@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useApp } from "../context/AppContext";
 
 export default function CakeCard({ cake }) {
   const navigate = useNavigate();
-  const { quickAdd } = useApp();
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -35,22 +33,15 @@ export default function CakeCard({ cake }) {
       <div className="cake-card-body">
         <h3 className="cake-card-name">{cake.name}</h3>
         <p className="cake-card-desc">{cake.desc}</p>
-        <div className="cake-card-footer">
-          <div className="cake-price">Rs {cake.price.toLocaleString()}</div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              className="btn-add"
-              onClick={() => quickAdd(cake.name, cake.price)}
-            >
-              + Add
-            </button>
-            <button
-              className="btn-customize"
-              onClick={() => navigate("/customize")}
-            >
-              Customize
-            </button>
-          </div>
+        <div className="cake-card-footer" style={{ borderTop: 'none', paddingTop: 0, flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
+          <div className="cake-price" style={{ marginBottom: '4px' }}>Rs {cake.price.toLocaleString()}</div>
+          <button
+            className="btn-primary"
+            onClick={() => navigate(`/product/${cake.id}`)}
+            style={{ width: '100%' }}
+          >
+            Explore Creation
+          </button>
         </div>
       </div>
     </div>
