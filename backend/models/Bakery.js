@@ -1,12 +1,16 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const bakerySchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  address: String,
-  contactNumber: String,
-  isOpen: { type: Boolean, default: true },
-  rating: { type: Number, default: 0 }
-}, { timestamps: true });
+const bakerySchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
 
-export default mongoose.model('Bakery', bakerySchema);
+export default mongoose.model("Bakery", bakerySchema);
