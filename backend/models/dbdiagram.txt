@@ -1,186 +1,130 @@
-Table Bakery {
+Table users {
   _id ObjectId [pk]
   name string
-  owner ObjectId
-  address string
-  contactNumber string
-  isOpen boolean
-  rating number
-  createdAt datetime
-  updatedAt datetime
-}
-
-Table User {
-  _id ObjectId [pk]
-  name string
-  email string
+  email string [unique]
   password string
   role string
-  bakeryManaged ObjectId
-  phoneNumber string
-  street string
-  city string
-  postalCode string
+  bakeryId ObjectId [ref: > bakeries._id, note: "only for bakery owners"]
   createdAt datetime
   updatedAt datetime
 }
 
-Table Category {
+Table bakeries {
   _id ObjectId [pk]
-  bakery ObjectId
   name string
-  createdAt datetime
-  updatedAt datetime
-}
-
-Table Product {
-  _id ObjectId [pk]
-  bakery ObjectId
-  category ObjectId
-  name string
-  description string
-  basePrice number
-  imageUrl string
-  type string
+  ownerId ObjectId [ref: > users._id]
   isActive boolean
   createdAt datetime
   updatedAt datetime
 }
 
-Table CustomizationCategory {
+Table categories {
   _id ObjectId [pk]
-  product ObjectId
+  bakeryId ObjectId [ref: > bakeries._id]
   name string
-  selectionType string
-  minSelections number
-  maxSelections number
-  isRequired boolean
   createdAt datetime
   updatedAt datetime
 }
 
-Table CustomizationOption {
+Table ingredients {
   _id ObjectId [pk]
-  category ObjectId
+  bakeryId ObjectId [ref: > bakeries._id]
   name string
-  priceModifier number
-  createdAt datetime
-  updatedAt datetime
-}
-
-Table CustomizationToStockMap {
-  _id ObjectId [pk]
-  product ObjectId
-  optionName string
-  createdAt datetime
-  updatedAt datetime
-}
-
-Table Stock {
-  _id ObjectId [pk]
-  bakery ObjectId
-  name string
-  quantity number
   unit string
-  minThreshold number
+  pricePerUnit float
   createdAt datetime
   updatedAt datetime
 }
 
-Table ProductVariant {
+Table ingredient_recipes {
   _id ObjectId [pk]
-  product ObjectId
+  ingredientId ObjectId [ref: > ingredients._id, note: "composite ingredient"]
+  subIngredientId ObjectId [ref: > ingredients._id, note: "raw ingredient"]
+  quantity float
+}
+
+Table bakery_inventory {
+  _id ObjectId [pk]
+  bakeryId ObjectId [ref: > bakeries._id]
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantityAvailable float
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table products {
+  _id ObjectId [pk]
+  bakeryId ObjectId [ref: > bakeries._id]
+  categoryId ObjectId [ref: > categories._id]
   name string
-  priceModifier number
-  recipe ObjectId
+  basePrice float
+  type string [note: "fixed | custom"]
   createdAt datetime
   updatedAt datetime
 }
 
-Table Recipe {
+Table product_ingredients {
   _id ObjectId [pk]
-  productVariant ObjectId
-  instructions string
-  prepTime number
+  productId ObjectId [ref: > products._id]
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantity float
+}
+
+Table product_options {
+  _id ObjectId [pk]
+  productId ObjectId [ref: > products._id]
+  name string
+  required boolean
+  perLayer boolean
+  maxSelections int
   createdAt datetime
   updatedAt datetime
 }
 
-Table Order {
+Table option_choices {
   _id ObjectId [pk]
-  customer ObjectId
-  bakery ObjectId
-  totalPrice number
-  status string
-  paymentStatus string
-  createdAt datetime
-  updatedAt datetime
+  productOptionId ObjectId [ref: > product_options._id]
+  name string
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantity float
+  extraPrice float
 }
 
-Table OrderItem {
+Table orders {
   _id ObjectId [pk]
-  order ObjectId
-  product ObjectId
-  variant ObjectId
-  quantity number
-  priceAtPurchase number
-  recipeInstance ObjectId
-  createdAt datetime
-  updatedAt datetime
-}
-
-Table RecipeInstance {
-  _id ObjectId [pk]
-  orderItem ObjectId
+  userId ObjectId [ref: > users._id]
+  bakeryId ObjectId [ref: > bakeries._id]
+  totalPrice float
   status string
   createdAt datetime
   updatedAt datetime
 }
 
-Table Review {
+Table order_items {
   _id ObjectId [pk]
-  bakery ObjectId
-  customer ObjectId
-  rating number
+  orderId ObjectId [ref: > orders._id]
+  productId ObjectId [ref: > products._id]
+  quantity int
+  finalPrice float
+}
+
+Table order_selected_options {
+  _id ObjectId [pk]
+  orderItemId ObjectId [ref: > order_items._id]
+  optionName string
+  choiceName string
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantity float
+  layer int
+}
+
+Table reviews {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > users._id]
+  bakeryId ObjectId [ref: > bakeries._id]
+  rating int
   comment string
+  isHidden boolean
   createdAt datetime
   updatedAt datetime
 }
-
-/* =========================
-   RELATIONS (ARROWS)
-========================= */
-
-Ref: Bakery.owner > User._id
-
-Ref: User.bakeryManaged > Bakery._id
-
-Ref: Category.bakery > Bakery._id
-
-Ref: Product.bakery > Bakery._id
-Ref: Product.category > Category._id
-
-Ref: CustomizationCategory.product > Product._id
-Ref: CustomizationOption.category > CustomizationCategory._id
-
-Ref: CustomizationToStockMap.product > Product._id
-
-Ref: Stock.bakery > Bakery._id
-
-Ref: ProductVariant.product > Product._id
-Ref: Recipe.productVariant > ProductVariant._id
-
-Ref: Order.customer > User._id
-Ref: Order.bakery > Bakery._id
-
-Ref: OrderItem.order > Order._id
-Ref: OrderItem.product > Product._id
-Ref: OrderItem.variant > ProductVariant._id
-Ref: OrderItem.recipeInstance > RecipeInstance._id
-
-Ref: RecipeInstance.orderItem > OrderItem._id
-
-Ref: Review.bakery > Bakery._id
-Ref: Review.customer > User._id
-
-Ref: "User"."role" < "User"."name"
