@@ -31,13 +31,13 @@ export default function Hero() {
               if (bakeriesElement) bakeriesElement.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            Discover Bakeries
+            Discover
           </button>
-          <button 
-            className="btn-sage" 
-            onClick={() => navigate("/customize")}
+          <button
+            className="btn-sage"
+            onClick={() => navigate("/register-bakery")}
           >
-            Bespoke Order
+            Register Your Bakery
           </button>
         </div>
 
