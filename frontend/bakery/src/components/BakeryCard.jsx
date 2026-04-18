@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function BakeryCard({ bakery }) {
   const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
   const [imgError, setImgError] = useState(!bakery.img);
 
   const handleClick = () => {
     if (bakery.action === "Order") {
-      navigate(`/bakery/${bakery.id}`);
+      if (!user) {
+        openAuthModal("login");
+      } else {
+        navigate(`/bakery/${bakery.id}`);
+      }
     }
   };
 

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../context/AuthContext";
 
 const COLOR_MAP = {
+  // ... (keep COLOR_MAP)
   Cream: "#FFF5EC",
   "Blush Pink": "#F2C4B0",
   "Baby Blue": "#C8DFF0",
@@ -13,10 +15,12 @@ const COLOR_MAP = {
 
 export default function OrderSidebar() {
   const { state, calcTotal, applyVoucher, addToCart } = useApp();
+  const { user, openAuthModal } = useAuth();
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
 
   const color = COLOR_MAP[state.frostColor] || "#FFF5EC";
+  // ... (keep tier/preview logic)
   const tierCount = state.layers.count;
   const heights = tierCount === 1 ? [60] : tierCount === 2 ? [52, 46] : [44, 40, 36];
   const widths = tierCount === 1 ? [160] : tierCount === 2 ? [160, 120] : [160, 125, 90];
@@ -53,6 +57,11 @@ export default function OrderSidebar() {
   };
 
   const handleAddToCart = () => {
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
+
     addToCart({
       name: "Custom " + state.size.name + " Cake",
       detail: `${state.frost.flavor} frosting · ${state.frostColor} · ${state.layers.count} layer${state.layers.count > 1 ? "s" : ""}${state.toppings.length ? " · " + state.toppings.map(t => t.name).join(", ") : ""}`,

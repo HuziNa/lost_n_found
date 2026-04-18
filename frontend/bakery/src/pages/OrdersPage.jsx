@@ -1,5 +1,6 @@
 import React from "react";
 import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
 import { SAMPLE_ORDERS } from "../data/orders";
 
 function statusPill(s) {
@@ -9,6 +10,24 @@ function statusPill(s) {
 
 export default function OrdersPage() {
   const { state } = useApp();
+  const { user, openAuthModal } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="page active" id="page-orders">
+        <div className="orders-page guest-orders-view">
+          <div className="lock-icon">🔒</div>
+          <h1 className="orders-title">Members Only</h1>
+          <p className="orders-sub">
+            Please sign in to view your order history and track active orders.
+          </p>
+          <button className="btn-primary" onClick={() => openAuthModal("login")}>
+            Sign In to Access
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const cartOrders = state.cart.map(item => ({
     id: "SC-LIVE-" + item.id,

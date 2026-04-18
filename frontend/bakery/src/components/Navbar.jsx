@@ -1,9 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { state } = useApp();
+  const { user, logout, openAuthModal } = useAuth();
   const location = useLocation();
 
   const handleCollectionScroll = (e) => {
@@ -26,47 +28,50 @@ export default function Navbar() {
           </div>
           <div className="nav-tagline">The Classic Baking Tradition</div>
         </Link>
-        <div className="nav-divider"></div>
+
+        {/* Global Navigation Links (Always Visible) */}
         <div className="nav-links">
-          <Link
-            to="/"
-            className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
-          >
-            Home
-          </Link>
-          {location.pathname.startsWith("/bakery") && (
+          <div className="nav-links-inner">
             <Link
-              to="#cakes"
-              className="nav-link"
-              onClick={handleCollectionScroll}
+              to="/"
+              className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
             >
-              Collection
+              Home
             </Link>
-          )}
-          <Link
-            to="/orders"
-            className={`nav-link ${location.pathname === "/orders" ? "active" : ""}`}
-          >
-            Orders
+            {location.pathname.startsWith("/bakery") && (
+              <Link
+                to="#cakes"
+                className="nav-link"
+                onClick={handleCollectionScroll}
+              >
+                Collection
+              </Link>
+            )}
+            <Link
+              to="/orders"
+              className={`nav-link ${location.pathname === "/orders" ? "active" : ""}`}
+            >
+              Orders
+            </Link>
+            {user ? (
+              <button className="nav-link logout-btn" onClick={() => logout()}>
+                LOGOUT ({user.name.split(" ")[0]})
+              </button>
+            ) : (
+              <button className="nav-link" onClick={() => openAuthModal()}>
+                Login
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Action Group: Permanent Cart (Far Right) */}
+        <div className="nav-actions">
+          <Link to="/cart" className="nav-cta-header">
+            ✦ Cart
+            {state.cart.length > 0 && <span className="cart-badge">{state.cart.length}</span>}
           </Link>
         </div>
-        <Link to="/cart" className="nav-cta">
-          ✦ Cart
-          {state.cart.length > 0 && (
-            <span
-              id="cart-count-badge"
-              style={{
-                background: "var(--gold)",
-                color: "white",
-                fontSize: "9px",
-                padding: "2px 7px",
-                borderRadius: "10px",
-              }}
-            >
-              {state.cart.length}
-            </span>
-          )}
-        </Link>
       </div>
     </nav>
   );

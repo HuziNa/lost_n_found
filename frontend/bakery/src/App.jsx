@@ -1,10 +1,12 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AppProvider } from "./context/AppContext";
+import { AuthProvider } from "./context/AuthContext";
 import AnnouncementBar from "./components/AnnouncementBar";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Toast from "./components/Toast";
+import AuthModal from "./components/AuthModal";
 
 import HomePage from "./pages/HomePage";
 import BakeryPage from "./pages/BakeryPage";
@@ -24,24 +26,31 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <AppProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <AnnouncementBar />
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/bakery/:id" element={<BakeryPage />} />
-          <Route path="/bakery" element={<BakeryPage />} />
-          <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="/customize" element={<CustomizePage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-        </Routes>
-        <Footer />
-        <Toast />
-      </BrowserRouter>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <header className="header-fixed">
+            <AnnouncementBar />
+            <Navbar />
+          </header>
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/bakery/:id" element={<BakeryPage />} />
+              <Route path="/bakery" element={<BakeryPage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
+              <Route path="/customize" element={<CustomizePage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
+            </Routes>
+          </main>
+          <Footer />
+          <AuthModal />
+          <Toast />
+        </BrowserRouter>
+      </AppProvider>
+    </AuthProvider>
   );
 }
 

@@ -2,7 +2,9 @@ import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CAKES } from "../data/cakes";
 import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
 import '../styles/product.css';
+
 // SVGs for Allergens to match the "Anti-Slop" premium feel
 const AllergenIcon = ({ name, path }) => (
   <div className="allergen-item">
@@ -19,6 +21,7 @@ export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { quickAdd } = useApp();
+  const { user, openAuthModal } = useAuth();
 
   const cakeId = parseInt(id, 10);
   const cake = CAKES.find((c) => c.id === cakeId);
@@ -26,6 +29,19 @@ export default function ProductPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  const handleAction = (action) => {
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
+
+    if (action === "add") {
+      quickAdd(cake.name, cake.price);
+    } else if (action === "customize") {
+      navigate("/customize");
+    }
+  };
 
   if (!cake) {
     return (
@@ -117,10 +133,10 @@ export default function ProductPage() {
           <div className="product-actions-bar">
             <div className="product-price-large">Rs {cake.price.toLocaleString()}</div>
             <div className="product-buttons">
-              <button className="btn-sage product-btn" onClick={() => quickAdd(cake.name, cake.price)}>
+              <button className="btn-sage product-btn" onClick={() => handleAction("add")}>
                 Add to Cart
               </button>
-              <button className="btn-rose product-btn" onClick={() => navigate("/customize")}>
+              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}>
                 Customize Order
               </button>
             </div>
