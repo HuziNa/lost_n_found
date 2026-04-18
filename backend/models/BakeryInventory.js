@@ -1,15 +1,24 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const stockSchema = new mongoose.Schema({
-  bakery: { type: mongoose.Schema.Types.ObjectId, ref: 'Bakery', required: true },
+const bakeryInventorySchema = new mongoose.Schema(
+  {
+    bakeryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bakery",
+      required: true,
+    },
 
-  ingredientName: { type: String, required: true },
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
 
-  quantityAvailable: { type: Number, required: true },
+    quantityAvailable: { type: Number, required: true },
+  },
+  { timestamps: true }
+);
 
-  unit: { type: String, default: 'grams' },
+bakeryInventorySchema.index({ bakeryId: 1, ingredientId: 1 }, { unique: true });
 
-  alertThreshold: { type: Number, default: 500 } // can be used to send notification to owner
-}, { timestamps: true });
-
-export default mongoose.model('Stock', stockSchema);
+export default mongoose.model("BakeryInventory", bakeryInventorySchema);

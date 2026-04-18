@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
-const productIngredientSchema = new mongoose.Schema(
+const nutritionSchema = new mongoose.Schema(
   {
-    ingredientId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Ingredient",
-      required: true,
-    },
-    quantity: { type: Number, required: true },
+    calories: { type: Number }, // kcal
+    protein: { type: Number },  // grams
+    carbohydrates: { type: Number }, // grams
+    fats: { type: Number }, // grams
+    sugar: { type: Number }, // grams
+    fiber: { type: Number }, // grams
   },
   { _id: false }
 );
@@ -26,17 +26,37 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    name: { type: String, required: true },
-    basePrice: { type: Number, required: true },
-
-    type: {
+    name: {
       type: String,
-      enum: ["fixed", "custom"],
       required: true,
     },
 
-    // Used only for FIXED products
-    ingredients: [productIngredientSchema],
+    description: {
+      type: String,
+    },
+
+    type: {
+      type: String,
+      enum: ["FIXED", "CUSTOMIZABLE"],
+      required: true,
+    },
+
+    basePrice: {
+      type: Number,
+      required: true,
+    },
+
+    allergens: {
+      type: [String],
+      default: [],
+    },
+
+    nutrition: nutritionSchema,
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
