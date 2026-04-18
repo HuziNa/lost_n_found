@@ -1,0 +1,130 @@
+Table users {
+  _id ObjectId [pk]
+  name string
+  email string [unique]
+  password string
+  role string
+  bakeryId ObjectId [ref: > bakeries._id, note: "only for bakery owners"]
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table bakeries {
+  _id ObjectId [pk]
+  name string
+  ownerId ObjectId [ref: > users._id]
+  isActive boolean
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table categories {
+  _id ObjectId [pk]
+  bakeryId ObjectId [ref: > bakeries._id]
+  name string
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table ingredients {
+  _id ObjectId [pk]
+  bakeryId ObjectId [ref: > bakeries._id]
+  name string
+  unit string
+  pricePerUnit float
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table ingredient_recipes {
+  _id ObjectId [pk]
+  ingredientId ObjectId [ref: > ingredients._id, note: "composite ingredient"]
+  subIngredientId ObjectId [ref: > ingredients._id, note: "raw ingredient"]
+  quantity float
+}
+
+Table bakery_inventory {
+  _id ObjectId [pk]
+  bakeryId ObjectId [ref: > bakeries._id]
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantityAvailable float
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table products {
+  _id ObjectId [pk]
+  bakeryId ObjectId [ref: > bakeries._id]
+  categoryId ObjectId [ref: > categories._id]
+  name string
+  basePrice float
+  type string [note: "fixed | custom"]
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table product_ingredients {
+  _id ObjectId [pk]
+  productId ObjectId [ref: > products._id]
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantity float
+}
+
+Table product_options {
+  _id ObjectId [pk]
+  productId ObjectId [ref: > products._id]
+  name string
+  required boolean
+  perLayer boolean
+  maxSelections int
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table option_choices {
+  _id ObjectId [pk]
+  productOptionId ObjectId [ref: > product_options._id]
+  name string
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantity float
+  extraPrice float
+}
+
+Table orders {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > users._id]
+  bakeryId ObjectId [ref: > bakeries._id]
+  totalPrice float
+  status string
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table order_items {
+  _id ObjectId [pk]
+  orderId ObjectId [ref: > orders._id]
+  productId ObjectId [ref: > products._id]
+  quantity int
+  finalPrice float
+}
+
+Table order_selected_options {
+  _id ObjectId [pk]
+  orderItemId ObjectId [ref: > order_items._id]
+  optionName string
+  choiceName string
+  ingredientId ObjectId [ref: > ingredients._id]
+  quantity float
+  layer int
+}
+
+Table reviews {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > users._id]
+  bakeryId ObjectId [ref: > bakeries._id]
+  rating int
+  comment string
+  isHidden boolean
+  createdAt datetime
+  updatedAt datetime
+}

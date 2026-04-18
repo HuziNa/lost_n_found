@@ -1,48 +1,74 @@
 import mongoose from "mongoose";
 
+const nutritionSchema = new mongoose.Schema(
+  {
+    calories: Number,
+    protein: Number,
+    carbohydrates: Number,
+    fats: Number,
+    sugar: Number,
+    fiber: Number,
+  },
+  { _id: false }
+);
+
+const productIngredientSchema = new mongoose.Schema(
+  {
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const productSchema = new mongoose.Schema(
   {
-    bakery: {
+    bakeryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bakery",
       required: true,
     },
 
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+
     name: { type: String, required: true },
-    description: String,
+
+    type: {
+      type: String,
+      enum: ["FIXED", "CUSTOMIZABLE"],
+      required: true,
+    },
 
     basePrice: { type: Number, required: true },
 
-    category: {
-      type: String,
-      enum: ["Cake", "Cupcake", "Pastry", "Bread", "Pizza"],
+    ingredients: {
+      type: [productIngredientSchema],
+      default: [],
     },
 
-    isCustomizable: { type: Boolean, default: false },
+    allergens: {
+      type: [String],
+      default: [],
+    },
 
-    // ✅ For FIXED products ONLY
-    recipe: [
-      {
-        ingredient: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Ingredient",
-        },
-        amountRequired: Number,
-      },
-    ],
+    nutrition: nutritionSchema,
 
-    // 🔥 NEW: For CUSTOM products ONLY (base ingredients like dough, eggs etc)
-    baseRecipe: [
-      {
-        ingredient: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Ingredient",
-        },
-        amountRequired: Number,
-      },
-    ],
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.model("Product", productSchema);
