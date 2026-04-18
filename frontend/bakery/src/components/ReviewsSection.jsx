@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { REVIEWS_DATA, AVATAR_COLORS, AVATAR_TEXT } from "../data/reviews";
+import { Icon } from "./ui/Icons";
 
 export default function ReviewsSection() {
   const [reviews, setReviews] = useState(REVIEWS_DATA);
@@ -131,9 +132,12 @@ export default function ReviewsSection() {
                   onClick={() => handleHelpful(i)}
                   disabled={r._voted}
                 >
-                  👍 {r.helpful}
+                  <Icon name="thumbUp" size={12} />
+                  {r.helpful}
                 </button>
-                <button disabled={r._voted}>👎</button>
+                <button disabled={r._voted} aria-label="Not helpful">
+                  <Icon name="thumbDown" size={12} />
+                </button>
               </div>
             </div>
           ))}
@@ -196,9 +200,13 @@ export default function ReviewsSection() {
                 fontSize: "13px",
                 fontWeight: 500,
                 letterSpacing: "0.5px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              ✓ Thank you! Your review has been posted.
+              <Icon name="check" size={14} />
+              Thank you! Your review has been posted.
             </div>
           )}
         </div>

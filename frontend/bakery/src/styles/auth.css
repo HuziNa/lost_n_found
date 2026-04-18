@@ -67,10 +67,19 @@
   right: 24px;
   background: none;
   border: none;
-  font-size: 18px;
+  width: 28px;
+  height: 28px;
   color: var(--ink-muted);
   cursor: pointer;
   transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-close svg {
+  width: 14px;
+  height: 14px;
 }
 
 .auth-close:hover {

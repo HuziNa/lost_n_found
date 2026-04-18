@@ -14,6 +14,10 @@ import CustomizePage from "./pages/CustomizePage";
 import CartPage from "./pages/CartPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProductPage from "./pages/ProductPage";
+import BakeryRegistrationPage from "./pages/BakeryRegistrationPage";
+import AdminPage from "./pages/AdminPage";
+import BakeryDashboard from "./pages/BakeryDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -43,6 +47,17 @@ function App() {
               <Route path="/customize" element={<CustomizePage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/register-bakery" element={<BakeryRegistrationPage />} />
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/bakery/dashboard" element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <BakeryDashboard />
+                </ProtectedRoute>
+              } />
             </Routes>
           </main>
           <Footer />

@@ -1,5 +1,6 @@
 import React from "react";
 import { useApp } from "../../context/AppContext";
+import { Icon } from "../ui/Icons";
 
 export function StepCard({ num, title, subtitle, isOpen, toggleOpen, children }) {
   return (
@@ -36,7 +37,9 @@ export function SizeStep() {
           onClick={() => !opt.outOfStock && updateState("size", { name: opt.name, price: opt.price })}
           style={opt.outOfStock ? { position: "relative" } : {}}
         >
-          <div className="opt-card-icon">🎂</div>
+          <div className="opt-card-icon">
+            <Icon name="cake" size={20} />
+          </div>
           <div className="opt-card-name">{opt.name}</div>
           <div className="opt-card-serves">{opt.serves}</div>
           <div className="opt-card-price">Rs {opt.price.toLocaleString()}</div>
@@ -121,12 +124,12 @@ export function FrostingStep() {
 export function ToppingsStep() {
   const { state, updateState } = useApp();
   const options = [
-    { name: "Sprinkles", icon: "🌈", price: 60 },
-    { name: "Fresh Fruits", icon: "🍓", price: 150 },
-    { name: "Choco Shavings", icon: "🍫", price: 120 },
-    { name: "Edible Glitter", icon: "✨", price: 80 },
-    { name: "Fondant Flowers", icon: "🌸", price: 200 },
-    { name: "Sugar Pearls", icon: "🫧", price: 100, oos: true },
+    { name: "Sprinkles", icon: "sprinkles", price: 60 },
+    { name: "Fresh Fruits", icon: "fruit", price: 150 },
+    { name: "Choco Shavings", icon: "chocolate", price: 120 },
+    { name: "Edible Glitter", icon: "glitter", price: 80 },
+    { name: "Fondant Flowers", icon: "flower", price: 200 },
+    { name: "Sugar Pearls", icon: "pearl", price: 100, oos: true },
   ];
 
   const toggles = (name, price) => {
@@ -147,8 +150,14 @@ export function ToppingsStep() {
             className={`topping-card ${isSelected ? "selected" : ""} ${o.oos ? "out-of-stock" : ""}`}
             onClick={() => !o.oos && toggles(o.name, o.price)}
           >
-            {isSelected && <div className="check">✓</div>}
-            <div className="topping-icon">{o.icon}</div>
+            {isSelected && (
+              <div className="check">
+                <Icon name="check" size={12} />
+              </div>
+            )}
+            <div className="topping-icon">
+              <Icon name={o.icon} size={22} />
+            </div>
             <div className="topping-name">{o.name}</div>
             <div className="topping-price" style={o.oos ? { color: "var(--ink-muted)" } : {}}>
               {o.oos ? "Out of Stock" : `+Rs ${o.price}`}
@@ -203,9 +212,9 @@ export function MessageStep() {
 export function DecorationsStep() {
   const { state, updateState } = useApp();
   const options = [
-    { name: "Birthday Candles", icon: "🕯️", price: 80 },
-    { name: "Sparkler", icon: "✨", price: 120 },
-    { name: "Ribbon Border", icon: "🎀", price: 60 }
+    { name: "Birthday Candles", icon: "candle", price: 80 },
+    { name: "Sparkler", icon: "sparkler", price: 120 },
+    { name: "Ribbon Border", icon: "ribbon", price: 60 }
   ];
 
   const toggles = (name, price) => {
@@ -241,7 +250,9 @@ export function DecorationsStep() {
           className={`deco-item ${state.decos.some(d => d.name === o.name) ? "selected" : ""}`}
           onClick={() => toggles(o.name, o.price)}
         >
-          <div className="deco-emoji">{o.icon}</div>
+          <div className="deco-emoji">
+            <Icon name={o.icon} size={20} />
+          </div>
           <div>
             <div className="deco-name">{o.name}</div>
             <div className="deco-price">+Rs {o.price}</div>
@@ -252,7 +263,9 @@ export function DecorationsStep() {
         className={`deco-item ${state.decos.some(d => d.name === "Number Candle") ? "selected" : ""}`}
         onClick={() => toggles("Number Candle", 100 * state.numCandle)}
       >
-        <div className="deco-emoji">🔢</div>
+        <div className="deco-emoji">
+          <Icon name="number" size={20} />
+        </div>
         <div>
           <div className="deco-name">Number Candle</div>
           <div className="deco-price">+Rs 100 each</div>

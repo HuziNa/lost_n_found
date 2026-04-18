@@ -54,15 +54,18 @@ export function AppProvider({ children }) {
         discount: VOUCHERS[upperCode],
         voucherCode: upperCode,
       }));
-      return `✓ ${upperCode} applied — ${VOUCHERS[upperCode]}% off!`;
-    } else {
-      setState((prev) => ({
-        ...prev,
-        discount: 0,
-        voucherCode: "",
-      }));
-      return "✗ Invalid voucher code.";
+      return {
+        type: "success",
+        message: `${upperCode} applied - ${VOUCHERS[upperCode]}% off.`,
+      };
     }
+
+    setState((prev) => ({
+      ...prev,
+      discount: 0,
+      voucherCode: "",
+    }));
+    return { type: "error", message: "Invalid voucher code." };
   };
 
   const addToCart = (item) => {
@@ -85,7 +88,7 @@ export function AppProvider({ children }) {
       name,
       detail: "Standard size",
       price,
-      emoji: "🎂",
+      icon: "cake",
     });
   };
 

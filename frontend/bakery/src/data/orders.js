@@ -12,11 +12,11 @@ export const SAMPLE_ORDERS = [
     price: 1310,
     status: "preparing",
     timeline: [
-      { label: "Order Placed", icon: "📋", done: true, time: "1:42 PM" },
-      { label: "Confirmed", icon: "✅", done: true, time: "1:45 PM" },
-      { label: "Preparing", icon: "🎂", active: true, time: "In progress" },
-      { label: "Out for Delivery", icon: "🚗", done: false, time: "—" },
-      { label: "Delivered", icon: "📦", done: false, time: "—" },
+      { label: "Order Placed", icon: "orders", done: true, time: "1:42 PM" },
+      { label: "Confirmed", icon: "check", done: true, time: "1:45 PM" },
+      { label: "Preparing", icon: "cake", active: true, time: "In progress" },
+      { label: "Out for Delivery", icon: "truck", done: false, time: "—" },
+      { label: "Delivered", icon: "box", done: false, time: "—" },
     ],
   },
   {
@@ -27,11 +27,11 @@ export const SAMPLE_ORDERS = [
     price: 1350,
     status: "delivered",
     timeline: [
-      { label: "Order Placed", icon: "📋", done: true, time: "9:15 PM" },
-      { label: "Confirmed", icon: "✅", done: true, time: "9:18 PM" },
-      { label: "Preparing", icon: "🎂", done: true, time: "9:40 PM" },
-      { label: "Out for Delivery", icon: "🚗", done: true, time: "10:05 PM" },
-      { label: "Delivered", icon: "📦", done: true, time: "10:34 PM" },
+      { label: "Order Placed", icon: "orders", done: true, time: "9:15 PM" },
+      { label: "Confirmed", icon: "check", done: true, time: "9:18 PM" },
+      { label: "Preparing", icon: "cake", done: true, time: "9:40 PM" },
+      { label: "Out for Delivery", icon: "truck", done: true, time: "10:05 PM" },
+      { label: "Delivered", icon: "box", done: true, time: "10:34 PM" },
     ],
   },
 ];

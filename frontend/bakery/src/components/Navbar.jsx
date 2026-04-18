@@ -2,11 +2,13 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
+import { Icon } from "./ui/Icons";
 
 export default function Navbar() {
   const { state } = useApp();
   const { user, logout, openAuthModal } = useAuth();
   const location = useLocation();
+  const isRestricted = user?.role === "admin" || user?.role === "owner";
 
   const handleCollectionScroll = (e) => {
     if (location.pathname.startsWith("/bakery")) {
@@ -29,30 +31,46 @@ export default function Navbar() {
           <div className="nav-tagline">The Classic Baking Tradition</div>
         </Link>
 
-        {/* Global Navigation Links (Always Visible) */}
+        {/* Dynamic Navigation Links */}
         <div className="nav-links">
           <div className="nav-links-inner">
-            <Link
-              to="/"
-              className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
-            >
-              Home
-            </Link>
-            {location.pathname.startsWith("/bakery") && (
-              <Link
-                to="#cakes"
-                className="nav-link"
-                onClick={handleCollectionScroll}
-              >
-                Collection
-              </Link>
+            {location.pathname.startsWith("/admin") ? (
+              <>
+                <Link to="/admin" className={`nav-link ${location.pathname === "/admin" ? "active" : ""}`}>
+                  Dashboard
+                </Link>
+                <Link to="/" className="nav-link">
+                  Site View
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>
+                  Home
+                </Link>
+                {location.pathname.startsWith("/bakery") && (
+                  <Link to="#cakes" className="nav-link" onClick={handleCollectionScroll}>
+                    Collection
+                  </Link>
+                )}
+                {user?.role === "admin" && (
+                  <Link to="/admin" className="nav-link admin-portal-link">
+                    Admin Portal
+                  </Link>
+                )}
+                {user?.role === "owner" && (
+                  <Link to="/bakery/dashboard" className="nav-link admin-portal-link">
+                    My Bakery
+                  </Link>
+                )}
+                {!isRestricted && (
+                  <Link to="/orders" className={`nav-link ${location.pathname === "/orders" ? "active" : ""}`}>
+                    Orders
+                  </Link>
+                )}
+              </>
             )}
-            <Link
-              to="/orders"
-              className={`nav-link ${location.pathname === "/orders" ? "active" : ""}`}
-            >
-              Orders
-            </Link>
+
             {user ? (
               <button className="nav-link logout-btn" onClick={() => logout()}>
                 LOGOUT ({user.name.split(" ")[0]})
@@ -65,12 +83,17 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Action Group: Permanent Cart (Far Right) */}
+        {/* Action Group: Permanent Cart (Far Right) - Hidden in Admin Dashboard */}
         <div className="nav-actions">
-          <Link to="/cart" className="nav-cta-header">
-            ✦ Cart
-            {state.cart.length > 0 && <span className="cart-badge">{state.cart.length}</span>}
-          </Link>
+          {!location.pathname.startsWith("/admin") && !isRestricted && (
+            <Link to="/cart" className="nav-cta-header">
+              <span className="nav-link-icon">
+                <Icon name="cart" size={16} />
+              </span>
+              Cart
+              {state.cart.length > 0 && <span className="cart-badge">{state.cart.length}</span>}
+            </Link>
+          )}
         </div>
       </div>
     </nav>

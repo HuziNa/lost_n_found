@@ -22,6 +22,7 @@ export default function ProductPage() {
   const navigate = useNavigate();
   const { quickAdd } = useApp();
   const { user, openAuthModal } = useAuth();
+  const isRestricted = user?.role === "admin" || user?.role === "owner";
 
   const cakeId = parseInt(id, 10);
   const cake = CAKES.find((c) => c.id === cakeId);
@@ -33,6 +34,11 @@ export default function ProductPage() {
   const handleAction = (action) => {
     if (!user) {
       openAuthModal("login");
+      return;
+    }
+
+    if (isRestricted) {
+      alert("Admins and bakery owners cannot place orders.");
       return;
     }
 

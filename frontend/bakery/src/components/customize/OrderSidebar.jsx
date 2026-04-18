@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { useAuth } from "../../context/AuthContext";
+import { Icon } from "../ui/Icons";
 
 const COLOR_MAP = {
   // ... (keep COLOR_MAP)
@@ -16,8 +17,10 @@ const COLOR_MAP = {
 export default function OrderSidebar() {
   const { state, calcTotal, applyVoucher, addToCart } = useApp();
   const { user, openAuthModal } = useAuth();
+  const isRestricted = user?.role === "admin" || user?.role === "owner";
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
+  const [voucherType, setVoucherType] = useState("");
 
   const color = COLOR_MAP[state.frostColor] || "#FFF5EC";
   // ... (keep tier/preview logic)
@@ -52,8 +55,9 @@ export default function OrderSidebar() {
   const decoTotal = state.decos.reduce((s, d) => s + d.price, 0);
 
   const handleVoucher = () => {
-    const msg = applyVoucher(voucherInput);
-    setVoucherMsg(msg);
+    const { message, type } = applyVoucher(voucherInput);
+    setVoucherMsg(message);
+    setVoucherType(type);
   };
 
   const handleAddToCart = () => {
@@ -62,21 +66,26 @@ export default function OrderSidebar() {
       return;
     }
 
+    if (isRestricted) {
+      alert("Admins and bakery owners cannot place orders.");
+      return;
+    }
+
     addToCart({
       name: "Custom " + state.size.name + " Cake",
       detail: `${state.frost.flavor} frosting · ${state.frostColor} · ${state.layers.count} layer${state.layers.count > 1 ? "s" : ""}${state.toppings.length ? " · " + state.toppings.map(t => t.name).join(", ") : ""}`,
       price: total,
-      emoji: "🎂"
+      icon: "cake"
     });
   };
 
-  const saveDesign = () => alert("✓ Design saved! Share link copied to clipboard.");
+  const saveDesign = () => alert("Design saved. Share link copied to clipboard.");
 
   return (
     <div className="order-sidebar">
       <div className="order-card">
         <div className="order-card-header">
-          <span style={{ fontSize: "20px", opacity: 0.7 }}>✦</span>
+          <Icon name="sparkle" className="order-card-icon" />
           <div className="order-card-title">Your Bespoke Cake</div>
         </div>
 
@@ -101,9 +110,9 @@ export default function OrderSidebar() {
             <g id="preview-toppings">
               {hasFruits && (
                 <>
-                  <text x="80" y={y - 2} fontSize="12">🍓</text>
-                  <text x="100" y={y - 2} fontSize="12">🫐</text>
-                  <text x="120" y={y - 2} fontSize="12">🍓</text>
+                  <circle cx="82" cy={y - 4} r="4" fill="#d45b5b" />
+                  <circle cx="100" cy={y - 4} r="3.5" fill="#6b78d1" />
+                  <circle cx="118" cy={y - 4} r="4" fill="#d45b5b" />
                 </>
               )}
               {hasSprinkles && (
@@ -174,15 +183,17 @@ export default function OrderSidebar() {
           />
           <button className="voucher-btn" onClick={handleVoucher}>Apply</button>
         </div>
-        {voucherMsg && (
-          <div className={`voucher-msg ${voucherMsg.startsWith("✓") ? "success" : "error"}`}>
-            {voucherMsg}
-          </div>
-        )}
+        {voucherMsg && <div className={`voucher-msg ${voucherType}`}>{voucherMsg}</div>}
 
         <div className="order-actions">
-          <button className="btn-outline" onClick={saveDesign}>🤍 Save Design</button>
-          <button className="btn-sage" onClick={handleAddToCart}>✦ Add to Cart</button>
+          <button className="btn-outline" onClick={saveDesign}>
+            <Icon name="heart" className="btn-icon" />
+            Save Design
+          </button>
+          <button className="btn-sage" onClick={handleAddToCart}>
+            <Icon name="cart" className="btn-icon" />
+            Add to Cart
+          </button>
         </div>
       </div>
     </div>

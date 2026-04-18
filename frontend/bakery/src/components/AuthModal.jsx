@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { Icon } from "./ui/Icons";
 import "../styles/auth.css";
 
 export default function AuthModal() {
@@ -41,7 +42,9 @@ export default function AuthModal() {
   return (
     <div className="auth-overlay" onClick={closeAuthModal}>
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="auth-close" onClick={closeAuthModal}>✕</button>
+        <button className="auth-close" onClick={closeAuthModal} aria-label="Close">
+          <Icon name="close" size={14} />
+        </button>
         
         <div className="auth-header">
           <h2 className="auth-title">

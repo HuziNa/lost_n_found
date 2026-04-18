@@ -10,7 +10,15 @@ export default function BakeryPage() {
   const { id } = useParams();
   
   const bakeryId = id ? parseInt(id, 10) : 1; 
-  const bakery = BAKERIES.find(b => b.id === bakeryId) || BAKERIES[0];
+  const baseBakery = BAKERIES.find(b => b.id === bakeryId) || BAKERIES[0];
+  let storedProfile = null;
+  try {
+    const raw = localStorage.getItem(`bakeryProfile_${bakeryId}`);
+    storedProfile = raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    storedProfile = null;
+  }
+  const bakery = { ...baseBakery, ...(storedProfile || {}) };
 
   return (
     <div className="page active" id="page-bakery">
@@ -38,6 +46,12 @@ export default function BakeryPage() {
               <div className="hero-meta-num cream-text">{bakery.rating}★</div>
               <div className="hero-meta-label gold-text">Rating</div>
             </div>
+            {bakery.address && (
+              <div className="hero-meta-item">
+                <div className="hero-meta-text cream-text">{bakery.address}</div>
+                <div className="hero-meta-label gold-text">Address</div>
+              </div>
+            )}
           </div>
         </div>
       </section>
