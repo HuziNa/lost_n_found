@@ -2,12 +2,27 @@ import mongoose from "mongoose";
 
 const nutritionSchema = new mongoose.Schema(
   {
-    calories: { type: Number }, // kcal
-    protein: { type: Number },  // grams
-    carbohydrates: { type: Number }, // grams
-    fats: { type: Number }, // grams
-    sugar: { type: Number }, // grams
-    fiber: { type: Number }, // grams
+    calories: Number,
+    protein: Number,
+    carbohydrates: Number,
+    fats: Number,
+    sugar: Number,
+    fiber: Number,
+  },
+  { _id: false }
+);
+
+const productIngredientSchema = new mongoose.Schema(
+  {
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
   },
   { _id: false }
 );
@@ -26,14 +41,7 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    name: {
-      type: String,
-      required: true,
-    },
-
-    description: {
-      type: String,
-    },
+    name: { type: String, required: true },
 
     type: {
       type: String,
@@ -41,9 +49,11 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    basePrice: {
-      type: Number,
-      required: true,
+    basePrice: { type: Number, required: true },
+
+    ingredients: {
+      type: [productIngredientSchema],
+      default: [],
     },
 
     allergens: {
