@@ -13,10 +13,10 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    bakeryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Bakery",
-      default: null,
+    // if they are an owner, we link them to their bakeries
+    bakeryManaged: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Bakery' 
     },
   },
   { timestamps: true }
