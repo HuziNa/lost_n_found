@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 // schema for the options selected for a product in an order
 const selectedOptionSchema = new mongoose.Schema(
   {
-    optionName: { type: String, required: true },
-    choiceName: { type: String },
+    optionName: { type: String, required: true }, // sponge
+    choiceName: { type: String }, // chocolate
 
     ingredientId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,7 +13,7 @@ const selectedOptionSchema = new mongoose.Schema(
     },
 
     quantity: { type: Number, required: true },
-    layer: { type: Number }, // optional
+    layer: { type: Number }, // optional (1)
   },
   { _id: false }
 );

@@ -1,27 +1,83 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Bakery from "../models/Bakery.js";
 
 // just dummy navigation paths for frontend to know where to go after auth actions
 const HERO_PAGE_PATH = "/hero";
 const LOGIN_PAGE_PATH = "/login";
-const REGISTERABLE_ROLES = ["customer", "owner"];
+const OWNER_ROLE = "bakeryOwner";
+const REGISTERABLE_ROLES = ["customer", OWNER_ROLE];
+const ROLE_ALIAS_MAP = {
+  customer: "customer",
+  owner: OWNER_ROLE,
+  bakeryowner: OWNER_ROLE,
+};
+
+const toIdString = (value) => (value ? value.toString() : null);
 
 function sanitizeUser(userDoc) {
-  return {
+  const baseUser = {
     id: userDoc._id,
     name: userDoc.name,
     email: userDoc.email,
+    contactNumber: userDoc.contactNumber,
     role: userDoc.role,
-    phoneNumber: userDoc.phoneNumber,
     address: userDoc.address,
-    bakeryManaged: userDoc.bakeryManaged,
+    createdAt: userDoc.createdAt,
+    updatedAt: userDoc.updatedAt,
   };
+
+  // Owners get extra bakery details in auth responses, same as user profile APIs.
+  if (userDoc.role === OWNER_ROLE) {
+    if (userDoc.bakeryManaged && userDoc.bakeryManaged._id) {
+      baseUser.bakeryManaged = {
+        id: toIdString(userDoc.bakeryManaged._id),
+        name: userDoc.bakeryManaged.name,
+        address: userDoc.bakeryManaged.address || null,
+        contactNumber: userDoc.bakeryManaged.contactNumber || null,
+        ownerId: toIdString(userDoc.bakeryManaged.ownerId),
+        isActive: userDoc.bakeryManaged.isActive,
+      };
+    } else {
+      baseUser.bakeryManaged = userDoc.bakeryManaged
+        ? { id: toIdString(userDoc.bakeryManaged) }
+        : null;
+    }
+  }
+
+  return baseUser;
 }
 
-//we have the same api for registering both customers and owners but the data that is sent to the api is different for signing up  
-// in the case of normal user the fields are left empty but for the owner the bakery name and bakery address are sent 
+const findUserForResponse = (userId) =>
+  User.findById(userId)
+    .select("-password")
+    .populate(
+      "bakeryManaged",
+      "_id name address contactNumber ownerId isActive",
+    );
+
+const saveSession = (req, userDoc) =>
+  new Promise((resolve, reject) => {
+    if (!req.session) {
+      resolve();
+      return;
+    }
+
+    req.session.userId = userDoc._id.toString();
+    req.session.role = userDoc.role;
+
+    req.session.save((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+
+//we have the same api for registering both customers and owners but the data that is sent to the api is different for signing up
+// in the case of normal user the fields are left empty but for the owner the bakery name and bakery address are sent
 export const registerUser = async (req, res) => {
   try {
     const {
@@ -29,29 +85,38 @@ export const registerUser = async (req, res) => {
       email,
       password,
       role,
+      contactNumber,
       phoneNumber,
+      number,
       address,
       bakeryName,
       bakeryAddress,
     } = req.body;
 
-    // random checks 
-    if (!name || !email || !password || !phoneNumber) {
+    const providedContactNumber = (contactNumber ?? phoneNumber ?? number ?? "")
+      .toString()
+      .trim();
+
+    // random checks
+    if (!name || !email || !password || !providedContactNumber) {
       return res.status(400).json({
-        message: "name, email, password, and phoneNumber are required.",
+        message:
+          "name, email, password, and contactNumber are required (phoneNumber/number are also accepted).",
       });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const selectedRole = (role || "customer").toLowerCase();
+    const normalizedRoleInput = (role || "customer").toLowerCase().trim();
+    const selectedRole = ROLE_ALIAS_MAP[normalizedRoleInput];
 
-    if (!REGISTERABLE_ROLES.includes(selectedRole)) {
+    if (!selectedRole || !REGISTERABLE_ROLES.includes(selectedRole)) {
       return res.status(400).json({
-        message: "role can only be customer or owner. admin is reserved.",
+        message:
+          "role can only be customer or bakeryOwner (owner alias supported). admin is reserved.",
       });
     }
 
-    if (selectedRole === "owner" && (!bakeryName || !bakeryAddress)) {
+    if (selectedRole === "bakeryOwner" && (!bakeryName || !bakeryAddress)) {
       return res.status(400).json({
         message: "For owner signup, bakeryName and bakeryAddress are required.",
       });
@@ -71,19 +136,18 @@ export const registerUser = async (req, res) => {
       email: normalizedEmail,
       password: hashedPassword,
       role: selectedRole,
-      phoneNumber: phoneNumber.trim(),
-      address,
+      contactNumber: providedContactNumber,
+      address: address ? String(address).trim() : undefined,
     });
 
-
     // if the user is an owner then a coreesponidng bakery prof is created and then linked back to the user
-    if (selectedRole === "owner") {
+    if (selectedRole === "bakeryOwner") {
       try {
         const bakery = await Bakery.create({
           name: bakeryName.trim(),
-          owner: user._id,
-          address: bakeryAddress,
-          contactNumber: phoneNumber.trim(),
+          ownerId: user._id,
+          address: String(bakeryAddress).trim(),
+          contactNumber: providedContactNumber,
         });
 
         user.bakeryManaged = bakery._id;
@@ -97,7 +161,9 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    user = await User.findById(user._id).select("-password");
+    await saveSession(req, user);
+
+    user = await findUserForResponse(user._id);
 
     return res.status(201).json({
       message: "Signup successful.",
@@ -112,7 +178,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// pretty starightforward login 
+// pretty starightforward login
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -143,17 +209,13 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    // saving the jwt token in the browsers local storage 
-    const token = jwt.sign(
-      { sub: user._id.toString(), role: user.role },
-      process.env.JWT_SECRET || "change-this-secret-in-env",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
-    );
+    await saveSession(req, user);
+
+    const userForResponse = await findUserForResponse(user._id);
 
     return res.status(200).json({
       message: "Login successful.",
-      token,
-      user: sanitizeUser(user),
+      user: sanitizeUser(userForResponse),
       redirectTo: HERO_PAGE_PATH,
     });
   } catch (error) {
@@ -163,10 +225,30 @@ export const loginUser = async (req, res) => {
     });
   }
 };
-// dummy api will change later 
-export const logoutUser = async (_req, res) => {
-  return res.status(200).json({
-    message: "Logout successful. Clear token on client side.",
-    redirectTo: LOGIN_PAGE_PATH,
+
+export const logoutUser = async (req, res) => {
+  const sessionCookieName = process.env.SESSION_NAME || "sid";
+
+  if (!req.session) {
+    return res.status(200).json({
+      message: "Logout successful.",
+      redirectTo: LOGIN_PAGE_PATH,
+    });
+  }
+
+  return req.session.destroy((error) => {
+    if (error) {
+      return res.status(500).json({
+        message: "Error logging out.",
+        error: error.message,
+      });
+    }
+
+    res.clearCookie(sessionCookieName);
+
+    return res.status(200).json({
+      message: "Logout successful.",
+      redirectTo: LOGIN_PAGE_PATH,
+    });
   });
 };

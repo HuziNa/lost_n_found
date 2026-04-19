@@ -51,6 +51,7 @@ const productSchema = new mongoose.Schema(
 
     basePrice: { type: Number, required: true },
 
+    // for the fixed items 
     ingredients: {
       type: [productIngredientSchema],
       default: [],

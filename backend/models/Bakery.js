@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 const bakerySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
+    address: { type: String },
+    contactNumber: { type: String },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -10,7 +12,7 @@ const bakerySchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Bakery", bakerySchema);

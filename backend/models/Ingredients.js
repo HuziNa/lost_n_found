@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// defines recipe for a compound ingredient 
+// defines recipe for a compound ingredient (sponge is made of flour, sugar, eggs)
 const ingredientRecipeSchema = new mongoose.Schema(
   {
     ingredientId: {
