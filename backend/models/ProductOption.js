@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 
-// defines the actual options available to choose from for that option
+// defines the actual options available to choose from for that option (compund ingredient)
 const optionChoiceSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true }, // chocolate, vanilla etc
 
-    ingredientId: {
+    ingredientId: { // coca powder for chocolate sponge, vanilla extract for vanilla sponge 
+      // for the chocolate sponge option, the choice of chocolate would link compund ingreidient we have made
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
       required: true,
@@ -18,6 +19,7 @@ const optionChoiceSchema = new mongoose.Schema(
 );
 
 // defines an option/choice a user can make for a product for example sponge of a cake
+// for exm the spinge of a cake and then in the option choices we have chocolate, vanilla etc
 const productOptionSchema = new mongoose.Schema(
   {
     productId: {
@@ -30,7 +32,7 @@ const productOptionSchema = new mongoose.Schema(
     required: { type: Boolean, default: false },
 
     perLayer: { type: Boolean, default: false },
-    maxSelections: { type: Number },
+    maxSelections: { type: Number }, // for example max 3 layers of sponge
 
     choices: [optionChoiceSchema],
   },
