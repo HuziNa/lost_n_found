@@ -1,0 +1,204 @@
+/* ═══════════════════════════════════════════
+   PRODUCT PAGE (DETAILED BLEGIUM WAFFLE STYLE)
+   ═══════════════════════════════════════════ */
+
+.product-page {
+  background: var(--cream);
+  min-height: 100vh;
+  padding: 80px max(24px, 5vw) 120px;
+}
+
+.product-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  gap: 80px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .product-container {
+    flex-direction: column;
+    gap: 40px;
+  }
+}
+
+.product-column {
+  flex: 1;
+}
+
+.product-left {
+  max-width: 45%;
+}
+@media (max-width: 900px) {
+  .product-left {
+    max-width: 100%;
+  }
+}
+
+.product-right {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Image & Ingredients */
+.product-image-wrapper {
+  background: var(--parchment);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow-sm);
+}
+
+.product-main-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+
+.section-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--ink-mid);
+  padding-bottom: 6px;
+  display: inline-block;
+  width: 100%;
+}
+
+.ingredients-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* Right Side - Title */
+.product-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 600;
+  color: var(--sage-dark);
+  line-height: 1.2;
+  margin-top: -10px;
+}
+
+/* Nutritional Information */
+.product-nutrition-section {
+  width: 100%;
+  max-width: 400px;
+}
+
+.nutrition-header {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 5px;
+  margin-bottom: 0;
+}
+
+.nutrition-heading {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.nutrition-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nutrition-table td {
+  padding: 10px 5px;
+  font-size: 14px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.nutrition-table tr td:last-child {
+  border-left: 1px solid var(--ink);
+  padding-left: 15px;
+  width: 80px;
+}
+
+/* Allergens */
+.product-allergens-section {
+  width: 100%;
+  max-width: 400px;
+}
+
+.allergens-grid {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.allergen-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 50px;
+}
+
+.allergen-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.allergen-name {
+  font-size: 12px;
+  color: var(--ink-mid);
+}
+
+/* Disclaimer */
+.product-disclaimer {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+  max-width: 450px;
+}
+
+.product-disclaimer a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* Actions */
+.product-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-gold);
+  padding-top: 25px;
+  margin-top: 10px;
+}
+
+.product-price-large {
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.product-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.product-btn {
+  padding: 14px 28px;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
