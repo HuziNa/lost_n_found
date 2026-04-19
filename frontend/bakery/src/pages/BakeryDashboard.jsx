@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import BakerySidebar from "../components/BakerySidebar";
-import { Icon } from "../components/ui/Icons";
+import { Icon } from "../components/customize/Icons";
 import { BAKERIES } from "../data/bakeries";
 
 const MOCK_PRODUCTS = [

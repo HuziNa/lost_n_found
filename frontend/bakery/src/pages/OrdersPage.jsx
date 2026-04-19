@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import { SAMPLE_ORDERS } from "../data/orders";
-import { Icon } from "../components/ui/Icons";
+import { Icon } from "../components/customize/Icons";
 
 function statusPill(s) {
   const map = { pending: "Pending", confirmed: "Confirmed", preparing: "Preparing", delivered: "Delivered", cancelled: "Cancelled" };

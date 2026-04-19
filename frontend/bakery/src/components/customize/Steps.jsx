@@ -1,6 +1,53 @@
 import React from "react";
 import { useApp } from "../../context/AppContext";
-import { Icon } from "../ui/Icons";
+import { Icon } from "./Icons";
+
+const PRODUCT_TOPPINGS = {
+  cake: [
+    { name: "Sprinkles", icon: "sprinkles", price: 60, ingredientId: "507f191e810c19729de86001" },
+    { name: "Fresh Fruits", icon: "fruit", price: 150, ingredientId: "507f191e810c19729de86002" },
+    { name: "Choco Shavings", icon: "chocolate", price: 120, ingredientId: "507f191e810c19729de86003" },
+    { name: "Edible Glitter", icon: "glitter", price: 80, ingredientId: "507f191e810c19729de86004" },
+    { name: "Fondant Flowers", icon: "flower", price: 200, ingredientId: "507f191e810c19729de86005" },
+    { name: "Sugar Pearls", icon: "pearl", price: 100, ingredientId: "507f191e810c19729de86006" }
+  ],
+  pizza: [
+    { name: "Pepperoni", icon: "pepper", price: 90, ingredientId: "507f191e810c19729de86101" },
+    { name: "Mushrooms", icon: "mushroom", price: 70, ingredientId: "507f191e810c19729de86102" },
+    { name: "Black Olives", icon: "olive", price: 60, ingredientId: "507f191e810c19729de86103" },
+    { name: "Bell Peppers", icon: "leaf", price: 50, ingredientId: "507f191e810c19729de86104" },
+    { name: "Red Onions", icon: "onion", price: 50, ingredientId: "507f191e810c19729de86105" },
+    { name: "Jalapenos", icon: "chili", price: 80, ingredientId: "507f191e810c19729de86106" }
+  ],
+  cupcake: [
+    { name: "Rainbow Sprinkles", icon: "sprinkles", price: 40, ingredientId: "507f191e810c19729de86201" },
+    { name: "Fruit Compote", icon: "fruit", price: 80, ingredientId: "507f191e810c19729de86202" },
+    { name: "Chocolate Drizzle", icon: "chocolate", price: 60, ingredientId: "507f191e810c19729de86203" },
+    { name: "Edible Glitter", icon: "glitter", price: 70, ingredientId: "507f191e810c19729de86204" },
+    { name: "Mini Macarons", icon: "heart", price: 110, ingredientId: "507f191e810c19729de86205" }
+  ]
+};
+
+function getToppingOptions(productType) {
+  return PRODUCT_TOPPINGS[productType] || PRODUCT_TOPPINGS.cake;
+}
+
+async function adjustIngredientStock(ingredientId, action) {
+  if (!ingredientId) return;
+  const quantity = action === "increase" ? 1 : action === "decrease" ? -1 : 0;
+  if (quantity === 0) return;
+
+  const endpoint = `/api/bakery/ingredients/stock`;
+  try {
+    await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredientId, quantity })
+    });
+  } catch (error) {
+    console.warn("Ingredient stock update failed", action, ingredientId, error);
+  }
+}
 
 export function StepCard({ num, title, subtitle, isOpen, toggleOpen, children }) {
   return (
@@ -121,34 +168,35 @@ export function FrostingStep() {
   );
 }
 
-export function ToppingsStep() {
+export function ToppingsStep({ productType }) {
   const { state, updateState } = useApp();
-  const options = [
-    { name: "Sprinkles", icon: "sprinkles", price: 60 },
-    { name: "Fresh Fruits", icon: "fruit", price: 150 },
-    { name: "Choco Shavings", icon: "chocolate", price: 120 },
-    { name: "Edible Glitter", icon: "glitter", price: 80 },
-    { name: "Fondant Flowers", icon: "flower", price: 200 },
-    { name: "Sugar Pearls", icon: "pearl", price: 100, oos: true },
-  ];
+  const options = getToppingOptions(productType);
 
-  const toggles = (name, price) => {
-    let ts = [...state.toppings];
-    const idx = ts.findIndex(t => t.name === name);
-    if (idx >= 0) ts.splice(idx, 1);
-    else ts.push({ name, price });
-    updateState("toppings", ts);
+  const toggles = async (option) => {
+    const currentToppings = [...(state.toppings || [])];
+    const idx = currentToppings.findIndex(t => t.name === option.name);
+    const isSelected = idx >= 0;
+
+    if (isSelected) {
+      currentToppings.splice(idx, 1);
+      updateState("toppings", currentToppings);
+      await adjustIngredientStock(option.ingredientId, "increase");
+    } else {
+      currentToppings.push({ name: option.name, price: option.price, ingredientId: option.ingredientId });
+      updateState("toppings", currentToppings);
+      await adjustIngredientStock(option.ingredientId, "decrease");
+    }
   };
 
   return (
     <div className="toppings-grid">
-      {options.map(o => {
-        const isSelected = state.toppings.some(t => t.name === o.name);
+      {options.map((option) => {
+        const isSelected = (state.toppings || []).some(t => t.name === option.name);
         return (
           <div
-            key={o.name}
-            className={`topping-card ${isSelected ? "selected" : ""} ${o.oos ? "out-of-stock" : ""}`}
-            onClick={() => !o.oos && toggles(o.name, o.price)}
+            key={option.name}
+            className={`topping-card ${isSelected ? "selected" : ""} ${option.oos ? "out-of-stock" : ""}`}
+            onClick={() => !option.oos && toggles(option)}
           >
             {isSelected && (
               <div className="check">
@@ -156,11 +204,11 @@ export function ToppingsStep() {
               </div>
             )}
             <div className="topping-icon">
-              <Icon name={o.icon} size={22} />
+              <Icon name={option.icon} size={22} />
             </div>
-            <div className="topping-name">{o.name}</div>
-            <div className="topping-price" style={o.oos ? { color: "var(--ink-muted)" } : {}}>
-              {o.oos ? "Out of Stock" : `+Rs ${o.price}`}
+            <div className="topping-name">{option.name}</div>
+            <div className="topping-price" style={option.oos ? { color: "var(--ink-muted)" } : {}}>
+              {option.oos ? "Out of Stock" : `+Rs ${option.price}`}
             </div>
           </div>
         );
@@ -278,4 +326,318 @@ export function DecorationsStep() {
       </div>
     </div>
   );
+}
+
+// Pizza-specific steps
+export function CrustStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { type: "Thin", price: 0, label: "Thin Crust", desc: "Crispy and light" },
+    { type: "Thick", price: 50, label: "Thick Crust", desc: "Soft and chewy" },
+    { type: "Stuffed", price: 100, label: "Stuffed Crust", desc: "Cheese-filled edges" }
+  ];
+
+  return (
+    <div className="crust-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.type}
+          className={`crust-card ${state.crust?.type === opt.type ? "selected" : ""}`}
+          onClick={() => updateState("crust", { type: opt.type, price: opt.price })}
+        >
+          <div className="crust-icon">
+            <Icon name="pizza" size={24} />
+          </div>
+          <div className="crust-name">{opt.label}</div>
+          <div className="crust-desc">{opt.desc}</div>
+          <div className="crust-price">{opt.price === 0 ? "Included" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SauceStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { type: "Marinara", price: 0, label: "Marinara", desc: "Classic tomato sauce" },
+    { type: "Pesto", price: 80, label: "Pesto", desc: "Basil and pine nut sauce" },
+    { type: "White", price: 60, label: "White Sauce", desc: "Creamy garlic sauce" },
+    { type: "BBQ", price: 70, label: "BBQ Sauce", desc: "Sweet and smoky" }
+  ];
+
+  return (
+    <div className="sauce-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.type}
+          className={`sauce-card ${state.sauce?.type === opt.type ? "selected" : ""}`}
+          onClick={() => updateState("sauce", { type: opt.type, price: opt.price })}
+        >
+          <div className="sauce-color" style={{ backgroundColor: getSauceColor(opt.type) }}></div>
+          <div className="sauce-name">{opt.label}</div>
+          <div className="sauce-desc">{opt.desc}</div>
+          <div className="sauce-price">{opt.price === 0 ? "Included" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CheeseStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { type: "Regular", price: 0, label: "Regular Cheese", desc: "Mozzarella blend" },
+    { type: "Extra", price: 50, label: "Extra Cheese", desc: "Double portion" },
+    { type: "Vegan", price: 60, label: "Vegan Cheese", desc: "Plant-based alternative" },
+    { type: "None", price: 0, label: "No Cheese", desc: "Cheese-free option" }
+  ];
+
+  return (
+    <div className="cheese-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.type}
+          className={`cheese-card ${state.cheese?.type === opt.type ? "selected" : ""}`}
+          onClick={() => updateState("cheese", { type: opt.type, price: opt.price })}
+        >
+          <div className="cheese-icon">🧀</div>
+          <div className="cheese-name">{opt.label}</div>
+          <div className="cheese-desc">{opt.desc}</div>
+          <div className="cheese-price">{opt.price === 0 ? "Included" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SpecialInstructionsStep() {
+  const { state, updateState } = useApp();
+
+  return (
+    <div className="special-instructions">
+      <textarea
+        className="instructions-input"
+        rows="3"
+        maxLength="100"
+        placeholder="e.g. Extra crispy, well done, cut into squares..."
+        value={state.specialInstructions || ""}
+        onChange={e => updateState("specialInstructions", e.target.value)}
+      ></textarea>
+      <div className="instructions-counter">
+        <span>{(state.specialInstructions || "").length}</span>/100
+      </div>
+    </div>
+  );
+}
+
+// Donut-specific steps
+export function BaseStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { type: "Yeast", price: 0, label: "Yeast Donut", desc: "Light and fluffy" },
+    { type: "Cake", price: 20, label: "Cake Donut", desc: "Dense and moist" },
+    { type: "Glazed", price: 0, label: "Classic Glazed", desc: "Traditional favorite" }
+  ];
+
+  return (
+    <div className="base-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.type}
+          className={`base-card ${state.base?.type === opt.type ? "selected" : ""}`}
+          onClick={() => updateState("base", { type: opt.type, price: opt.price })}
+        >
+          <div className="base-icon">🍩</div>
+          <div className="base-name">{opt.label}</div>
+          <div className="base-desc">{opt.desc}</div>
+          <div className="base-price">{opt.price === 0 ? "Included" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function FillingStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { type: "None", price: 0, label: "No Filling", desc: "Classic donut" },
+    { type: "Cream", price: 40, label: "Cream Filling", desc: "Vanilla custard" },
+    { type: "Jelly", price: 35, label: "Jelly Filling", desc: "Fruit preserve" },
+    { type: "Custard", price: 45, label: "Custard", desc: "Rich and creamy" },
+    { type: "Chocolate", price: 40, label: "Chocolate", desc: "Dark chocolate ganache" }
+  ];
+
+  return (
+    <div className="filling-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.type}
+          className={`filling-card ${state.filling?.type === opt.type ? "selected" : ""}`}
+          onClick={() => updateState("filling", { type: opt.type, price: opt.price })}
+        >
+          <div className="filling-icon">{getFillingIcon(opt.type)}</div>
+          <div className="filling-name">{opt.label}</div>
+          <div className="filling-desc">{opt.desc}</div>
+          <div className="filling-price">{opt.price === 0 ? "Included" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function GlazeStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { type: "Chocolate", price: 0, label: "Chocolate Glaze", desc: "Rich and glossy" },
+    { type: "Vanilla", price: 0, label: "Vanilla Glaze", desc: "Sweet and simple" },
+    { type: "Strawberry", price: 20, label: "Strawberry Glaze", desc: "Pink and fruity" },
+    { type: "Maple", price: 25, label: "Maple Glaze", desc: "Warm and sweet" }
+  ];
+
+  return (
+    <div className="glaze-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.type}
+          className={`glaze-card ${state.glaze?.type === opt.type ? "selected" : ""}`}
+          onClick={() => updateState("glaze", { type: opt.type, price: opt.price })}
+        >
+          <div className="glaze-color" style={{ backgroundColor: getGlazeColor(opt.type) }}></div>
+          <div className="glaze-name">{opt.label}</div>
+          <div className="glaze-desc">{opt.desc}</div>
+          <div className="glaze-price">{opt.price === 0 ? "Included" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SprinklesStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { name: "Rainbow Sprinkles", price: 15, icon: "rainbow" },
+    { name: "Chocolate Sprinkles", price: 12, icon: "chocolate" },
+    { name: "Coconut Flakes", price: 18, icon: "coconut" },
+    { name: "Chopped Nuts", price: 20, icon: "nuts" }
+  ];
+
+  const toggles = (name, price) => {
+    let ss = [...(state.sprinkles || [])];
+    const idx = ss.findIndex(s => s.name === name);
+    if (idx >= 0) ss.splice(idx, 1);
+    else ss.push({ name, price });
+    updateState("sprinkles", ss);
+  };
+
+  return (
+    <div className="sprinkles-grid">
+      {options.map(o => {
+        const isSelected = (state.sprinkles || []).some(s => s.name === o.name);
+        return (
+          <div
+            key={o.name}
+            className={`sprinkle-card ${isSelected ? "selected" : ""}`}
+            onClick={() => toggles(o.name, o.price)}
+          >
+            {isSelected && (
+              <div className="check">
+                <Icon name="check" size={12} />
+              </div>
+            )}
+            <div className="sprinkle-icon">
+              <Icon name={o.icon} size={22} />
+            </div>
+            <div className="sprinkle-name">{o.name}</div>
+            <div className="sprinkle-price">+Rs {o.price}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function DrizzleStep() {
+  const { state, updateState } = useApp();
+
+  return (
+    <div className="drizzle-option">
+      <div
+        className={`drizzle-card ${state.drizzle ? "selected" : ""}`}
+        onClick={() => updateState("drizzle", !state.drizzle)}
+      >
+        {state.drizzle && (
+          <div className="check">
+            <Icon name="check" size={12} />
+          </div>
+        )}
+        <div className="drizzle-icon">🍫</div>
+        <div className="drizzle-content">
+          <div className="drizzle-name">Chocolate Drizzle</div>
+          <div className="drizzle-desc">Extra chocolate drizzle on top</div>
+          <div className="drizzle-price">+Rs 25</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Cupcake-specific steps
+export function QuantityStep() {
+  const { state, updateState } = useApp();
+  const options = [
+    { count: 1, price: 0, label: "1 Cupcake", desc: "Single serving" },
+    { count: 6, price: 50, label: "Half Dozen", desc: "6 cupcakes - 10% off" },
+    { count: 12, price: 80, label: "Dozen", desc: "12 cupcakes - 20% off" },
+    { count: 24, price: 120, label: "Two Dozen", desc: "24 cupcakes - 30% off" }
+  ];
+
+  return (
+    <div className="quantity-grid">
+      {options.map((opt) => (
+        <div
+          key={opt.count}
+          className={`quantity-card ${state.quantity === opt.count ? "selected" : ""}`}
+          onClick={() => updateState("quantity", opt.count)}
+        >
+          <div className="quantity-icon">🧁</div>
+          <div className="quantity-name">{opt.label}</div>
+          <div className="quantity-desc">{opt.desc}</div>
+          <div className="quantity-price">{opt.price === 0 ? "Base price" : `+Rs ${opt.price}`}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Helper functions
+function getSauceColor(type) {
+  const colors = {
+    "Marinara": "#DC143C",
+    "Pesto": "#228B22",
+    "White": "#FFFACD",
+    "BBQ": "#8B4513"
+  };
+  return colors[type] || "#DC143C";
+}
+
+function getFillingIcon(type) {
+  const icons = {
+    "None": "🍩",
+    "Cream": "🥛",
+    "Jelly": "🍯",
+    "Custard": "🍮",
+    "Chocolate": "🍫"
+  };
+  return icons[type] || "🍯";
+}
+
+function getGlazeColor(type) {
+  const colors = {
+    "Chocolate": "#8B4513",
+    "Vanilla": "#FFFACD",
+    "Strawberry": "#FFB6C1",
+    "Maple": "#D2691E"
+  };
+  return colors[type] || "#FFFACD";
 }

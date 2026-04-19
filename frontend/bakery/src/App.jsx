@@ -12,6 +12,7 @@ import HomePage from "./pages/HomePage";
 import BakeryPage from "./pages/BakeryPage";
 import CustomizePage from "./pages/CustomizePage";
 import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProductPage from "./pages/ProductPage";
 import BakeryRegistrationPage from "./pages/BakeryRegistrationPage";
@@ -46,6 +47,7 @@ function App() {
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/customize" element={<CustomizePage />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/register-bakery" element={<BakeryRegistrationPage />} />
               <Route path="/admin" element={

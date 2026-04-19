@@ -2357,15 +2357,14 @@ body {
 
 /* ORDER SIDEBAR */
 .order-sidebar {
-  position: sticky;
-  top: 90px;
+  position: relative;  /* change from sticky to relative */
+  top: auto;
 }
 
 .order-card {
   background: var(--warm-white);
   border: 1px solid var(--border-gold);
   border-radius: var(--radius-md);
-  overflow: hidden;
   box-shadow: var(--shadow-md);
 }
 
@@ -2393,8 +2392,8 @@ body {
 }
 
 .order-preview {
-  padding: 24px;
-  min-height: 140px;
+  padding: 32px;
+  min-height: 200px;
   background: var(--parchment);
   display: flex;
   justify-content: center;
@@ -3102,10 +3101,12 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .order-sidebar {
-    position: static;
-    margin-top: 40px;
-  }
+ .order-sidebar {
+  position: sticky;
+  top: 90px;
+  align-self: start;
+  height: fit-content;
+}
 
   .bakeries-grid {
     grid-template-columns: repeat(2, 1fr);

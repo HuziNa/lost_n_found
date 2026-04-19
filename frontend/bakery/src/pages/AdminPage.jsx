@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Icon } from "../components/ui/Icons";
+import { Icon } from "../components/customize/Icons";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("applications");

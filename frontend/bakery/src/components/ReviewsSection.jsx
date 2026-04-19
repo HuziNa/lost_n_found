@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { REVIEWS_DATA, AVATAR_COLORS, AVATAR_TEXT } from "../data/reviews";
-import { Icon } from "./ui/Icons";
+import { Icon } from "./customize/Icons";
 
 export default function ReviewsSection() {
   const [reviews, setReviews] = useState(REVIEWS_DATA);

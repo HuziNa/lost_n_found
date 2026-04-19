@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
-import { Icon } from "./ui/Icons";
+import { Icon } from "./customize/Icons";
 
 export default function Navbar() {
   const { state } = useApp();

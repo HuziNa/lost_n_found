@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Icon } from "./ui/Icons";
+import { Icon } from "./customize/Icons";
 
 export default function BakerySidebar({ activeTab, setActiveTab, bakeryLink = "/bakery/1" }) {
   const { logout } = useAuth();
