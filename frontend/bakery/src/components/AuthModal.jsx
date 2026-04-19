@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Icon } from "./ui/Icons";
+import { Icon } from "./customize/Icons";
 import "../styles/auth.css";
 
 export default function AuthModal() {

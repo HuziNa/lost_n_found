@@ -217,6 +217,33 @@ const ICONS = {
       <path d="M9 6l6 6-6 6" />
     </>
   ),
+  card: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </>
+  ),
+  cash: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M6 10h12M6 14h12" />
+      <circle cx="8" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="16" cy="12" r="1" />
+    </>
+  ),
+  bank: (
+    <>
+      <rect x="4" y="6" width="16" height="12" rx="2" />
+      <path d="M4 10h16M8 14h2M12 14h2" />
+      <path d="M6 6l6-4 6 4" />
+    </>
+  ),
+  spinner: (
+    <>
+      <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 18, className = "", title }) {

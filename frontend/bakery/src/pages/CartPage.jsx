@@ -2,7 +2,7 @@ import React from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
-import { Icon } from "../components/ui/Icons";
+import { Icon } from "../components/customize/Icons";
 
 export default function CartPage() {
   const { state, removeFromCart } = useApp();
@@ -73,7 +73,9 @@ export default function CartPage() {
             <div className="cart-summary-line total">
               <span>Total</span><span>Rs {total.toLocaleString()}</span>
             </div>
-            <button className="btn-checkout">Proceed to Checkout</button>
+            <Link to="/checkout">
+              <button className="btn-checkout">Proceed to Checkout</button>
+            </Link>
           </div>
         </div>
       </div>
