@@ -2,7 +2,10 @@ import express from "express";
 import dotenv from "dotenv";
 import session from "express-session";
 import connectDB from "./config/database.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import bakeryRoutes from "./routes/bakeryRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
@@ -30,6 +33,9 @@ app.use(
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/bakery", bakeryRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
 
 // for testing
 app.get("/", (req, res) => {
