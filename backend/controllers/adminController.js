@@ -180,7 +180,9 @@ const getTopBakeryByMetric = async ({ sort }) => {
 export const listAdminBakeries = async (req, res) => {
   try {
     const rawActivityFilter =
-      req.query.isActive !== undefined ? req.query.isActive : req.query.functional;
+      req.query.isActive !== undefined
+        ? req.query.isActive
+        : req.query.functional;
 
     const activityFilterResult = toBooleanFromQuery(rawActivityFilter);
     if (activityFilterResult.error) {

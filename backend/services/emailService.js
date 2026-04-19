@@ -23,10 +23,10 @@ const getTransporter = () => {
 const isEmailConfigured = () => {
   return Boolean(
     process.env.SMTP_HOST &&
-      process.env.SMTP_PORT &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS &&
-      process.env.MAIL_FROM,
+    process.env.SMTP_PORT &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS &&
+    process.env.MAIL_FROM,
   );
 };
 
@@ -66,7 +66,12 @@ const buildTextBody = ({
     }
   });
 
-  lines.push("", `Total: ${formatMoney(totalPrice)}`, "", "Thank you for ordering.");
+  lines.push(
+    "",
+    `Total: ${formatMoney(totalPrice)}`,
+    "",
+    "Thank you for ordering.",
+  );
 
   return lines.join("\n");
 };
