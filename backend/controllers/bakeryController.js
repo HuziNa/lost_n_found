@@ -2,18 +2,118 @@ import mongoose from "mongoose";
 import Bakery from "../models/Bakery.js";
 import BakeryInventory from "../models/BakeryInventory.js";
 import Category from "../models/Category.js";
+import GlobalCategory from "../models/GlobalCategory.js";
 import Ingredient from "../models/Ingredients.js";
 import Order from "../models/Order.js";
 import ProductOption from "../models/ProductOption.js";
 import Product from "../models/Products.js";
 import Review from "../models/Review.js";
 import User from "../models/User.js";
+import { ensureGlobalCategories } from "../utils/globalCategories.js";
 
 const PRODUCT_TYPES = ["FIXED", "CUSTOMIZABLE"];
+
+const DEFAULT_STORY =
+  "A culture, tradition, lifestyle, and class - with a legacy spanning over a century. Our bakery stands as a testament to generations of craft, passion, and the belief that food is love made edible.\n\nEvery product is a masterful symphony of flavors, expertly crafted to leave you spellbound. From Presidents to families, our creations have graced the finest tables.";
+const DEFAULT_QUOTE =
+  "Making this world a better place by sharing love, empathy and happiness - one slice at a time.";
+const DEFAULT_STATS = {
+  years: "115+",
+  customers: "50K+",
+  recipes: "200+",
+  baked: "24/7",
+};
 
 const toIdString = (value) => (value ? value.toString() : null);
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
+
+const buildCategoryMap = async (categoryIds, bakeryId) => {
+  const uniqueIds = [...new Set(categoryIds.filter(Boolean))];
+  const map = new Map();
+
+  if (uniqueIds.length === 0) {
+    return map;
+  }
+
+  const globalCategories = await GlobalCategory.find({
+    _id: { $in: uniqueIds },
+  })
+    .select("_id name")
+    .lean();
+
+  globalCategories.forEach((category) => {
+    map.set(toIdString(category._id), category);
+  });
+
+  const missingIds = uniqueIds.filter((id) => !map.has(toIdString(id)));
+  if (missingIds.length > 0) {
+    const fallbackCategories = await Category.find({
+      _id: { $in: missingIds },
+      bakeryId,
+    })
+      .select("_id name")
+      .lean();
+
+    fallbackCategories.forEach((category) => {
+      map.set(toIdString(category._id), category);
+    });
+  }
+
+  return map;
+};
+
+const resolveCategoryById = async (categoryId, bakeryId) => {
+  if (!categoryId) return null;
+
+  const globalCategory = await GlobalCategory.findById(categoryId)
+    .select("_id name")
+    .lean();
+
+  if (globalCategory) {
+    return globalCategory;
+  }
+
+  if (!bakeryId) {
+    return null;
+  }
+
+  return Category.findOne({ _id: categoryId, bakeryId })
+    .select("_id name")
+    .lean();
+};
+
+const ensureBakeryStoryDefaults = (bakeryDoc) => {
+  if (!bakeryDoc) return false;
+  let updated = false;
+
+  if (!String(bakeryDoc.myStory || "").trim()) {
+    bakeryDoc.myStory = DEFAULT_STORY;
+    updated = true;
+  }
+  if (!String(bakeryDoc.storyQuote || "").trim()) {
+    bakeryDoc.storyQuote = DEFAULT_QUOTE;
+    updated = true;
+  }
+  if (!String(bakeryDoc.statsYears || "").trim()) {
+    bakeryDoc.statsYears = DEFAULT_STATS.years;
+    updated = true;
+  }
+  if (!String(bakeryDoc.statsCustomers || "").trim()) {
+    bakeryDoc.statsCustomers = DEFAULT_STATS.customers;
+    updated = true;
+  }
+  if (!String(bakeryDoc.statsRecipes || "").trim()) {
+    bakeryDoc.statsRecipes = DEFAULT_STATS.recipes;
+    updated = true;
+  }
+  if (!String(bakeryDoc.statsBaked || "").trim()) {
+    bakeryDoc.statsBaked = DEFAULT_STATS.baked;
+    updated = true;
+  }
+
+  return updated;
+};
 
 function serializeProduct(productDoc, options = []) {
   return {
@@ -23,6 +123,9 @@ function serializeProduct(productDoc, options = []) {
     name: productDoc.name,
     type: productDoc.type,
     basePrice: productDoc.basePrice,
+    description: productDoc.description || "",
+    imageUrl: productDoc.imageUrl || "",
+    ingredientsText: productDoc.ingredientsText || "",
     ingredients: productDoc.ingredients || [],
     allergens: productDoc.allergens || [],
     nutrition: productDoc.nutrition || {},
@@ -51,6 +154,172 @@ function serializeOptions(optionDocs) {
     updatedAt: option.updatedAt,
   }));
 }
+
+function serializeCategory(categoryDoc) {
+  return {
+    id: toIdString(categoryDoc._id),
+    name: categoryDoc.name,
+    createdAt: categoryDoc.createdAt,
+    updatedAt: categoryDoc.updatedAt,
+  };
+}
+
+function serializePublicBakery(bakeryDoc) {
+  return {
+    id: toIdString(bakeryDoc._id),
+    name: bakeryDoc.name,
+    address: bakeryDoc.address,
+    contactNumber: bakeryDoc.contactNumber,
+    imageUrl: bakeryDoc.imageUrl || "",
+    isActive: bakeryDoc.isActive,
+    createdAt: bakeryDoc.createdAt,
+    updatedAt: bakeryDoc.updatedAt,
+  };
+}
+
+// API: GET /api/bakery/categories
+// - Session cookie from /api/auth/login
+// Returns:
+// - 200 with categories list for owner's bakery
+export const listBakeryCategories = async (req, res) => {
+  try {
+    const categories = await ensureGlobalCategories();
+
+    return res.status(200).json({
+      message: "Global categories fetched successfully.",
+      categories: categories.map(serializeCategory),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error fetching global categories.",
+      error: error.message,
+    });
+  }
+};
+
+// API: POST /api/bakery/categories
+// - Session cookie from /api/auth/login
+// - Body: { name: String }
+// Returns:
+// - 201 with created category
+export const createBakeryCategory = async (req, res) => {
+  try {
+    return res.status(403).json({
+      message: "Categories are managed by admins. Please select from the predefined list.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error creating category.",
+      error: error.message,
+    });
+  }
+};
+
+// API: PATCH /api/bakery/profile
+// - Session cookie from /api/auth/login
+// - Body: { myStory?: String, storyQuote?: String, statsYears?: String, statsCustomers?: String, statsRecipes?: String, statsBaked?: String, imageUrl?: String }
+// Returns:
+// - 200 with updated bakery profile
+export const updateBakeryProfile = async (req, res) => {
+  try {
+    const {
+      myStory,
+      storyQuote,
+      statsYears,
+      statsCustomers,
+      statsRecipes,
+      statsBaked,
+      imageUrl,
+    } = req.body;
+
+    if (
+      myStory === undefined &&
+      storyQuote === undefined &&
+      statsYears === undefined &&
+      statsCustomers === undefined &&
+      statsRecipes === undefined &&
+      statsBaked === undefined &&
+      imageUrl === undefined
+    ) {
+      return res.status(400).json({
+        message: "At least one field is required: myStory, storyQuote, statsYears, statsCustomers, statsRecipes, statsBaked, imageUrl.",
+      });
+    }
+
+    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
+
+    if (!user || !user.bakeryManaged) {
+      return res.status(404).json({
+        message: "Bakery not found for this owner.",
+      });
+    }
+
+    if (myStory !== undefined) {
+      user.bakeryManaged.myStory = String(myStory || "").trim();
+    }
+    if (storyQuote !== undefined) {
+      user.bakeryManaged.storyQuote = String(storyQuote || "").trim();
+    }
+    if (statsYears !== undefined) {
+      user.bakeryManaged.statsYears = String(statsYears || "").trim();
+    }
+    if (statsCustomers !== undefined) {
+      user.bakeryManaged.statsCustomers = String(statsCustomers || "").trim();
+    }
+    if (statsRecipes !== undefined) {
+      user.bakeryManaged.statsRecipes = String(statsRecipes || "").trim();
+    }
+    if (statsBaked !== undefined) {
+      user.bakeryManaged.statsBaked = String(statsBaked || "").trim();
+    }
+    if (imageUrl !== undefined) {
+      user.bakeryManaged.imageUrl = String(imageUrl || "").trim();
+    }
+    await user.bakeryManaged.save();
+
+    return res.status(200).json({
+      message: "Bakery profile updated successfully.",
+      bakery: {
+        id: toIdString(user.bakeryManaged._id),
+        name: user.bakeryManaged.name,
+        address: user.bakeryManaged.address || null,
+        contactNumber: user.bakeryManaged.contactNumber || null,
+        myStory: user.bakeryManaged.myStory || "",
+        storyQuote: user.bakeryManaged.storyQuote || "",
+        statsYears: user.bakeryManaged.statsYears || "",
+        statsCustomers: user.bakeryManaged.statsCustomers || "",
+        statsRecipes: user.bakeryManaged.statsRecipes || "",
+        statsBaked: user.bakeryManaged.statsBaked || "",
+        imageUrl: user.bakeryManaged.imageUrl || "",
+        isActive: user.bakeryManaged.isActive,
+        approvalStatus: user.bakeryManaged.approvalStatus,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error updating bakery profile.",
+      error: error.message,
+    });
+  }
+};
+
+// API: PATCH /api/bakery/categories/:categoryId
+// - Session cookie from /api/auth/login
+// - Body: { name: String }
+// Returns:
+// - 200 with updated category
+export const updateBakeryCategory = async (req, res) => {
+  try {
+    return res.status(403).json({
+      message: "Categories are managed by admins. Please select from the predefined list.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error updating category.",
+      error: error.message,
+    });
+  }
+};
 
 // API: GET /api/bakery/ingredients
 // - Session cookie from /api/auth/login
@@ -98,16 +367,16 @@ export const listBakeryIngredients = async (req, res) => {
 
 // API: POST /api/bakery/ingredients
 // - Session cookie from /api/auth/login
-// - Body: { name: String, unit: String, stock: Number, minStock: Number }
+// - Body: { name: String, unit: String, pricePerUnit: Number, stock: Number, minStock: Number }
 // Returns:
 // - 201 with created ingredient
 export const createBakeryIngredient = async (req, res) => {
   try {
-    const { name, unit, stock, minStock } = req.body;
+    const { name, unit, pricePerUnit, stock, minStock } = req.body;
 
-    if (!name || !unit) {
+    if (!name || !unit || pricePerUnit === undefined) {
       return res.status(400).json({
-        message: "name and unit are required.",
+        message: "name, unit, and pricePerUnit are required.",
       });
     }
 
@@ -135,6 +404,7 @@ export const createBakeryIngredient = async (req, res) => {
       bakeryId: user.bakeryManaged._id,
       name: name.trim(),
       unit: unit.trim(),
+      pricePerUnit: Number(pricePerUnit),
       stock: Number(stock) || 0,
       minStock: Number(minStock) || 0,
     });
@@ -143,6 +413,7 @@ export const createBakeryIngredient = async (req, res) => {
       id: toIdString(ingredient._id),
       name: ingredient.name,
       unit: ingredient.unit,
+      pricePerUnit: ingredient.pricePerUnit,
       stock: ingredient.stock,
       minStock: ingredient.minStock,
       isActive: ingredient.isActive,
@@ -289,6 +560,9 @@ export const createBakeryProduct = async (req, res) => {
       name,
       type,
       basePrice,
+      description,
+      imageUrl,
+      ingredientsText,
       ingredients,
       allergens,
       nutrition,
@@ -323,14 +597,12 @@ export const createBakeryProduct = async (req, res) => {
     }
 
     // Verify category belongs to this bakery
-    const category = await Category.findOne({
-      _id: categoryId,
-      bakeryId: user.bakeryManaged._id,
-    });
+    await ensureGlobalCategories();
+    const category = await GlobalCategory.findById(categoryId).lean();
 
     if (!category) {
       return res.status(400).json({
-        message: "Category not found in your bakery.",
+        message: "Category not found in the global list.",
       });
     }
 
@@ -419,6 +691,9 @@ export const createBakeryProduct = async (req, res) => {
       name: name.trim(),
       type,
       basePrice: Number(basePrice),
+      description: description ? String(description).trim() : "",
+      imageUrl: imageUrl ? String(imageUrl).trim() : "",
+      ingredientsText: ingredientsText ? String(ingredientsText).trim() : "",
       ingredients: ingredients || [],
       allergens: allergens || [],
       nutrition: nutrition || {},
@@ -502,14 +777,12 @@ export const updateBakeryProduct = async (req, res) => {
         });
       }
 
-      const category = await Category.findOne({
-        _id: updateData.categoryId,
-        bakeryId: user.bakeryManaged._id,
-      });
+      await ensureGlobalCategories();
+      const category = await GlobalCategory.findById(updateData.categoryId).lean();
 
       if (!category) {
         return res.status(400).json({
-          message: "Category not found in your bakery.",
+          message: "Category not found in the global list.",
         });
       }
     }
@@ -619,7 +892,24 @@ export const updateBakeryProduct = async (req, res) => {
     }
 
     // Update product
-    Object.assign(product, updateData);
+    if (updateData.description !== undefined) {
+      product.description = String(updateData.description || "").trim();
+    }
+
+    if (updateData.imageUrl !== undefined) {
+      product.imageUrl = String(updateData.imageUrl || "").trim();
+    }
+
+    if (updateData.ingredientsText !== undefined) {
+      product.ingredientsText = String(updateData.ingredientsText || "").trim();
+    }
+
+    const safeUpdateData = { ...updateData };
+    delete safeUpdateData.description;
+    delete safeUpdateData.imageUrl;
+    delete safeUpdateData.ingredientsText;
+
+    Object.assign(product, safeUpdateData);
     await product.save();
 
     // Get updated options
@@ -689,6 +979,32 @@ export const deleteBakeryProduct = async (req, res) => {
   }
 };
 
+// API: GET /api/bakery/public
+// - Public endpoint (no session required)
+// Returns:
+// - 200 with approved, active bakeries
+export const listPublicBakeries = async (req, res) => {
+  try {
+    const bakeries = await Bakery.find({
+      isActive: true,
+      approvalStatus: "approved",
+    })
+      .sort({ createdAt: -1 })
+      .select("_id name address contactNumber imageUrl isActive createdAt updatedAt")
+      .lean();
+
+    return res.status(200).json({
+      message: "Public bakeries fetched successfully.",
+      bakeries: bakeries.map(serializePublicBakery),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error fetching public bakeries.",
+      error: error.message,
+    });
+  }
+};
+
 // API: GET /api/bakery/menu/:bakeryId/products
 // - Public endpoint (no session required)
 // Returns:
@@ -707,18 +1023,22 @@ export const getBakeryMenuProductsByBakeryId = async (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
     const skip = (page - 1) * limit;
 
-    const bakery = await Bakery.findOne({
+    const bakeryDoc = await Bakery.findOne({
       _id: bakeryId,
       isActive: true,
-    })
-      .select("_id name isActive")
-      .lean();
+    }).select("_id name isActive myStory storyQuote statsYears statsCustomers statsRecipes statsBaked imageUrl");
 
-    if (!bakery) {
+    if (!bakeryDoc) {
       return res.status(404).json({
         message: "Bakery not found or inactive.",
       });
     }
+
+    if (ensureBakeryStoryDefaults(bakeryDoc)) {
+      await bakeryDoc.save();
+    }
+
+    const bakery = bakeryDoc.toObject();
 
     const filter = {
       bakeryId: bakery._id,
@@ -763,16 +1083,7 @@ export const getBakeryMenuProductsByBakeryId = async (req, res) => {
       ...new Set(products.map((product) => toIdString(product.categoryId))),
     ];
 
-    const categories = await Category.find({
-      _id: { $in: categoryIds },
-      bakeryId: bakery._id,
-    })
-      .select("_id name")
-      .lean();
-
-    const categoryById = new Map(
-      categories.map((category) => [toIdString(category._id), category]),
-    );
+    const categoryById = await buildCategoryMap(categoryIds, bakery._id);
 
     const serializedProducts = products.map((product) => {
       const serializedProduct = serializeProduct(
@@ -797,6 +1108,13 @@ export const getBakeryMenuProductsByBakeryId = async (req, res) => {
         id: toIdString(bakery._id),
         name: bakery.name,
         isActive: bakery.isActive,
+        myStory: bakery.myStory || "",
+        storyQuote: bakery.storyQuote || "",
+        statsYears: bakery.statsYears || "",
+        statsCustomers: bakery.statsCustomers || "",
+        statsRecipes: bakery.statsRecipes || "",
+        statsBaked: bakery.statsBaked || "",
+        imageUrl: bakery.imageUrl || "",
       },
       page,
       limit,
@@ -837,25 +1155,24 @@ export const getBakeryMenuProductById = async (req, res) => {
       });
     }
 
-    const bakery = await Bakery.findOne({
+    const bakeryDoc = await Bakery.findOne({
       _id: product.bakeryId,
       isActive: true,
-    })
-      .select("_id name isActive")
-      .lean();
+    }).select("_id name isActive myStory storyQuote statsYears statsCustomers statsRecipes statsBaked imageUrl");
 
-    if (!bakery) {
+    if (!bakeryDoc) {
       return res.status(404).json({
         message: "Bakery for this product was not found or inactive.",
       });
     }
 
-    const category = await Category.findOne({
-      _id: product.categoryId,
-      bakeryId: bakery._id,
-    })
-      .select("_id name")
-      .lean();
+    if (ensureBakeryStoryDefaults(bakeryDoc)) {
+      await bakeryDoc.save();
+    }
+
+    const bakery = bakeryDoc.toObject();
+
+    const category = await resolveCategoryById(product.categoryId, bakery._id);
 
     const optionDocs =
       product.type === "CUSTOMIZABLE"
@@ -871,6 +1188,13 @@ export const getBakeryMenuProductById = async (req, res) => {
       id: toIdString(bakery._id),
       name: bakery.name,
       isActive: bakery.isActive,
+      myStory: bakery.myStory || "",
+      storyQuote: bakery.storyQuote || "",
+      statsYears: bakery.statsYears || "",
+      statsCustomers: bakery.statsCustomers || "",
+      statsRecipes: bakery.statsRecipes || "",
+      statsBaked: bakery.statsBaked || "",
+      imageUrl: bakery.imageUrl || "",
     };
 
     serializedProduct.category = category
@@ -1234,7 +1558,7 @@ export const createBakeryReview = async (req, res) => {
     // Check if user already reviewed this bakery
     const existingReview = await Review.findOne({
       bakeryId,
-      customerId: user._id,
+      userId: user._id,
     });
 
     if (existingReview) {
@@ -1245,7 +1569,7 @@ export const createBakeryReview = async (req, res) => {
 
     const review = await Review.create({
       bakeryId,
-      customerId: user._id,
+      userId: user._id,
       rating: Number(rating),
       comment: comment ? comment.trim() : "",
     });
@@ -1253,7 +1577,7 @@ export const createBakeryReview = async (req, res) => {
     const serializedReview = {
       id: toIdString(review._id),
       bakeryId: toIdString(review.bakeryId),
-      customerId: toIdString(review.customerId),
+      userId: toIdString(review.userId),
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt,
@@ -1287,6 +1611,8 @@ export const listBakeryReviews = async (req, res) => {
       });
     }
 
+    const bakeryObjectId = new mongoose.Types.ObjectId(bakeryId);
+
     const page = Math.max(Number(req.query.page) || 1, 1);
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
     const skip = (page - 1) * limit;
@@ -1305,22 +1631,22 @@ export const listBakeryReviews = async (req, res) => {
     }
 
     const [reviews, totalReviews] = await Promise.all([
-      Review.find({ bakeryId })
-        .populate("customerId", "name")
+      Review.find({ bakeryId: bakeryObjectId })
+        .populate("userId", "name")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      Review.countDocuments({ bakeryId }),
+      Review.countDocuments({ bakeryId: bakeryObjectId }),
     ]);
 
     const serializedReviews = reviews.map((review) => ({
       id: toIdString(review._id),
       bakeryId: toIdString(review.bakeryId),
-      customer: review.customerId
+      customer: review.userId
         ? {
-            id: toIdString(review.customerId._id),
-            name: review.customerId.name,
+            id: toIdString(review.userId._id),
+            name: review.userId.name,
           }
         : null,
       rating: review.rating,
@@ -1331,7 +1657,7 @@ export const listBakeryReviews = async (req, res) => {
 
     // Calculate average rating
     const ratingResult = await Review.aggregate([
-      { $match: { bakeryId: mongoose.Types.ObjectId(bakeryId) } },
+      { $match: { bakeryId: bakeryObjectId } },
       {
         $group: {
           _id: null,

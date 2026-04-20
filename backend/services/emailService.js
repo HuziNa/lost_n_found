@@ -121,6 +121,32 @@ const buildHtmlBody = ({
   `;
 };
 
+const buildApprovalTextBody = ({ ownerName, bakeryName }) => {
+  const lines = [
+    `Hi ${ownerName || "Bakery Owner"},`,
+    "",
+    `Your bakery application for ${bakeryName || "your bakery"} has been approved.`,
+    "You can now log in and access your bakery owner dashboard.",
+    "",
+    "Thank you for joining our marketplace.",
+  ];
+
+  return lines.join("\n");
+};
+
+const buildRejectionTextBody = ({ ownerName, bakeryName }) => {
+  const lines = [
+    `Hi ${ownerName || "Bakery Owner"},`,
+    "",
+    `Your bakery application for ${bakeryName || "your bakery"} was not approved at this time.`,
+    "If you have questions or want to reapply, please contact support.",
+    "",
+    "Thank you for your interest.",
+  ];
+
+  return lines.join("\n");
+};
+
 export const sendOrderConfirmationEmail = async ({
   to,
   customerName,
@@ -163,6 +189,58 @@ export const sendOrderConfirmationEmail = async ({
         items,
         totalPrice,
       }),
+    });
+
+    return { sent: true };
+  } catch (error) {
+    return { sent: false, reason: error.message };
+  }
+};
+
+export const sendBakeryApprovalEmail = async ({ to, ownerName, bakeryName }) => {
+  if (!to) {
+    return { sent: false, reason: "missing-recipient" };
+  }
+
+  if (!isEmailConfigured()) {
+    return { sent: false, reason: "smtp-not-configured" };
+  }
+
+  const transporter = getTransporter();
+  const subject = "Bakery application approved";
+
+  try {
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to,
+      subject,
+      text: buildApprovalTextBody({ ownerName, bakeryName }),
+    });
+
+    return { sent: true };
+  } catch (error) {
+    return { sent: false, reason: error.message };
+  }
+};
+
+export const sendBakeryRejectionEmail = async ({ to, ownerName, bakeryName }) => {
+  if (!to) {
+    return { sent: false, reason: "missing-recipient" };
+  }
+
+  if (!isEmailConfigured()) {
+    return { sent: false, reason: "smtp-not-configured" };
+  }
+
+  const transporter = getTransporter();
+  const subject = "Bakery application update";
+
+  try {
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to,
+      subject,
+      text: buildRejectionTextBody({ ownerName, bakeryName }),
     });
 
     return { sent: true };
