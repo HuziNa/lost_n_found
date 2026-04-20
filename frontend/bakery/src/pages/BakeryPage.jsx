@@ -5,7 +5,6 @@ import { getBakeryCategories, getBakeryMenuProducts } from "../api/bakery";
 import { useAuth } from "../context/AuthContext";
 import CategoriesSection from "../components/CategoriesSection";
 import CakeCollection from "../components/CakeCollection";
-import PizzaCollection from "../components/PizzaCollection";
 import AboutSection from "../components/AboutSection";
 import ReviewsSection from "../components/ReviewsSection";
 
@@ -67,6 +66,7 @@ export default function BakeryPage() {
         </div>
       )}
       
+      {/* Bakery Header Section */}
       <section className="section bakery-hero" style={{ 
         backgroundImage: `url(${heroImageUrl})`,
         backgroundColor: 'var(--sage-dark)',
@@ -93,10 +93,33 @@ export default function BakeryPage() {
         </div>
       </section>
 
-      <CategoriesSection />
-      <CakeCollection />
-      <AboutSection />
-      <ReviewsSection />
+      <CategoriesSection
+        categories={categories}
+        onSelectCategory={(categoryName) => setActiveCategory(categoryName)}
+      />
+      {menuQuery.isLoading && <div className="placeholder-box">Loading menu...</div>}
+      {menuQuery.isError && <div className="placeholder-box">Unable to load menu.</div>}
+      {!menuQuery.isLoading && (
+        <CakeCollection
+          products={products}
+          categories={categories}
+          filter={activeCategory}
+          onFilterChange={setActiveCategory}
+        />
+      )}
+      <AboutSection
+        story={bakery?.myStory}
+        quote={bakery?.storyQuote}
+        stats={{
+          years: bakery?.statsYears,
+          customers: bakery?.statsCustomers,
+          recipes: bakery?.statsRecipes,
+          baked: bakery?.statsBaked,
+        }}
+        bakeryName={bakery?.name}
+        bakeryImageUrl={bakery?.imageUrl}
+      />
+      <ReviewsSection bakeryId={bakeryId} />
     </div>
   );
 }

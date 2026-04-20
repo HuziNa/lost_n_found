@@ -189,7 +189,7 @@ export default function ProductPage() {
         quickAdd(product);
       }
     } else if (action === "customize") {
-      navigate(`/customize`);
+      navigate("/customize");
     }
   };
 
@@ -232,6 +232,110 @@ export default function ProductPage() {
 
         <div className="product-column product-right">
           <h1 className="product-title">{product.name}</h1>
+          <p className="product-desc" style={{ color: "var(--ink-muted)" }}>
+            {product.description || (product.category?.name ? `Category: ${product.category.name}` : "Bakery collection")}
+          </p>
+
+          {product.type === "CUSTOMIZABLE" && product.options?.length > 0 && (
+            <div className="product-nutrition-section">
+              <div className="nutrition-header">
+                <span className="nutrition-heading">Customization Options</span>
+              </div>
+              <div className="custom-options">
+                {product.options.map((option) => {
+                  const selections = selectedOptions[option.name] || [];
+                  const maxSelections = option.maxSelections === null ? Infinity : Number(option.maxSelections || 1);
+                  const isMulti = maxSelections > 1;
+
+                  return (
+                    <div key={option.id || option.name} style={{ marginBottom: "18px" }}>
+                      <div style={{ fontWeight: 600, marginBottom: "6px" }}>
+                        {option.name}
+                        {option.required ? " *" : ""}
+                      </div>
+                      <div style={{ color: "var(--ink-muted)", fontSize: "12px", marginBottom: "8px" }}>
+                        {isMulti ? `Select up to ${maxSelections} choices` : "Select one"}
+                        {option.perLayer ? " | Per layer" : ""}
+                      </div>
+                      <div style={{ display: "grid", gap: "8px" }}>
+                        {option.choices.map((choice) => {
+                          const isSelected = selections.some((entry) => entry.choiceName === choice.name);
+                          const inputType = isMulti ? "checkbox" : "radio";
+                          return (
+                            <label key={choice.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <input
+                                type={inputType}
+                                name={option.name}
+                                checked={isSelected}
+                                onChange={() => toggleChoice(option, choice)}
+                              />
+                              <span style={{ flex: 1 }}>{choice.name}</span>
+                              {choice.extraPrice ? (
+                                <span style={{ color: "var(--ink-muted)", fontSize: "12px" }}>
+                                  +Rs {Number(choice.extraPrice).toLocaleString()}
+                                </span>
+                              ) : null}
+                              {option.perLayer && isSelected && (
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={selections.find((entry) => entry.choiceName === choice.name)?.layer || 1}
+                                  onChange={(event) => updateLayer(option.name, choice.name, event.target.value)}
+                                  style={{ width: "64px" }}
+                                />
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {optionError && <div className="auth-error" style={{ marginTop: "8px" }}>{optionError}</div>}
+            </div>
+          )}
+
+          <div className="product-nutrition-section">
+            <div className="nutrition-header">
+              <span className="nutrition-heading">Nutritional Information</span>
+            </div>
+            {nutritionEntries.length > 0 ? (
+              <table className="nutrition-table">
+                <tbody>
+                  {nutritionEntries.map(([label, value]) => (
+                    <tr key={label}>
+                      <td>{label}</td>
+                      <td>{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ color: "var(--ink-muted)" }}>Nutrition details are not available.</div>
+            )}
+          </div>
+
+          <div className="product-allergens-section">
+            <h3 className="section-label">ALLERGENS</h3>
+            {product.allergens?.length ? (
+              <div className="allergens-grid">
+                {product.allergens.map((allergen) => (
+                  <AllergenIcon
+                    key={allergen}
+                    name={allergen}
+                    path={<path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2z" />}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: "var(--ink-muted)" }}>Allergen details are not listed.</div>
+            )}
+          </div>
+
+          <div className="product-disclaimer">
+            Additional product details are available upon request from the bakery.
+          </div>
 
           <div className="product-actions-bar">
             <div className="product-price-large">Rs {displayPrice.toLocaleString()}</div>
@@ -239,7 +343,7 @@ export default function ProductPage() {
               <button className="btn-sage product-btn" onClick={() => handleAction("add")}>
                 Add to Cart
               </button>
-              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}>
+              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}> 
                 Customize Order
               </button>
             </div>
