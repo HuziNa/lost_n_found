@@ -1,9 +1,31 @@
 import React from "react";
+import { getCategoryImage } from "../utils/categoryImages";
 
-export default function CategoriesSection() {
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=600&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1571115176098-24ec42ed204d?w=600&q=80&auto=format&fit=crop",
+];
+
+const CATEGORY_IMAGES = {
+  cake: "https://tse4.mm.bing.net/th/id/OIP.jggcJPFc0lMi3dzd5VYzqwHaHQ?rs=1&pid=ImgDetMain&o=7&rm=3",
+  cupcake: "https://tse4.mm.bing.net/th/id/OIP.ojy9M0h34CANEtz42j-miAHaIu?w=736&h=867&rs=1&pid=ImgDetMain&o=7&rm=3",
+  pizza: "https://tse3.mm.bing.net/th/id/OIP.6o-iCWIBMb3VTDt-fh5OMQHaE7?w=626&h=417&rs=1&pid=ImgDetMain&o=7&rm=3",
+  bread: "https://i.pinimg.com/736x/67/76/af/6776af11592ca546a51ce7c2694df4ed.jpg",
+};
+
+export default function CategoriesSection({ categories = [], onSelectCategory }) {
   const scrollToCakes = () => {
     const cakesElement = document.getElementById("cakes");
     if (cakesElement) cakesElement.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleCategoryClick = (category) => {
+    if (onSelectCategory) {
+      onSelectCategory(category.name);
+    }
+    scrollToCakes();
   };
 
   return (
@@ -28,58 +50,38 @@ export default function CategoriesSection() {
           </div>
         </div>
         <div className="cat-grid">
-          {/* Cakes */}
-          <div className="cat-card" onClick={scrollToCakes}>
-            <div className="cat-card-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=600&q=80&auto=format&fit=crop"
-                alt="Luxury celebration cakes"
-                onError={(e) => { e.target.style.background = "#C4847A"; }}
-              />
+          {categories.length === 0 && (
+            <div className="placeholder-box" style={{ gridColumn: "1 / -1" }}>
+              No categories available yet.
             </div>
-            <div className="cat-card-body">
-              <div className="cat-card-name">Celebration Cakes</div>
-            </div>
-          </div>
-          {/* Donuts */}
-          <div className="cat-card">
-            <div className="cat-card-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&q=80&auto=format&fit=crop"
-                alt="Artisan donuts"
-                onError={(e) => (e.target.style.background = "#D4B46A")}
-              />
-            </div>
-            <div className="cat-card-body">
-              <div className="cat-card-name">Daily Pastries</div>
-            </div>
-          </div>
-          {/* Gifting */}
-          <div className="cat-card">
-            <div className="cat-card-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=600&q=80&auto=format&fit=crop"
-                alt="Luxury gifting boxes"
-                onError={(e) => (e.target.style.background = "#A8C5AF")}
-              />
-            </div>
-            <div className="cat-card-body">
-              <div className="cat-card-name">Gifting Sets</div>
-            </div>
-          </div>
-          {/* Macarons */}
-          <div className="cat-card">
-            <div className="cat-card-img-wrap">
-              <img
-                src="https://images.unsplash.com/photo-1571115176098-24ec42ed204d?w=600&q=80&auto=format&fit=crop"
-                alt="Delicate French macarons"
-                onError={(e) => (e.target.style.background = "#E8C4BF")}
-              />
-            </div>
-            <div className="cat-card-body">
-              <div className="cat-card-name">Artisan Macarons</div>
-            </div>
-          </div>
+          )}
+          {categories.map((category, index) => {
+            const nameKey = (category.name || "").toLowerCase();
+            const imageUrl =
+              getCategoryImage(category.id) ||
+              CATEGORY_IMAGES[nameKey] ||
+              FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+            return (
+              <div
+                key={category.id || category.name}
+                className="cat-card"
+                onClick={() => handleCategoryClick(category)}
+              >
+                <div className="cat-card-img-wrap">
+                  <img
+                    src={imageUrl}
+                    alt={category.name}
+                    onError={(event) => {
+                      event.target.style.background = "#C4847A";
+                    }}
+                  />
+                </div>
+                <div className="cat-card-body">
+                  <div className="cat-card-name">{category.name}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

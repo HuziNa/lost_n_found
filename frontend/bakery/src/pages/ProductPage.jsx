@@ -1,12 +1,11 @@
-import React, { useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { CAKES } from "../data/cakes";
-import { PIZZAS } from "../data/pizzas";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getBakeryMenuProduct } from "../api/bakery";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
-import '../styles/product.css';
+import "../styles/product.css";
 
-// SVGs for Allergens to match the "Anti-Slop" premium feel
 const AllergenIcon = ({ name, path }) => (
   <div className="allergen-item">
     <div className="allergen-icon-circle">
@@ -18,25 +17,145 @@ const AllergenIcon = ({ name, path }) => (
   </div>
 );
 
+const DEFAULT_IMAGE =
+  "https://images.unsplash.com/photo-1509409137281-5a36f620dddf?w=1200&q=80&auto=format&fit=crop";
+
 export default function ProductPage() {
   const { id } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
-  const { quickAdd } = useApp();
+  const { addToCart, quickAdd } = useApp();
   const { user, openAuthModal } = useAuth();
-  const isRestricted = user?.role === "admin" || user?.role === "owner";
+  const canOrder = user?.role === "customer";
 
-  const query = new URLSearchParams(location.search);
-  const productType = query.get("type") === "pizza" ? "pizza" : "cake";
+  const productQuery = useQuery({
+    queryKey: ["menuProduct", id],
+    queryFn: () => getBakeryMenuProduct(id),
+    enabled: !!id,
+  });
 
-  const productId = parseInt(id, 10);
-  const product = productType === "pizza"
-    ? PIZZAS.find((item) => item.id === productId)
-    : CAKES.find((item) => item.id === productId);
+  const product = productQuery.data?.product;
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [optionError, setOptionError] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [id, location.search]);
+  }, [id]);
+
+  useEffect(() => {
+    setSelectedOptions({});
+    setOptionError("");
+  }, [product?.id]);
+
+  const nutritionEntries = useMemo(() => {
+    const nutrition = product?.nutrition || {};
+    return Object.entries(nutrition);
+  }, [product]);
+
+  const extraPrice = useMemo(() => {
+    if (!product?.options?.length) return 0;
+    let total = 0;
+    product.options.forEach((option) => {
+      const selections = selectedOptions[option.name] || [];
+      selections.forEach((selection) => {
+        const choice = option.choices.find((item) => item.name === selection.choiceName);
+        if (choice) {
+          total += Number(choice.extraPrice || 0);
+        }
+      });
+    });
+    return total;
+  }, [product, selectedOptions]);
+
+  const displayPrice = useMemo(() => {
+    if (!product) return 0;
+    return Number(product.basePrice || 0) + extraPrice;
+  }, [product, extraPrice]);
+
+  const toggleChoice = (option, choice) => {
+    setSelectedOptions((prev) => {
+      const current = prev[option.name] || [];
+      const maxSelections = option.maxSelections === null ? Infinity : Number(option.maxSelections || 1);
+      const isMulti = maxSelections > 1;
+      const alreadySelected = current.find((entry) => entry.choiceName === choice.name);
+
+      if (!isMulti) {
+        return {
+          ...prev,
+          [option.name]: [
+            {
+              choiceName: choice.name,
+              layer: option.perLayer ? 1 : undefined,
+            },
+          ],
+        };
+      }
+
+      if (alreadySelected) {
+        return {
+          ...prev,
+          [option.name]: current.filter((entry) => entry.choiceName !== choice.name),
+        };
+      }
+
+      if (current.length >= maxSelections) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [option.name]: [
+          ...current,
+          {
+            choiceName: choice.name,
+            layer: option.perLayer ? 1 : undefined,
+          },
+        ],
+      };
+    });
+  };
+
+  const updateLayer = (optionName, choiceName, layer) => {
+    setSelectedOptions((prev) => {
+      const current = prev[optionName] || [];
+      return {
+        ...prev,
+        [optionName]: current.map((entry) =>
+          entry.choiceName === choiceName
+            ? { ...entry, layer: Number(layer) || 1 }
+            : entry
+        ),
+      };
+    });
+  };
+
+  const buildSelectedPayload = () => {
+    if (!product?.options?.length) return [];
+    const selections = [];
+    product.options.forEach((option) => {
+      const selected = selectedOptions[option.name] || [];
+      selected.forEach((entry) => {
+        selections.push({
+          optionName: option.name,
+          choiceName: entry.choiceName,
+          ...(option.perLayer ? { layer: entry.layer || 1 } : {}),
+        });
+      });
+    });
+    return selections;
+  };
+
+  const validateSelections = () => {
+    if (!product?.options?.length) return true;
+    const missing = product.options.filter(
+      (option) => option.required && !(selectedOptions[option.name] || []).length
+    );
+    if (missing.length > 0) {
+      setOptionError("Please select all required options before adding to cart.");
+      return false;
+    }
+    setOptionError("");
+    return true;
+  };
 
   const handleAction = (action) => {
     if (!user) {
@@ -44,19 +163,45 @@ export default function ProductPage() {
       return;
     }
 
-    if (isRestricted) {
-      alert("Admins and bakery owners cannot place orders.");
+    if (!canOrder) {
+      alert("Only customers can add items to the cart.");
+      return;
+    }
+
+    if (!product) return;
+
+    if (product.type === "CUSTOMIZABLE" && !validateSelections()) {
       return;
     }
 
     if (action === "add") {
-      quickAdd(product.name, product.price);
+      if (product.type === "CUSTOMIZABLE") {
+        addToCart({
+          productId: product.id,
+          bakeryId: product.bakeryId,
+          name: product.name,
+          detail: "Customize order",
+          price: displayPrice,
+          icon: "cake",
+          selectedOptions: buildSelectedPayload(),
+        });
+      } else {
+        quickAdd(product);
+      }
     } else if (action === "customize") {
-      navigate(`/customize?type=${productType}`);
+      navigate(`/customize`);
     }
   };
 
-  if (!product) {
+  if (productQuery.isLoading) {
+    return (
+      <div className="page active" style={{ padding: "120px 20px", textAlign: "center" }}>
+        <h2>Loading product...</h2>
+      </div>
+    );
+  }
+
+  if (productQuery.isError || !product) {
     return (
       <div className="page active" style={{ padding: "120px 20px", textAlign: "center" }}>
         <h2>Product not found.</h2>
@@ -65,91 +210,36 @@ export default function ProductPage() {
     );
   }
 
-  // Generate some mock ingredients based on the name to make it look realistic
-  const getIngredients = (name) => {
-    return `${name} [wheat flour (gluten), butter (milk), pearl sugar, water, eggs, yeast, invert sugar, milk powder, salt, natural vanilla flavor], Coating chocolate, Sugar powder.`;
-  };
-
   return (
     <div className="page active product-page">
       <div className="product-container">
-        
-        {/* Left Column */}
         <div className="product-column product-left">
           <div className="product-image-wrapper">
-            <img src={product.img} alt={product.name} className="product-main-image" />
+            <img
+              src={product.imageUrl || DEFAULT_IMAGE}
+              alt={product.name}
+              className="product-main-image"
+            />
           </div>
-          
+
           <div className="product-ingredients-section">
             <h3 className="section-label">INGREDIENTS</h3>
-            <p className="ingredients-text">{getIngredients(product.name)}</p>
+            <p className="ingredients-text">
+              {product.ingredientsText || "Ingredient details are managed by the bakery."}
+            </p>
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="product-column product-right">
           <h1 className="product-title">{product.name}</h1>
 
-          <div className="product-nutrition-section">
-            <div className="nutrition-header">
-              <span className="nutrition-heading">Nutritional Information | Per Serving</span>
-            </div>
-            <table className="nutrition-table">
-              <tbody>
-                <tr>
-                  <td>Calories</td>
-                  <td>430</td>
-                </tr>
-                <tr>
-                  <td>Total Fat (g)</td>
-                  <td>24</td>
-                </tr>
-                <tr>
-                  <td>Saturated Fat (g)</td>
-                  <td>16</td>
-                </tr>
-                <tr>
-                  <td>Trans Fat (g)</td>
-                  <td>0</td>
-                </tr>
-                <tr>
-                  <td>Total Carbohydrate (g)</td>
-                  <td>49</td>
-                </tr>
-                <tr>
-                  <td>Total Sugar (g)</td>
-                  <td>26</td>
-                </tr>
-                <tr>
-                  <td>Protein (g)</td>
-                  <td>5(g)</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="product-allergens-section">
-            <h3 className="section-label">ALLERGENS</h3>
-            <div className="allergens-grid">
-              <AllergenIcon name="Wheat" path={<path d="M12 21v-8m0 0a4 4 0 014-4h1a4 4 0 00-4-4 4 4 0 00-4 4h1a4 4 0 014 4z" />} />
-              <AllergenIcon name="Milk" path={<path d="M7 6v12a2 2 0 002 2h6a2 2 0 002-2V6M7 6h10M7 6l2-4h6l2 4" />} />
-              <AllergenIcon name="Egg" path={<path d="M12 22c4.418 0 8-4.477 8-10S16.418 2 12 2 4 6.477 4 12s3.582 10 8 10z" />} />
-              <AllergenIcon name="Soy" path={<path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zM8 12a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4zm-4 6a2 2 0 100-4 2 2 0 000 4z" />} />
-              <AllergenIcon name="Tree Nut" path={<path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm2 14c-2 0-3-1-3-3s1-3 3-3 3 1 3 3-1 3-3 3zm-4-8c-1.5 0-2.5-.5-2.5-2S8.5 4 10 4s2.5.5 2.5 2T10 8z" />} />
-            </div>
-          </div>
-
-          <div className="product-disclaimer">
-            2,000 Calories a day is used for general nutrition advice, but calorie needs may vary. Additional nutritional information available upon request. Customization of your order may impact the accuracy and/or completeness of the available nutritional information. <a href="#">Allergen and Nutrition Information</a>
-          </div>
-
           <div className="product-actions-bar">
-            <div className="product-price-large">Rs {product.price.toLocaleString()}</div>
+            <div className="product-price-large">Rs {displayPrice.toLocaleString()}</div>
             <div className="product-buttons">
-              <button className="btn-sage product-btn" onClick={() => handleAction("add") }>
+              <button className="btn-sage product-btn" onClick={() => handleAction("add")}>
                 Add to Cart
               </button>
-              <button className="btn-rose product-btn" onClick={() => handleAction("customize") }>
+              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}>
                 Customize Order
               </button>
             </div>
@@ -159,4 +249,3 @@ export default function ProductPage() {
     </div>
   );
 }
-

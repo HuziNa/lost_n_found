@@ -51,6 +51,18 @@ const productSchema = new mongoose.Schema(
 
     basePrice: { type: Number, required: true },
 
+    description: { type: String, default: "" },
+
+    imageUrl: { type: String, default: "" },
+
+    ingredientsText: { type: String, default: "" },
+
+    description: { type: String, default: "" },
+
+    imageUrl: { type: String, default: "" },
+
+    ingredientsText: { type: String, default: "" },
+
     // for the fixed items 
     ingredients: {
       type: [productIngredientSchema],

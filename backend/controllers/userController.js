@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
 
-const ORDER_STATUSES = ["pending", "completed"];
+const ORDER_STATUSES = ["pending", "baking", "ready", "completed", "cancelled"];
 const OWNER_ROLE = "bakeryOwner";
 
 const toIdString = (value) => (value ? value.toString() : null);
@@ -27,8 +27,16 @@ function sanitizeUser(userDoc) {
         name: userDoc.bakeryManaged.name,
         address: userDoc.bakeryManaged.address || null,
         contactNumber: userDoc.bakeryManaged.contactNumber || null,
+        myStory: userDoc.bakeryManaged.myStory || "",
+        storyQuote: userDoc.bakeryManaged.storyQuote || "",
+        statsYears: userDoc.bakeryManaged.statsYears || "",
+        statsCustomers: userDoc.bakeryManaged.statsCustomers || "",
+        statsRecipes: userDoc.bakeryManaged.statsRecipes || "",
+        statsBaked: userDoc.bakeryManaged.statsBaked || "",
+        imageUrl: userDoc.bakeryManaged.imageUrl || "",
         ownerId: toIdString(userDoc.bakeryManaged.ownerId),
         isActive: userDoc.bakeryManaged.isActive,
+        approvalStatus: userDoc.bakeryManaged.approvalStatus,
       };
     } else {
       baseUser.bakeryManaged = userDoc.bakeryManaged
@@ -52,7 +60,7 @@ export const getMyDetails = async (req, res) => {
       .select("-password")
       .populate(
         "bakeryManaged",
-        "_id name address contactNumber ownerId isActive",
+        "_id name address contactNumber myStory storyQuote statsYears statsCustomers statsRecipes statsBaked imageUrl ownerId isActive approvalStatus",
       );
 
     if (!user) {
@@ -183,7 +191,7 @@ export const updateMyAccount = async (req, res) => {
     if (user.role === OWNER_ROLE && user.bakeryManaged) {
       await user.populate(
         "bakeryManaged",
-        "_id name address contactNumber ownerId isActive",
+        "_id name address contactNumber myStory storyQuote statsYears statsCustomers statsRecipes statsBaked imageUrl ownerId isActive approvalStatus",
       );
     }
 
@@ -202,7 +210,7 @@ export const updateMyAccount = async (req, res) => {
 // API: GET /api/users/me/orders
 // Expects:
 // - Session cookie from /api/auth/login (sid by default)
-// - Optional query params: page, limit, status (pending|completed)
+// - Optional query params: page, limit, status (pending|baking|ready|completed|cancelled)
 // Returns:
 // - 200 with Order schema columns:
 //   userId, bakeryId, items[{ productId, quantity, selectedOptions[{ optionName, choiceName, ingredientId, quantity, layer }], finalPrice }], totalPrice, status, createdAt, updatedAt
@@ -218,7 +226,7 @@ export const getMyPastOrders = async (req, res) => {
 
     if (normalizedStatus && !ORDER_STATUSES.includes(normalizedStatus)) {
       return res.status(400).json({
-        message: "status must be one of: pending, completed.",
+        message: "status must be one of: pending, baking, ready, completed, cancelled.",
       });
     }
 

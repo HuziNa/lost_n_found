@@ -1,6 +1,7 @@
 import express from "express";
 import {
   addIngredientStock,
+  createBakeryCategory,
   createBakeryReview,
   createBakeryIngredient,
   createBakeryProduct,
@@ -8,11 +9,15 @@ import {
   getBakeryMenuProductsByBakeryId,
   getBakeryMenuProductById,
   getBakeryAnalytics,
+  listPublicBakeries,
+  listBakeryCategories,
   listBakeryIngredients,
   listBakeryPastOrders,
   listBakeryProducts,
   listBakeryReviews,
+  updateBakeryProfile,
   updateBakeryOrderStatus,
+  updateBakeryCategory,
   updateBakeryProduct,
 } from "../controllers/bakeryController.js";
 import {
@@ -23,6 +28,9 @@ import {
 
 const router = express.Router();
 
+// Public bakery list endpoint for discovery.
+router.get("/public", listPublicBakeries);
+
 // Public menu list endpoint for frontend product grids.
 router.get("/menu/:bakeryId/products", getBakeryMenuProductsByBakeryId);
 
@@ -32,10 +40,17 @@ router.get("/products/:productId", getBakeryMenuProductById);
 // Public bakery reviews endpoint (requires bakeryId query param).
 router.get("/reviews", listBakeryReviews);
 
+// Public global categories list.
+router.get("/categories", listBakeryCategories);
+
 // Customer review submission endpoint.
 router.post("/reviews", requireAuth, requireCustomer, createBakeryReview);
 
 router.use(requireAuth, requireBakeryOwner);
+router.post("/categories", createBakeryCategory);
+router.patch("/categories/:categoryId", updateBakeryCategory);
+
+router.patch("/profile", updateBakeryProfile);
 
 router.get("/ingredients", listBakeryIngredients);
 router.post("/ingredients", createBakeryIngredient);

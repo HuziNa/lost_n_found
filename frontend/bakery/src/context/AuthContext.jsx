@@ -1,23 +1,33 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { loginUser, logoutUser, signupUser } from "../api/auth";
+import { getMe } from "../api/users";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'signup'
   const [loading, setLoading] = useState(true);
 
-  const API_URL = "http://localhost:5001/api/auth";
+  const refreshUser = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getMe();
+      setUser(response?.user || null);
+    } catch (error) {
+      if (error?.status !== 401) {
+        console.error("Failed to refresh session:", error);
+      }
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser && token) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
-  }, [token]);
+    refreshUser();
+  }, [refreshUser]);
 
   const openAuthModal = (mode = "login") => {
     setAuthMode(mode);
@@ -30,75 +40,45 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setToken(data.token);
-        setUser(data.user);
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        closeAuthModal();
-        return { success: true };
-      } else {
-        return { success: false, message: data.message };
-      }
+      const data = await loginUser({ email, password });
+      setUser(data.user || null);
+      closeAuthModal();
+      return { success: true };
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, message: "An error occurred during login." };
+      return { success: false, message: error?.data?.message || "An error occurred during login." };
     }
   };
 
   const signup = async (userData) => {
     try {
-      const response = await fetch(`${API_URL}/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Some backends return token on signup, some don't. 
-        // Based on the controller, it returns user but no token explicitly shown in my previous view_file (wait, let me check again)
-        // I checked authController.js: login returns token, register returns user but NO token.
-        // I should probably auto-login after signup if token is available, or just tell user to login.
-        // Actually, many systems auto-login. I'll check registerUser again.
-        
-        // RE-CHECKING authController.js:
-        // registerUser returns: res.status(201).json({ message: "Signup successful.", user: sanitizeUser(user), redirectTo: HERO_PAGE_PATH });
-        // No token. So I'll just switch them to login mode or perform login automatically if I want.
-        // Let's just switch to login mode with a success message for now, or I could modify backend? 
-        // User asked for the popup, I'll stick to frontend changes first.
-        
-        return { success: true, message: "Signup successful! Please log in." };
-      } else {
-        return { success: false, message: data.message };
+      const data = await signupUser(userData);
+      if (data?.user) {
+        setUser(data.user);
+        closeAuthModal();
+        return { success: true, message: data.message };
       }
+      return { success: true, message: data?.message || "Signup successful." };
     } catch (error) {
       console.error("Signup error:", error);
-      return { success: false, message: "An error occurred during signup." };
+      return { success: false, message: error?.data?.message || "An error occurred during signup." };
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.warn("Logout error:", error);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
         loading,
         isAuthModalOpen,
         authMode,
@@ -108,6 +88,7 @@ export const AuthProvider = ({ children }) => {
         login,
         signup,
         logout,
+        refreshUser,
       }}
     >
       {children}

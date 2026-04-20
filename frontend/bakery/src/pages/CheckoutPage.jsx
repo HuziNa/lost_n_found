@@ -1,14 +1,17 @@
-import React, { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { placeOrder } from "../api/orders";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import { Icon } from "../components/customize/Icons";
 import "../styles/checkout.css";
 
 export default function CheckoutPage() {
-  const { state } = useApp();
+  const { state, clearCart } = useApp();
   const { user } = useAuth();
-  const isRestricted = user?.role === "admin" || user?.role === "owner";
+  const navigate = useNavigate();
+  const isRestricted = user?.role === "admin" || user?.role === "bakeryOwner";
 
   // Form state
   const [customerInfo, setCustomerInfo] = useState({
@@ -22,8 +25,9 @@ export default function CheckoutPage() {
   });
 
   const [deliveryOption, setDeliveryOption] = useState("standard");
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [orderError, setOrderError] = useState("");
+  const [orderSuccess, setOrderSuccess] = useState("");
 
   if (isRestricted) {
     const redirectTo = user?.role === "admin" ? "/admin" : "/bakery/dashboard";
@@ -34,6 +38,10 @@ export default function CheckoutPage() {
     return <Navigate to="/cart" replace />;
   }
 
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCustomerInfo(prev => ({
@@ -42,32 +50,42 @@ export default function CheckoutPage() {
     }));
   };
 
-  // Placeholder function for placing order
-  const handlePlaceOrder = async () => {
-    setIsProcessing(true);
+  const bakeryId = state.cart[0]?.bakeryId;
+  const orderPayload = useMemo(() => {
+    const items = state.cart.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity || 1,
+      ...(item.selectedOptions && item.selectedOptions.length > 0
+        ? { selectedOptions: item.selectedOptions }
+        : {}),
+    }));
 
-    // Placeholder for order placement API
-    // TODO: Replace with actual API call
-    console.log("Placing order with data:", {
-      customerInfo,
-      deliveryOption,
-      paymentMethod,
-      items: state.cart,
-      total: calculateTotal()
-    });
+    return {
+      bakeryId,
+      items,
+    };
+  }, [bakeryId, state.cart]);
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  const placeOrderMutation = useMutation({
+    mutationFn: () => placeOrder(orderPayload),
+    onSuccess: (data) => {
+      setOrderSuccess(data?.message || "Order placed successfully.");
+      setOrderError("");
+      clearCart();
+      setTimeout(() => {
+        navigate("/orders", { replace: true });
+      }, 800);
+    },
+    onError: (error) => {
+      setOrderError(error?.data?.message || "Unable to place order. Please try again.");
+      setOrderSuccess("");
+    },
+  });
 
-    // Placeholder success handling
-    alert("Order placed successfully! (This is a placeholder - API integration needed)");
-    setIsProcessing(false);
-  };
-
-  const calculateTotal = () => {
-    const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
-    const delivery = subtotal >= 2000 ? 0 : 150;
-    return subtotal + delivery;
+  const handlePlaceOrder = () => {
+    setOrderError("");
+    setOrderSuccess("");
+    placeOrderMutation.mutate();
   };
 
   const deliveryOptions = [
@@ -77,12 +95,11 @@ export default function CheckoutPage() {
   ];
 
   const paymentMethods = [
-    { id: "card", name: "Credit/Debit Card", icon: "card" },
     { id: "cod", name: "Cash on Delivery", icon: "cash" },
     { id: "bank", name: "Bank Transfer", icon: "bank" }
   ];
 
-  const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+  const subtotal = state.cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
   const selectedDelivery = deliveryOptions.find(opt => opt.id === deliveryOption);
   const deliveryFee = selectedDelivery?.price || 150;
   const finalTotal = subtotal + deliveryFee;
@@ -239,24 +256,6 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {paymentMethod === 'card' && (
-                <div className="card-details" style={{ marginTop: '20px' }}>
-                  <div className="form-grid">
-                    <div className="form-group full-width">
-                      <label>Card Number</label>
-                      <input type="text" placeholder="1234 5678 9012 3456" />
-                    </div>
-                    <div className="form-group">
-                      <label>Expiry Date</label>
-                      <input type="text" placeholder="MM/YY" />
-                    </div>
-                    <div className="form-group">
-                      <label>CVV</label>
-                      <input type="text" placeholder="123" />
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -271,8 +270,9 @@ export default function CheckoutPage() {
                     <div className="item-info">
                       <div className="item-name">{item.name}</div>
                       <div className="item-detail">{item.detail}</div>
+                      <div className="item-detail">Qty: {item.quantity || 1}</div>
                     </div>
-                    <div className="item-price">Rs {item.price.toLocaleString()}</div>
+                    <div className="item-price">Rs {(item.price * (item.quantity || 1)).toLocaleString()}</div>
                   </div>
                 ))}
               </div>
@@ -292,12 +292,20 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {!bakeryId && (
+                <div className="auth-error" style={{ marginTop: "12px" }}>
+                  Missing bakery information for this order.
+                </div>
+              )}
+              {orderError && <div className="auth-error" style={{ marginTop: "12px" }}>{orderError}</div>}
+              {orderSuccess && <div className="auth-success" style={{ marginTop: "12px" }}>{orderSuccess}</div>}
+
               <button
                 className="btn-place-order"
                 onClick={handlePlaceOrder}
-                disabled={isProcessing}
+                disabled={placeOrderMutation.isPending || !bakeryId}
               >
-                {isProcessing ? (
+                {placeOrderMutation.isPending ? (
                   <>
                     <Icon name="spinner" size={16} />
                     Processing...

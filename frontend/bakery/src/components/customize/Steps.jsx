@@ -36,17 +36,7 @@ async function adjustIngredientStock(ingredientId, action) {
   if (!ingredientId) return;
   const quantity = action === "increase" ? 1 : action === "decrease" ? -1 : 0;
   if (quantity === 0) return;
-
-  const endpoint = `/api/bakery/ingredients/stock`;
-  try {
-    await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ingredientId, quantity })
-    });
-  } catch (error) {
-    console.warn("Ingredient stock update failed", action, ingredientId, error);
-  }
+  return;
 }
 
 export function StepCard({ num, title, subtitle, isOpen, toggleOpen, children }) {
