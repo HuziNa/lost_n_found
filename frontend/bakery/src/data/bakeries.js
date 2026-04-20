@@ -66,5 +66,18 @@ export const BAKERIES = [
     action: "Coming",
     img: "",
     fallbackBg: "#E8C4BF"
+  },
+  {
+    id: 7,
+    badge: "Pizza",
+    name: "Pizzeria Bella Vista",
+    category: "Authentic Italian Pizzeria",
+    desc: "Wood-fired pizzas with fresh ingredients, imported Italian cheeses, and traditional recipes passed down through generations.",
+    rating: 4.8,
+    stars: "★★★★★",
+    action: "Order",
+    address: "24 Via Roma, Firenze",
+    img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&q=80&auto=format&fit=crop",
+    fallbackBg: "#D2691E"
   }
 ];

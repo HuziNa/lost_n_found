@@ -2,6 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import CategoriesSection from "../components/CategoriesSection";
 import CakeCollection from "../components/CakeCollection";
+import PizzaCollection from "../components/PizzaCollection";
 import AboutSection from "../components/AboutSection";
 import ReviewsSection from "../components/ReviewsSection";
 import { BAKERIES } from "../data/bakeries";
@@ -57,7 +58,7 @@ export default function BakeryPage() {
       </section>
 
       <CategoriesSection />
-      <CakeCollection />
+      {bakery.category?.toLowerCase().includes("pizzeria") ? <PizzaCollection /> : <CakeCollection />}
       <AboutSection />
       <ReviewsSection />
     </div>

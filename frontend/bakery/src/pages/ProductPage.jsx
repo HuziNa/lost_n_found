@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { CAKES } from "../data/cakes";
+import { PIZZAS } from "../data/pizzas";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import '../styles/product.css';
@@ -19,17 +20,23 @@ const AllergenIcon = ({ name, path }) => (
 
 export default function ProductPage() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { quickAdd } = useApp();
   const { user, openAuthModal } = useAuth();
   const isRestricted = user?.role === "admin" || user?.role === "owner";
 
-  const cakeId = parseInt(id, 10);
-  const cake = CAKES.find((c) => c.id === cakeId);
+  const query = new URLSearchParams(location.search);
+  const productType = query.get("type") === "pizza" ? "pizza" : "cake";
+
+  const productId = parseInt(id, 10);
+  const product = productType === "pizza"
+    ? PIZZAS.find((item) => item.id === productId)
+    : CAKES.find((item) => item.id === productId);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [id, location.search]);
 
   const handleAction = (action) => {
     if (!user) {
@@ -43,13 +50,13 @@ export default function ProductPage() {
     }
 
     if (action === "add") {
-      quickAdd(cake.name, cake.price);
+      quickAdd(product.name, product.price);
     } else if (action === "customize") {
-      navigate("/customize");
+      navigate(`/customize?type=${productType}`);
     }
   };
 
-  if (!cake) {
+  if (!product) {
     return (
       <div className="page active" style={{ padding: "120px 20px", textAlign: "center" }}>
         <h2>Product not found.</h2>
@@ -70,18 +77,18 @@ export default function ProductPage() {
         {/* Left Column */}
         <div className="product-column product-left">
           <div className="product-image-wrapper">
-            <img src={cake.img} alt={cake.name} className="product-main-image" />
+            <img src={product.img} alt={product.name} className="product-main-image" />
           </div>
           
           <div className="product-ingredients-section">
             <h3 className="section-label">INGREDIENTS</h3>
-            <p className="ingredients-text">{getIngredients(cake.name)}</p>
+            <p className="ingredients-text">{getIngredients(product.name)}</p>
           </div>
         </div>
 
         {/* Right Column */}
         <div className="product-column product-right">
-          <h1 className="product-title">{cake.name}</h1>
+          <h1 className="product-title">{product.name}</h1>
 
           <div className="product-nutrition-section">
             <div className="nutrition-header">
@@ -137,12 +144,12 @@ export default function ProductPage() {
           </div>
 
           <div className="product-actions-bar">
-            <div className="product-price-large">Rs {cake.price.toLocaleString()}</div>
+            <div className="product-price-large">Rs {product.price.toLocaleString()}</div>
             <div className="product-buttons">
-              <button className="btn-sage product-btn" onClick={() => handleAction("add")}>
+              <button className="btn-sage product-btn" onClick={() => handleAction("add") }>
                 Add to Cart
               </button>
-              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}>
+              <button className="btn-rose product-btn" onClick={() => handleAction("customize") }>
                 Customize Order
               </button>
             </div>
@@ -153,4 +160,3 @@ export default function ProductPage() {
   );
 }
 
-import '../styles/product.css';

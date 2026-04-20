@@ -1,0 +1,88 @@
+export const PIZZA_IMAGES = {
+  margherita: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80&auto=format&fit=crop",
+  pepperoni: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=600&q=80&auto=format&fit=crop",
+  hawaiian: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&q=80&auto=format&fit=crop",
+  vegetarian: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&q=80&auto=format&fit=crop",
+};
+
+export const PIZZA_IMAGES_ALT = {
+  quattro: "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=600&q=80&auto=format&fit=crop",
+  meat: "https://images.unsplash.com/photo-1601924582970-9238bcb495d9?w=600&q=80&auto=format&fit=crop",
+  supreme: "https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?w=600&q=80&auto=format&fit=crop",
+  bianca: "https://images.unsplash.com/photo-1584365685547-9a5fb6f3a70c?w=600&q=80&auto=format&fit=crop",
+};
+
+export const PIZZAS = [
+  {
+    id: 1,
+    name: "Margherita Classica",
+    desc: "Fresh mozzarella, San Marzano tomatoes, basil, and extra virgin olive oil on our signature crust.",
+    price: 1200,
+    img: PIZZA_IMAGES.margherita,
+    badge: "popular",
+    cat: "classic",
+  },
+  {
+    id: 2,
+    name: "Pepperoni Supreme",
+    desc: "Spicy pepperoni, mozzarella, and our house-made tomato sauce on a crispy thin crust.",
+    price: 1450,
+    img: PIZZA_IMAGES.pepperoni,
+    badge: "new",
+    cat: "meat",
+  },
+  {
+    id: 3,
+    name: "Hawaiian Paradise",
+    desc: "Ham, pineapple, mozzarella, and a sweet tomato glaze. A tropical twist on tradition.",
+    price: 1350,
+    img: PIZZA_IMAGES.hawaiian,
+    badge: "",
+    cat: "specialty",
+  },
+  {
+    id: 4,
+    name: "Vegetarian Delight",
+    desc: "Bell peppers, mushrooms, olives, onions, and fresh mozzarella on our wood-fired crust.",
+    price: 1300,
+    img: PIZZA_IMAGES.vegetarian,
+    badge: "",
+    cat: "vegetarian",
+  },
+  {
+    id: 5,
+    name: "Quattro Formaggi",
+    desc: "Four cheese blend: mozzarella, gorgonzola, parmesan, and ricotta. A cheese lover's dream.",
+    price: 1550,
+    img: PIZZA_IMAGES_ALT.quattro,
+    badge: "",
+    cat: "classic",
+  },
+  {
+    id: 6,
+    name: "Meat Lovers Supreme",
+    desc: "Pepperoni, sausage, ham, bacon, and ground beef with extra cheese.",
+    price: 1650,
+    img: PIZZA_IMAGES_ALT.meat,
+    badge: "popular",
+    cat: "meat",
+  },
+  {
+    id: 7,
+    name: "The Supreme",
+    desc: "Everything but the kitchen sink: pepperoni, sausage, peppers, onions, mushrooms, and olives.",
+    price: 1500,
+    img: PIZZA_IMAGES_ALT.supreme,
+    badge: "new",
+    cat: "specialty",
+  },
+  {
+    id: 8,
+    name: "Bianca Special",
+    desc: "White pizza with ricotta, mozzarella, garlic, and fresh herbs. No tomato sauce.",
+    price: 1250,
+    img: PIZZA_IMAGES_ALT.bianca,
+    badge: "",
+    cat: "vegetarian",
+  },
+];
