@@ -154,6 +154,46 @@
   font-weight: 600;
 }
 
+.dashboard-modal .auth-field label {
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  text-transform: none;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.dashboard-modal .auth-field input,
+.dashboard-modal .auth-field select,
+.dashboard-modal .auth-field textarea {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  background: var(--warm-white);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.dashboard-modal .auth-field textarea {
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.dashboard-modal .auth-field input::placeholder,
+.dashboard-modal .auth-field textarea::placeholder {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.dashboard-modal .auth-field input:focus,
+.dashboard-modal .auth-field select:focus,
+.dashboard-modal .auth-field textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--warm-white);
+}
+
 .auth-field input {
   padding: 12px 16px;
   border: 1px solid var(--border);

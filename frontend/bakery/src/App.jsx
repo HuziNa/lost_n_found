@@ -18,6 +18,7 @@ import ProductPage from "./pages/ProductPage";
 import BakeryRegistrationPage from "./pages/BakeryRegistrationPage";
 import AdminPage from "./pages/AdminPage";
 import BakeryDashboard from "./pages/BakeryDashboard";
+import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Scroll to top on route change
@@ -49,6 +50,11 @@ function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/profile" element={
+                <ProtectedRoute allowedRoles={["customer", "bakeryOwner"]}>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } />
               <Route path="/register-bakery" element={<BakeryRegistrationPage />} />
               <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={["admin"]}>
@@ -56,7 +62,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/bakery/dashboard" element={
-                <ProtectedRoute allowedRoles={["owner"]}>
+                <ProtectedRoute allowedRoles={["bakeryOwner"]}>
                   <BakeryDashboard />
                 </ProtectedRoute>
               } />

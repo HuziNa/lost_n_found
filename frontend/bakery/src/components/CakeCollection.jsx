@@ -1,11 +1,27 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import CakeCard from "./CakeCard";
-import { CAKES } from "../data/cakes";
 
-export default function CakeCollection() {
-  const [filter, setFilter] = useState("all");
+export default function CakeCollection({ products = [], categories: categoriesProp = [], filter, onFilterChange }) {
+  const [localFilter, setLocalFilter] = useState("all");
+  const activeFilter = filter ?? localFilter;
+  const setFilter = onFilterChange ?? setLocalFilter;
 
-  const displayCakes = filter === "all" ? CAKES : CAKES.filter(c => c.cat === filter);
+  const derivedCategories = useMemo(() => {
+    const unique = new Map();
+    products.forEach((product) => {
+      if (product.category?.name) {
+        unique.set(product.category.name, product.category);
+      }
+    });
+    return Array.from(unique.values());
+  }, [products]);
+
+  const categories = categoriesProp.length > 0 ? categoriesProp : derivedCategories;
+
+  const displayProducts =
+    activeFilter === "all"
+      ? products
+      : products.filter((product) => product.category?.name === activeFilter);
 
   return (
     <section className="section cakes-section" id="cakes">
@@ -27,40 +43,28 @@ export default function CakeCollection() {
           </div>
           <div className="cake-filters">
             <button
-              className={`filter-btn ${filter === "all" ? "selected" : ""}`}
+              className={`filter-btn ${activeFilter === "all" ? "selected" : ""}`}
               onClick={() => setFilter("all")}
             >
               All
             </button>
-            <button
-              className={`filter-btn ${filter === "fresh" ? "selected" : ""}`}
-              onClick={() => setFilter("fresh")}
-            >
-              Fresh Cream
-            </button>
-            <button
-              className={`filter-btn ${filter === "mousse" ? "selected" : ""}`}
-              onClick={() => setFilter("mousse")}
-            >
-              Mousse
-            </button>
-            <button
-              className={`filter-btn ${filter === "butter" ? "selected" : ""}`}
-              onClick={() => setFilter("butter")}
-            >
-              Buttercream
-            </button>
-            <button
-              className={`filter-btn ${filter === "dry" ? "selected" : ""}`}
-              onClick={() => setFilter("dry")}
-            >
-              Dry Cake
-            </button>
+            {categories.map((category) => (
+              <button
+                key={category.id || category.name}
+                className={`filter-btn ${activeFilter === category.name ? "selected" : ""}`}
+                onClick={() => setFilter(category.name)}
+              >
+                {category.name}
+              </button>
+            ))}
           </div>
         </div>
         <div className="cake-grid" style={{ marginTop: '40px' }}>
-          {displayCakes.map(cake => (
-            <CakeCard key={cake.id} cake={cake} />
+          {displayProducts.length === 0 && (
+            <div className="placeholder-box">No products available yet.</div>
+          )}
+          {displayProducts.map(product => (
+            <CakeCard key={product.id} product={product} />
           ))}
         </div>
       </div>

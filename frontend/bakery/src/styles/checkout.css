@@ -1,24 +1,33 @@
-/* Checkout Page Styles */
+/* ═══════════════════════════════════════════
+   CHECKOUT PAGE
+   ═══════════════════════════════════════════ */
+
+/* Page wrapper */
 .checkout-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 48px max(24px, 5vw) 96px;
 }
 
+/* Header */
 .checkout-header {
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .checkout-title {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4.5vw, 56px);
+  font-weight: 400;
   color: var(--ink);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  letter-spacing: -0.6px;
 }
 
 .checkout-breadcrumb {
   color: var(--ink-muted);
-  font-size: 0.9rem;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .checkout-breadcrumb a {
@@ -30,29 +39,55 @@
   color: var(--ink);
 }
 
+/* ═══ TWO-COLUMN GRID ═══
+   No align-items set — children stretch to full row height.
+   This is critical: .checkout-sidebar must be taller than
+   .order-summary for position: sticky to work. */
 .checkout-content {
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 40px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 32px;
 }
 
+/* Main content column — align-self: start prevents it from
+   stretching, while the sidebar stretches to match its height. */
 .checkout-main {
+  align-self: start;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 24px;
 }
 
+/* ═══ SIDEBAR + STICKY ORDER SUMMARY ═══
+   .checkout-sidebar stretches to full grid row height (default).
+   .order-summary sticks inside it as the user scrolls. */
+.checkout-sidebar {
+  /* No position, no align-self — just a tall container */
+}
+
+.order-summary {
+  position: sticky;
+  top: 144px; /* 112px header + 32px breathing room */
+  background: var(--warm-white);
+  border-radius: 0;
+  padding: 26px 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+/* ═══ FORM SECTIONS ═══ */
 .checkout-section {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--warm-white);
+  border-radius: 0;
+  padding: 26px 28px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
   color: var(--ink);
   margin-bottom: 20px;
   display: flex;
@@ -79,22 +114,28 @@
   font-weight: 500;
   color: var(--ink);
   margin-bottom: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
 }
 
 .form-group input,
 .form-group textarea {
   padding: 12px 16px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  transition: var(--transition);
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184, 151, 58, 0.12);
 }
 
 .form-group textarea {
@@ -102,7 +143,7 @@
   min-height: 80px;
 }
 
-/* Delivery Options */
+/* ═══ DELIVERY OPTIONS ═══ */
 .delivery-options {
   display: flex;
   flex-direction: column;
@@ -114,24 +155,26 @@
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--cream);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
 }
 
 .delivery-option:hover {
-  border-color: var(--primary-light);
+  border-color: var(--gold-light);
 }
 
 .delivery-option.selected {
-  border-color: var(--primary);
-  background: rgba(255, 107, 53, 0.05);
+  border-color: var(--gold);
+  background: var(--gold-pale);
+  box-shadow: var(--shadow-xs);
 }
 
 .delivery-option input[type="radio"] {
   margin-top: 2px;
-  accent-color: var(--primary);
+  accent-color: var(--gold);
 }
 
 .option-content {
@@ -146,19 +189,19 @@
 
 .option-time {
   color: var(--ink-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin-bottom: 4px;
 }
 
 .option-price {
   font-weight: 600;
-  color: var(--primary);
+  color: var(--gold-dark);
 }
 
-/* Payment Methods */
+/* ═══ PAYMENT METHODS ═══ */
 .payment-methods {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -167,23 +210,25 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--cream);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
 }
 
 .payment-method:hover {
-  border-color: var(--primary-light);
+  border-color: var(--gold-light);
 }
 
 .payment-method.selected {
-  border-color: var(--primary);
-  background: rgba(255, 107, 53, 0.05);
+  border-color: var(--gold);
+  background: var(--gold-pale);
+  box-shadow: var(--shadow-xs);
 }
 
 .payment-method input[type="radio"] {
-  accent-color: var(--primary);
+  accent-color: var(--gold);
 }
 
 .method-content {
@@ -195,27 +240,16 @@
 }
 
 .card-details {
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
   padding: 20px;
 }
 
-/* Order Summary Sidebar */
-.checkout-sidebar {
-  position: sticky;
-  top: 20px;
-}
-
-.order-summary {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
+/* ═══ ORDER SUMMARY CONTENT ═══ */
 .order-summary h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
   color: var(--ink);
   margin-bottom: 20px;
 }
@@ -247,7 +281,7 @@
 }
 
 .item-detail {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--ink-muted);
 }
 
@@ -257,7 +291,7 @@
 }
 
 .order-totals {
-  border-top: 2px solid var(--border);
+  border-top: 1px solid var(--border);
   padding-top: 16px;
   margin-bottom: 24px;
 }
@@ -267,29 +301,32 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .total-line.final {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 600;
   color: var(--ink);
   border-top: 1px solid var(--border);
   margin-top: 8px;
   padding-top: 16px;
 }
 
+/* ═══ PLACE ORDER BUTTON ═══ */
 .btn-place-order {
   width: 100%;
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  background: var(--ink);
+  color: var(--cream);
+  border: 1px solid var(--ink);
+  padding: 16px 18px;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2.6px;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,11 +334,12 @@
 }
 
 .btn-place-order:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: var(--warm-white);
+  color: var(--ink);
 }
 
 .btn-place-order:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -311,18 +349,26 @@
   gap: 8px;
   justify-content: center;
   margin-top: 16px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
   color: var(--ink-muted);
 }
 
-/* Responsive Design */
+/* ═══ RESPONSIVE — MOBILE ═══ */
+@media (max-width: 850px) {
+  .order-summary {
+    top: 172px; /* 148px mobile header + 24px gap */
+  }
+}
+
 @media (max-width: 768px) {
   .checkout-content {
     grid-template-columns: 1fr;
     gap: 20px;
   }
 
-  .checkout-sidebar {
+  .order-summary {
     position: static;
   }
 
@@ -335,6 +381,6 @@
   }
 
   .checkout-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
 }

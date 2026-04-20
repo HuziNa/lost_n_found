@@ -7,7 +7,7 @@ import { Icon } from "../components/customize/Icons";
 export default function CartPage() {
   const { state, removeFromCart } = useApp();
   const { user } = useAuth();
-  const isRestricted = user?.role === "admin" || user?.role === "owner";
+  const isRestricted = user?.role === "admin" || user?.role === "bakeryOwner";
 
   if (isRestricted) {
     const redirectTo = user?.role === "admin" ? "/admin" : "/bakery/dashboard";
@@ -36,7 +36,7 @@ export default function CartPage() {
     );
   }
 
-  const subtotal = state.cart.reduce((s, i) => s + i.price, 0);
+  const subtotal = state.cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
   const delivery = subtotal >= 2000 ? 0 : 150;
   const total = subtotal + delivery;
 
@@ -54,8 +54,9 @@ export default function CartPage() {
                 <div className="cart-item-info">
                   <div className="cart-item-name">{item.name}</div>
                   <div className="cart-item-detail">{item.detail}</div>
+                  <div className="cart-item-detail">Qty: {item.quantity || 1}</div>
                 </div>
-                <div className="cart-item-price">Rs {item.price.toLocaleString()}</div>
+                <div className="cart-item-price">Rs {(item.price * (item.quantity || 1)).toLocaleString()}</div>
                 <button className="cart-item-remove" onClick={() => removeFromCart(item.id)} aria-label="Remove item">
                   <Icon name="close" size={14} />
                 </button>

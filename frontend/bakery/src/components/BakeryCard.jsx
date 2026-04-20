@@ -5,15 +5,18 @@ import { useAuth } from "../context/AuthContext";
 export default function BakeryCard({ bakery }) {
   const navigate = useNavigate();
   const { user, openAuthModal } = useAuth();
-  const [imgError, setImgError] = useState(!bakery.img);
+  const [imgError, setImgError] = useState(!bakery.imageUrl);
+
+  const isOrderable = bakery.isActive !== false;
 
   const handleClick = () => {
-    if (bakery.action === "Order") {
-      if (!user) {
-        openAuthModal("login");
-      } else {
-        navigate(`/bakery/${bakery.id}`);
-      }
+    if (!isOrderable) {
+      return;
+    }
+    if (!user) {
+      openAuthModal("login");
+    } else {
+      navigate(`/bakery/${bakery.id}`);
     }
   };
 
@@ -21,7 +24,7 @@ export default function BakeryCard({ bakery }) {
     <div
       className="bakery-card"
       onClick={handleClick}
-      style={{ cursor: bakery.action === "Order" ? "pointer" : "default" }}
+      style={{ cursor: isOrderable ? "pointer" : "default" }}
     >
       <div 
         className="bakery-image-container" 
@@ -34,9 +37,9 @@ export default function BakeryCard({ bakery }) {
           overflow: 'hidden'
         }}
       >
-        {!imgError && bakery.img ? (
+        {!imgError && bakery.imageUrl ? (
           <img
-            src={bakery.img}
+            src={bakery.imageUrl}
             alt={bakery.name}
             className="bakery-image"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -45,10 +48,14 @@ export default function BakeryCard({ bakery }) {
         ) : null}
       </div>
       <div className="bakery-content">
-        <div className="bakery-badge">{bakery.badge}</div>
+        <div className="bakery-badge">{isOrderable ? "Open" : "Inactive"}</div>
         <h3 className="bakery-name">{bakery.name}</h3>
-        <p className="bakery-category">{bakery.category}</p>
-        <p className="bakery-desc">{bakery.desc}</p>
+        <p className="bakery-category">{bakery.address || "City center"}</p>
+        <p className="bakery-desc">
+          {bakery.orderStats
+            ? `${bakery.orderStats.totalOrders} orders - Rs ${Number(bakery.orderStats.totalRevenue || 0).toLocaleString()} revenue`
+            : "Freshly baked items delivered daily."}
+        </p>
         <div className="bakery-footer" style={{ borderTop: 'none', paddingTop: 0 }}>
           <button 
             className="btn-primary"
@@ -58,7 +65,7 @@ export default function BakeryCard({ bakery }) {
               handleClick();
             }}
           >
-            {bakery.action}
+            {isOrderable ? "Order" : "Unavailable"}
           </button>
         </div>
       </div>

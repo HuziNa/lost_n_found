@@ -22,13 +22,17 @@ const initialState = {
 export function AppProvider({ children }) {
   const [state, setState] = useState(initialState);
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Item added to cart");
 
   // Update specific field in state
   const updateState = (field, value) => {
     setState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const showToast = () => {
+  const showToast = (message) => {
+    if (message) {
+      setToastMessage(message);
+    }
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2500);
   };
@@ -69,11 +73,57 @@ export function AppProvider({ children }) {
   };
 
   const addToCart = (item) => {
-    setState((prev) => ({
-      ...prev,
-      cart: [...prev.cart, { ...item, id: Date.now() }],
-    }));
-    showToast();
+    let didAdd = false;
+    let blocked = false;
+
+    setState((prev) => {
+      if (!item?.productId || !item?.bakeryId) {
+        blocked = true;
+        return prev;
+      }
+
+      if (prev.cart.length > 0 && prev.cart[0].bakeryId !== item.bakeryId) {
+        blocked = true;
+        return prev;
+      }
+
+      const nextCart = [...prev.cart];
+      const existingIndex = nextCart.findIndex(
+        (entry) =>
+          entry.productId === item.productId &&
+          JSON.stringify(entry.selectedOptions || []) ===
+            JSON.stringify(item.selectedOptions || [])
+      );
+
+      if (existingIndex >= 0) {
+        nextCart[existingIndex] = {
+          ...nextCart[existingIndex],
+          quantity: (nextCart[existingIndex].quantity || 1) + (item.quantity || 1),
+        };
+      } else {
+        nextCart.push({
+          ...item,
+          id: Date.now() + Math.random(),
+          quantity: item.quantity || 1,
+        });
+      }
+
+      didAdd = true;
+      return { ...prev, cart: nextCart };
+    });
+
+    if (blocked) {
+      showToast(
+        item?.productId && item?.bakeryId
+          ? "Orders can only include one bakery at a time."
+          : "This item is not linked to a bakery product yet."
+      );
+      return;
+    }
+
+    if (didAdd) {
+      showToast("Item added to cart");
+    }
   };
 
   const removeFromCart = (id) => {
@@ -83,11 +133,21 @@ export function AppProvider({ children }) {
     }));
   };
 
-  const quickAdd = (name, price) => {
+  const clearCart = () => {
+    setState((prev) => ({
+      ...prev,
+      cart: [],
+    }));
+  };
+
+  const quickAdd = (product) => {
+    if (!product) return;
     addToCart({
-      name,
-      detail: "Standard size",
-      price,
+      productId: product.id,
+      bakeryId: product.bakeryId || product.bakery?.id,
+      name: product.name,
+      detail: product.type === "CUSTOMIZABLE" ? "Customize order" : "Standard",
+      price: product.basePrice,
       icon: "cake",
     });
   };
@@ -102,7 +162,9 @@ export function AppProvider({ children }) {
         addToCart,
         removeFromCart,
         quickAdd,
+        clearCart,
         toastVisible,
+        toastMessage,
       }}
     >
       {children}
