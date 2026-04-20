@@ -1,24 +1,20 @@
 import mongoose from "mongoose";
 
-// schema for the options selected for a product in an order
 const selectedOptionSchema = new mongoose.Schema(
   {
-    optionName: { type: String, required: true }, // sponge
-    choiceName: { type: String }, // chocolate
-
+    optionName: { type: String, required: true },
+    choiceName: { type: String },
     ingredientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
       required: true,
     },
-
     quantity: { type: Number, required: true },
-    layer: { type: Number }, // optional (1)
+    layer: { type: Number },
   },
   { _id: false }
 );
 
-// schema for a product in an order
 const orderItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -26,17 +22,13 @@ const orderItemSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-
     quantity: { type: Number, required: true },
-
     selectedOptions: [selectedOptionSchema],
-
     finalPrice: { type: Number, required: true },
   },
   { _id: false }
 );
 
-// the full order schema
 const orderSchema = new mongoose.Schema(
   {
     userId: {
@@ -59,6 +51,33 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "baking", "ready", "completed", "cancelled"],
       default: "pending",
+    },
+
+    // ── Delivery info ──────────────────────────────────────────────────────
+    deliveryOption: {
+      type: String,
+      enum: ["standard", "express", "pickup"],
+      default: "standard",
+    },
+
+    deliveryFee: { type: Number, default: 0 },
+
+    deliveryAddress: {
+      street: { type: String, default: "" },
+      city:   { type: String, default: "" },
+      postalCode: { type: String, default: "" },
+    },
+
+    deliveryInstructions: { type: String, default: "" },
+
+    // ── Customer contact ───────────────────────────────────────────────────
+    customerPhone: { type: String, default: "" },
+
+    // ── Payment ────────────────────────────────────────────────────────────
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "bank"],
+      default: "cod",
     },
   },
   { timestamps: true }
