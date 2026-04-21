@@ -136,7 +136,15 @@ export const updateMyAccount = async (req, res) => {
     }
 
     if (address !== undefined) {
-      user.address = String(address).trim();
+      const normalizedAddress = String(address).trim();
+
+      if (!normalizedAddress) {
+        return res.status(400).json({
+          message: "address cannot be empty.",
+        });
+      }
+
+      user.address = normalizedAddress;
     }
 
     if (email !== undefined) {

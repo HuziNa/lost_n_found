@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getBakeryCategories, getBakeryMenuProducts } from "../api/bakery";
 import { useAuth } from "../context/AuthContext";
-import CategoriesSection from "../components/CategoriesSection";
+import FeaturedCategories from "../components/FeaturedCategories";
 import CakeCollection from "../components/CakeCollection";
 import AboutSection from "../components/AboutSection";
 import ReviewsSection from "../components/ReviewsSection";
@@ -22,12 +22,14 @@ export default function BakeryPage() {
   });
 
   const categoriesQuery = useQuery({
-    queryKey: ["globalCategories"],
-    queryFn: getBakeryCategories,
+    queryKey: ["bakeryCategories", bakeryId],
+    queryFn: () => getBakeryCategories(bakeryId),
+    enabled: !!bakeryId,
   });
 
   const bakery = menuQuery.data?.bakery || null;
   const products = menuQuery.data?.products || [];
+  const bakeryAddress = String(bakery?.address || "").trim();
   const fallbackHeroImage =
     "https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?w=1600&q=80";
   const heroImageUrl = bakery?.imageUrl && bakery.imageUrl.trim()
@@ -46,9 +48,9 @@ export default function BakeryPage() {
     return Array.from(unique.values());
   }, [products]);
 
-  const categories = categoriesQuery.data?.categories?.length
-    ? categoriesQuery.data.categories
-    : productCategories;
+  const categoryData = categoriesQuery.data || {};
+  const categories = categoryData.categories || productCategories;
+  const featuredCategories = (categoryData.categories || []).filter(c => c.isFeatured);
 
   useEffect(() => {
     if (activeCategory === "all") return;
@@ -84,6 +86,19 @@ export default function BakeryPage() {
           <p className="bakery-subtitle-main">
             Browse our latest menu selections and seasonal favorites.
           </p>
+          {bakeryAddress && (
+            <p
+              style={{
+                color: "var(--cream)",
+                marginTop: "12px",
+                fontSize: "14px",
+                letterSpacing: "0.4px",
+                opacity: 0.9,
+              }}
+            >
+              {bakeryAddress}
+            </p>
+          )}
           <div className="hero-meta center-meta">
             <div className="hero-meta-item">
               <div className="hero-meta-num cream-text">{products.length}</div>
@@ -93,8 +108,8 @@ export default function BakeryPage() {
         </div>
       </section>
 
-      <CategoriesSection
-        categories={categories}
+      <FeaturedCategories 
+        categories={featuredCategories}
         onSelectCategory={(categoryName) => setActiveCategory(categoryName)}
       />
       {menuQuery.isLoading && <div className="placeholder-box">Loading menu...</div>}

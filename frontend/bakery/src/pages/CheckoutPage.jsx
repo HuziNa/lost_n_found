@@ -47,7 +47,6 @@ export default function CheckoutPage() {
 
   const paymentMethods = [
     { id: "cod",  name: "Cash on Delivery", icon: "cash" },
-    { id: "bank", name: "Bank Transfer",    icon: "bank" },
   ];
 
   const bakeryId        = state.cart[0]?.bakeryId;
@@ -202,6 +201,9 @@ export default function CheckoutPage() {
             {/* Payment Method */}
             <div className="checkout-section">
               <h2 className="section-title">Payment Method</h2>
+              <div className="auth-success" style={{ marginBottom: 12 }}>
+                We only accept cash on delivery for now.
+              </div>
               <div className="payment-methods">
                 {paymentMethods.map(method => (
                   <label key={method.id} className={`payment-method ${paymentMethod === method.id ? "selected" : ""}`}>

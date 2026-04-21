@@ -34,128 +34,19 @@ export default function ProductPage() {
   });
 
   const product = productQuery.data?.product;
-  const [selectedOptions, setSelectedOptions] = useState({});
-  const [optionError, setOptionError] = useState("");
+  const [errorStatus, setErrorStatus] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
-
-  useEffect(() => {
-    setSelectedOptions({});
-    setOptionError("");
-  }, [product?.id]);
 
   const nutritionEntries = useMemo(() => {
     const nutrition = product?.nutrition || {};
     return Object.entries(nutrition);
   }, [product]);
 
-  const extraPrice = useMemo(() => {
-    if (!product?.options?.length) return 0;
-    let total = 0;
-    product.options.forEach((option) => {
-      const selections = selectedOptions[option.name] || [];
-      selections.forEach((selection) => {
-        const choice = option.choices.find((item) => item.name === selection.choiceName);
-        if (choice) {
-          total += Number(choice.extraPrice || 0);
-        }
-      });
-    });
-    return total;
-  }, [product, selectedOptions]);
-
-  const displayPrice = useMemo(() => {
-    if (!product) return 0;
-    return Number(product.basePrice || 0) + extraPrice;
-  }, [product, extraPrice]);
-
-  const toggleChoice = (option, choice) => {
-    setSelectedOptions((prev) => {
-      const current = prev[option.name] || [];
-      const maxSelections = option.maxSelections === null ? Infinity : Number(option.maxSelections || 1);
-      const isMulti = maxSelections > 1;
-      const alreadySelected = current.find((entry) => entry.choiceName === choice.name);
-
-      if (!isMulti) {
-        return {
-          ...prev,
-          [option.name]: [
-            {
-              choiceName: choice.name,
-              layer: option.perLayer ? 1 : undefined,
-            },
-          ],
-        };
-      }
-
-      if (alreadySelected) {
-        return {
-          ...prev,
-          [option.name]: current.filter((entry) => entry.choiceName !== choice.name),
-        };
-      }
-
-      if (current.length >= maxSelections) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [option.name]: [
-          ...current,
-          {
-            choiceName: choice.name,
-            layer: option.perLayer ? 1 : undefined,
-          },
-        ],
-      };
-    });
-  };
-
-  const updateLayer = (optionName, choiceName, layer) => {
-    setSelectedOptions((prev) => {
-      const current = prev[optionName] || [];
-      return {
-        ...prev,
-        [optionName]: current.map((entry) =>
-          entry.choiceName === choiceName
-            ? { ...entry, layer: Number(layer) || 1 }
-            : entry
-        ),
-      };
-    });
-  };
-
-  const buildSelectedPayload = () => {
-    if (!product?.options?.length) return [];
-    const selections = [];
-    product.options.forEach((option) => {
-      const selected = selectedOptions[option.name] || [];
-      selected.forEach((entry) => {
-        selections.push({
-          optionName: option.name,
-          choiceName: entry.choiceName,
-          ...(option.perLayer ? { layer: entry.layer || 1 } : {}),
-        });
-      });
-    });
-    return selections;
-  };
-
-  const validateSelections = () => {
-    if (!product?.options?.length) return true;
-    const missing = product.options.filter(
-      (option) => option.required && !(selectedOptions[option.name] || []).length
-    );
-    if (missing.length > 0) {
-      setOptionError("Please select all required options before adding to cart.");
-      return false;
-    }
-    setOptionError("");
-    return true;
-  };
+  const isCustomizable = product?.type === "CUSTOMIZABLE" || Boolean(product?.selectedTemplate);
+  const hasCustomizationOptions = Boolean(product?.options?.length) || Boolean(product?.selectedTemplate);
 
   const handleAction = (action) => {
     if (!user) {
@@ -170,26 +61,16 @@ export default function ProductPage() {
 
     if (!product) return;
 
-    if (product.type === "CUSTOMIZABLE" && !validateSelections()) {
-      return;
-    }
-
     if (action === "add") {
-      if (product.type === "CUSTOMIZABLE") {
-        addToCart({
-          productId: product.id,
-          bakeryId: product.bakeryId,
-          name: product.name,
-          detail: "Customize order",
-          price: displayPrice,
-          icon: "cake",
-          selectedOptions: buildSelectedPayload(),
-        });
-      } else {
-        quickAdd(product);
-      }
+      quickAdd(product);
     } else if (action === "customize") {
-      navigate("/customize");
+      if (!isCustomizable) {
+        setErrorStatus("This product is not available for customization.");
+        return;
+      }
+      // Use the id from params or product.id
+      const pid = product.id || id;
+      navigate(`/customize/${pid}`);
     }
   };
 
@@ -227,6 +108,16 @@ export default function ProductPage() {
             <p className="ingredients-text">
               {product.ingredientsText || "Ingredient details are managed by the bakery."}
             </p>
+            {product.ingredients?.length > 0 && (
+              <ul style={{ marginTop: "10px", paddingLeft: "18px", color: "var(--ink-soft)", fontSize: "13px" }}>
+                {product.ingredients.map((item, index) => (
+                  <li key={`${item.ingredientId || "ingredient"}-${index}`}>
+                    {(item.name || item.ingredientName || `Ingredient ${index + 1}`)}: {Number(item.quantity || 0)}
+                    {item.unit ? ` ${item.unit}` : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -236,63 +127,18 @@ export default function ProductPage() {
             {product.description || (product.category?.name ? `Category: ${product.category.name}` : "Bakery collection")}
           </p>
 
-          {product.type === "CUSTOMIZABLE" && product.options?.length > 0 && (
-            <div className="product-nutrition-section">
-              <div className="nutrition-header">
-                <span className="nutrition-heading">Customization Options</span>
+          {isCustomizable && (
+            <div className="product-customize-banner">
+              <div className="customize-banner-content">
+                <span className="banner-icon">✦</span>
+                <div>
+                  <div className="banner-title">Make it uniquely yours</div>
+                  <div className="banner-text">Personalize flavors, toppings, and design in our premium builder.</div>
+                </div>
               </div>
-              <div className="custom-options">
-                {product.options.map((option) => {
-                  const selections = selectedOptions[option.name] || [];
-                  const maxSelections = option.maxSelections === null ? Infinity : Number(option.maxSelections || 1);
-                  const isMulti = maxSelections > 1;
-
-                  return (
-                    <div key={option.id || option.name} style={{ marginBottom: "18px" }}>
-                      <div style={{ fontWeight: 600, marginBottom: "6px" }}>
-                        {option.name}
-                        {option.required ? " *" : ""}
-                      </div>
-                      <div style={{ color: "var(--ink-muted)", fontSize: "12px", marginBottom: "8px" }}>
-                        {isMulti ? `Select up to ${maxSelections} choices` : "Select one"}
-                        {option.perLayer ? " | Per layer" : ""}
-                      </div>
-                      <div style={{ display: "grid", gap: "8px" }}>
-                        {option.choices.map((choice) => {
-                          const isSelected = selections.some((entry) => entry.choiceName === choice.name);
-                          const inputType = isMulti ? "checkbox" : "radio";
-                          return (
-                            <label key={choice.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <input
-                                type={inputType}
-                                name={option.name}
-                                checked={isSelected}
-                                onChange={() => toggleChoice(option, choice)}
-                              />
-                              <span style={{ flex: 1 }}>{choice.name}</span>
-                              {choice.extraPrice ? (
-                                <span style={{ color: "var(--ink-muted)", fontSize: "12px" }}>
-                                  +Rs {Number(choice.extraPrice).toLocaleString()}
-                                </span>
-                              ) : null}
-                              {option.perLayer && isSelected && (
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={selections.find((entry) => entry.choiceName === choice.name)?.layer || 1}
-                                  onChange={(event) => updateLayer(option.name, choice.name, event.target.value)}
-                                  style={{ width: "64px" }}
-                                />
-                              )}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {optionError && <div className="auth-error" style={{ marginTop: "8px" }}>{optionError}</div>}
+              <button className="btn-rose" onClick={() => handleAction("customize")}>
+                Start Customizing
+              </button>
             </div>
           )}
 
@@ -312,7 +158,7 @@ export default function ProductPage() {
                 </tbody>
               </table>
             ) : (
-              <div style={{ color: "var(--ink-muted)" }}>Nutrition details are not available.</div>
+              <div style={{ color: "var(--ink-muted)", fontSize: "13px" }}>Nutrition details are not available.</div>
             )}
           </div>
 
@@ -329,23 +175,31 @@ export default function ProductPage() {
                 ))}
               </div>
             ) : (
-              <div style={{ color: "var(--ink-muted)" }}>Allergen details are not listed.</div>
+              <div style={{ color: "var(--ink-muted)", fontSize: "13px" }}>Allergen details are not listed.</div>
             )}
           </div>
 
-          <div className="product-disclaimer">
+          <div className="product-disclaimer" style={{ marginTop: "24px", fontSize: "12px", fontStyle: "italic" }}>
             Additional product details are available upon request from the bakery.
           </div>
 
-          <div className="product-actions-bar">
-            <div className="product-price-large">Rs {displayPrice.toLocaleString()}</div>
-            <div className="product-buttons">
-              <button className="btn-sage product-btn" onClick={() => handleAction("add")}>
+          {errorStatus && <div className="option-error-message" style={{ color: "#d9534f", marginTop: "10px" }}>{errorStatus}</div>}
+
+          <div className="product-actions-bar" style={{ marginTop: "32px", borderTop: "1px solid var(--border)", paddingTop: "24px" }}>
+            <div className="product-price-large" style={{ fontSize: "24px", fontWeight: "300" }}>Rs {Number(product.basePrice || 0).toLocaleString()}</div>
+            <div className="product-buttons" style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+              <button className="btn-sage product-btn" onClick={() => handleAction("add")} style={{ flex: 1, padding: "14px" }}>
                 Add to Cart
               </button>
-              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}> 
-                Customize Order
-              </button>
+              {isCustomizable && (
+                <button
+                  className="btn-rose product-btn"
+                  onClick={() => handleAction("customize")}
+                  style={{ flex: 1, padding: "14px" }}
+                > 
+                  Customize Order
+                </button>
+              )}
             </div>
           </div>
         </div>

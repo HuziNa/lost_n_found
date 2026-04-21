@@ -5,6 +5,13 @@ import { getMyOrders } from "../api/users";
 import { useAuth } from "../context/AuthContext";
 import { Icon } from "../components/customize/Icons";
 
+const FLOW_STEPS = [
+  { key: "pending", label: "Placed", icon: "clipboard" },
+  { key: "baking", label: "Baking", icon: "cake" },
+  { key: "ready", label: "Ready", icon: "box" },
+  { key: "completed", label: "Delivered", icon: "truck" },
+];
+
 function statusPill(s) {
   const map = {
     pending:   "Pending",
@@ -17,6 +24,54 @@ function statusPill(s) {
     ready:     "Ready",
   };
   return <span className={`status-pill status-${s}`}>{map[s] || s}</span>;
+}
+
+function getActiveStepIndex(status) {
+  const index = FLOW_STEPS.findIndex((step) => step.key === status);
+  return index >= 0 ? index : 0;
+}
+
+function FlowTracker({ status }) {
+  if (status === "cancelled") {
+    return (
+      <div className="order-tracker flow-tracker cancelled-tracker">
+        <div className="cancelled-flow">
+          <div className="cancelled-icon-wrap">
+            <Icon name="close" size={14} />
+          </div>
+          <div>
+            <div className="cancelled-title">Order Cancelled</div>
+            <div className="cancelled-sub">This order was cancelled and will not progress further.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeStepIndex = getActiveStepIndex(status);
+
+  return (
+    <div className="order-tracker flow-tracker">
+      <div className="tracker-steps">
+        {FLOW_STEPS.map((step, index) => {
+          const isDone = index < activeStepIndex;
+          const isActive = index === activeStepIndex;
+
+          return (
+            <div className="tracker-step" key={step.key}>
+              <div className={`tracker-line ${isDone ? "done" : ""}`}></div>
+              <div className={`tracker-dot ${isDone ? "done" : ""} ${isActive ? "active" : ""}`}>
+                <Icon name={step.icon} size={14} />
+              </div>
+              <div className={`tracker-label ${isDone ? "done" : ""} ${isActive ? "active" : ""}`}>
+                {step.label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function DeliveryInfo({ order }) {
@@ -121,10 +176,13 @@ export default function OrdersPage() {
   return (
     <div className="page active" id="page-orders">
       <div className="orders-page">
-        <h1 className="orders-title">My Orders</h1>
-        <p className="orders-sub">
-          Track your order in real time — from our bakery to your doorstep.
-        </p>
+        <div className="orders-hero">
+          <div className="section-kicker">Order Flow</div>
+          <h1 className="orders-title">Track Your Journey</h1>
+          <p className="orders-sub">
+            Follow each order through every stage with a clear progress flow.
+          </p>
+        </div>
         <div id="orders-list">
           {ordersQuery.isLoading && (
             <div className="placeholder-box">Loading orders...</div>
@@ -138,7 +196,7 @@ export default function OrdersPage() {
           {orders.map((order) => (
             <div className="order-status-card" key={order.id}>
               <div className="order-status-header">
-                <div>
+                <div className="order-meta">
                   <div className="order-id">{order.id}</div>
                   <div className="order-date">
                     {order.createdAt
@@ -152,6 +210,8 @@ export default function OrdersPage() {
                 </div>
                 {statusPill(order.status)}
               </div>
+
+              <FlowTracker status={order.status} />
 
               <div className="order-items-row">
                 {(order.items || []).map((it, idx) => (

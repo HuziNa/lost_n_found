@@ -31,24 +31,6 @@ export default function CategoriesSection({ categories = [], onSelectCategory })
   return (
     <section className="section cat-section">
       <div className="section-inner">
-        <div
-          className="section-header"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "40px"
-          }}
-        >
-          <div style={{ textAlign: "center", width: "100%" }}>
-            <div className="section-kicker" style={{ justifyContent: "center" }}>Our Offerings</div>
-            <h2 className="section-title">
-               Browse <em>Collections</em>
-            </h2>
-          </div>
-        </div>
         <div className="cat-grid">
           {categories.length === 0 && (
             <div className="placeholder-box" style={{ gridColumn: "1 / -1" }}>

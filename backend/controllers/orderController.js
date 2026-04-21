@@ -155,6 +155,7 @@ const serializeOrder = (orderDoc) => ({
   // ────────────────────────────────────────────────────────────────────────
   items: (orderDoc.items || []).map((item) => ({
     productId:  toIdString(item.productId),
+    productName: item.productName || "",
     quantity:   item.quantity,
     finalPrice: item.finalPrice,
     selectedOptions: (item.selectedOptions || []).map((option) => ({
@@ -285,7 +286,7 @@ export const placeOrder = async (req, res) => {
       }
 
       const quantity  = requestedItem.quantity;
-      const orderItem = { productId: product._id, quantity, selectedOptions: [], finalPrice: 0 };
+      const orderItem = { productId: product._id, productName: product.name, quantity, selectedOptions: [], finalPrice: 0 };
       let finalUnitPrice = Number(product.basePrice);
 
       if (product.type === PRODUCT_TYPE_FIXED) {
@@ -411,7 +412,7 @@ export const placeOrder = async (req, res) => {
         userId:   customer._id,
         bakeryId,
         items:    orderItems,
-        totalPrice,
+        totalPrice: roundQuantity(totalPrice + (deliveryData.deliveryFee || 0)),
         // ── NEW: persist all delivery/payment data ───────────────────────
         ...deliveryData,
       });

@@ -25,6 +25,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profileQuery.data?.user) {
       const profile = profileQuery.data.user;
+
       setFormState((prev) => ({
         ...prev,
         name: profile.name || "",
@@ -86,23 +87,25 @@ export default function ProfilePage() {
         {!profileQuery.isLoading && (
           <form onSubmit={handleSubmit}>
             <div className="auth-field">
-              <label>Full Name</label>
+              <label>FULL NAME</label>
               <input name="name" value={formState.name} onChange={handleChange} required />
             </div>
             <div className="auth-field">
-              <label>Email</label>
+              <label>EMAIL</label>
               <input name="email" type="email" value={formState.email} onChange={handleChange} required />
             </div>
             <div className="auth-field">
-              <label>Contact Number</label>
+              <label>CONTACT NUMBER</label>
               <input name="contactNumber" value={formState.contactNumber} onChange={handleChange} />
             </div>
+            
             <div className="auth-field">
-              <label>Address</label>
-              <input name="address" value={formState.address} onChange={handleChange} />
+              <label>ADDRESS</label>
+              <input name="address" value={formState.address} onChange={handleChange} placeholder="e.g. 123 Cake Lane" />
             </div>
+
             <div className="auth-field">
-              <label>New Password</label>
+              <label>NEW PASSWORD</label>
               <input name="password" type="password" value={formState.password} onChange={handleChange} />
             </div>
             {error && <div className="auth-error">{error}</div>}

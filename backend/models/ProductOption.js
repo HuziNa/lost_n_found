@@ -34,6 +34,7 @@ const productOptionSchema = new mongoose.Schema(
     perLayer: { type: Boolean, default: false },
     maxSelections: { type: Number }, // for example max 3 layers of sponge
 
+    templateKey: { type: String }, // Links to standard segments like 'frosting_color'
     choices: [optionChoiceSchema],
   },
   { timestamps: true }

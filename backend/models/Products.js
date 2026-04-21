@@ -76,6 +76,10 @@ const productSchema = new mongoose.Schema(
 
     nutrition: nutritionSchema,
 
+    selectedTemplate: {
+      type: String,
+      default: "",
+    },
     isActive: {
       type: Boolean,
       default: true,

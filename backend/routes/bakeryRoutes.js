@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  addIngredientStock,
   createBakeryCategory,
   createBakeryReview,
   createBakeryIngredient,
@@ -11,6 +10,7 @@ import {
   getBakeryAnalytics,
   listPublicBakeries,
   listBakeryCategories,
+  listPublicBakeryCategories,
   listBakeryIngredients,
   listBakeryPastOrders,
   listBakeryProducts,
@@ -19,6 +19,8 @@ import {
   updateBakeryOrderStatus,
   updateBakeryCategory,
   updateBakeryProduct,
+  updateBakeryIngredient,
+  deleteBakeryIngredient,
 } from "../controllers/bakeryController.js";
 import {
   requireAuth,
@@ -40,13 +42,16 @@ router.get("/products/:productId", getBakeryMenuProductById);
 // Public bakery reviews endpoint (requires bakeryId query param).
 router.get("/reviews", listBakeryReviews);
 
-// Public global categories list.
-router.get("/categories", listBakeryCategories);
+// Public global categories list (Storefront)
+router.get("/categories/public/:bakeryId", listPublicBakeryCategories);
 
 // Customer review submission endpoint.
 router.post("/reviews", requireAuth, requireCustomer, createBakeryReview);
 
 router.use(requireAuth, requireBakeryOwner);
+
+// Protected Category management List 
+router.get("/categories", listBakeryCategories);
 router.post("/categories", createBakeryCategory);
 router.patch("/categories/:categoryId", updateBakeryCategory);
 
@@ -54,7 +59,8 @@ router.patch("/profile", updateBakeryProfile);
 
 router.get("/ingredients", listBakeryIngredients);
 router.post("/ingredients", createBakeryIngredient);
-router.post("/ingredients/stock", addIngredientStock);
+router.patch("/ingredients/:ingredientId", updateBakeryIngredient);
+router.delete("/ingredients/:ingredientId", deleteBakeryIngredient);
 
 router.get("/orders", listBakeryPastOrders);
 router.patch("/orders/:orderId/status", updateBakeryOrderStatus);

@@ -194,6 +194,212 @@
   background: var(--warm-white);
 }
 
+.dashboard-modal.product-editor-modal {
+  max-width: min(1120px, 96vw);
+  max-height: 92vh;
+  padding: 36px 34px;
+}
+
+.product-editor-form {
+  display: grid;
+  gap: 16px;
+}
+
+.product-option-builder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.product-option-helper-text {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.product-option-builder-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-option-builder-controls select {
+  min-width: 150px;
+}
+
+.product-option-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.product-options-builder {
+  display: grid;
+  gap: 14px;
+}
+
+.product-option-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.product-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.product-option-header h4 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.product-option-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.product-option-grid-advanced {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto;
+}
+
+.product-option-grid-simple {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+}
+
+.product-option-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.product-option-toggle input {
+  width: 15px;
+  height: 15px;
+}
+
+.product-option-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.product-option-choice-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.product-option-choice-row-advanced {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto;
+}
+
+.product-option-choice-row-simple {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.4fr) minmax(0, 0.9fr) auto;
+}
+
+.product-option-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.product-option-note {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.product-ingredient-checklist {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.product-ingredient-check {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.product-ingredient-check.selected {
+  border-color: var(--border-gold);
+  background: var(--gold-pale);
+}
+
+.product-ingredient-check label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.product-ingredient-check label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+}
+
+.product-ingredient-check label small {
+  margin-left: auto;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.ingredient-quantity-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ingredient-unit-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--parchment);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.ingredient-unit-hint.is-set {
+  background: var(--gold-pale);
+  color: var(--gold-dark);
+  border-color: var(--border-gold);
+}
+
+.ingredient-unit-hint.is-empty {
+  opacity: 0.8;
+}
+
 .auth-field input {
   padding: 12px 16px;
   border: 1px solid var(--border);
@@ -248,6 +454,28 @@
 
 .auth-footer span:hover {
   color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .dashboard-modal.product-editor-modal {
+    max-width: 96vw;
+    padding: 24px 18px;
+  }
+
+  .product-option-builder-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .product-option-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-option-choice-row,
+  .product-option-choice-row-advanced,
+  .product-option-choice-row-simple {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @keyframes fadeIn {

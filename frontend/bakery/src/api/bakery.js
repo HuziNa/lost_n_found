@@ -12,7 +12,12 @@ export const getPublicBakeries = async () => apiRequest("/bakery/public");
 
 export const getBakeryIngredients = async () => apiRequest("/bakery/ingredients");
 
-export const getBakeryCategories = async () => apiRequest("/bakery/categories");
+export const getBakeryCategories = async (bakeryId) => {
+  if (typeof bakeryId === "string" && bakeryId.trim()) {
+    return apiRequest(`/bakery/categories/public/${bakeryId}`);
+  }
+  return apiRequest("/bakery/categories");
+};
 
 export const createBakeryCategory = async (payload) =>
   apiRequest("/bakery/categories", {
@@ -38,10 +43,21 @@ export const createBakeryIngredient = async (payload) =>
     body: payload,
   });
 
-export const updateBakeryIngredientStock = async (payload) =>
-  apiRequest("/bakery/ingredients/stock", {
-    method: "POST",
+export const updateBakeryIngredient = async (ingredientId, payload) =>
+  apiRequest(`/bakery/ingredients/${ingredientId}`, {
+    method: "PATCH",
     body: payload,
+  });
+
+export const deleteBakeryIngredient = async (ingredientId) =>
+  apiRequest(`/bakery/ingredients/${ingredientId}`, {
+    method: "DELETE",
+  });
+
+export const updateBakeryIngredientStock = async (ingredientId, quantity) =>
+  apiRequest(`/bakery/ingredients/${ingredientId}`, {
+    method: "PATCH",
+    body: { stock: quantity },
   });
 
 export const getBakeryProducts = async () => apiRequest("/bakery/products");

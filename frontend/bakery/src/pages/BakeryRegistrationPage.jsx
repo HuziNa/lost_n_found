@@ -135,7 +135,7 @@ export default function BakeryRegistrationPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="+1 (555) 000-0000"
+                placeholder="03xxxxxxxxx"
                 required
               />
             </div>
