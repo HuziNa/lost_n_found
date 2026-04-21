@@ -246,22 +246,22 @@ export const listBakeryProducts = async (req, res) => {
       bakeryId: user.bakeryManaged._id,
     }).sort({ createdAt: -1 }).lean();
 
-    const productIds = products.map((product) => product._id);
+    const categoryIds = [...new Set(products.map((product) => product.categoryId))];
     const productOptions = await ProductOption.find({
-      productId: { $in: productIds },
+      categoryId: { $in: categoryIds },
     }).lean();
 
-    const optionsByProductId = new Map();
+    const optionsByCategoryId = new Map();
     for (const option of productOptions) {
-      const productId = toIdString(option.productId);
-      if (!optionsByProductId.has(productId)) {
-        optionsByProductId.set(productId, []);
+      const categoryId = toIdString(option.categoryId);
+      if (!optionsByCategoryId.has(categoryId)) {
+        optionsByCategoryId.set(categoryId, []);
       }
-      optionsByProductId.get(productId).push(option);
+      optionsByCategoryId.get(categoryId).push(option);
     }
 
     const serializedProducts = products.map((product) => {
-      const options = optionsByProductId.get(toIdString(product._id)) || [];
+      const options = optionsByCategoryId.get(toIdString(product.categoryId)) || [];
       return serializeProduct(product, serializeOptions(options));
     });
 
@@ -429,7 +429,7 @@ export const createBakeryProduct = async (req, res) => {
     if (type === "CUSTOMIZABLE" && options && Array.isArray(options)) {
       for (const optionData of options) {
         const option = await ProductOption.create({
-          productId: product._id,
+          categoryId: product.categoryId,
           name: optionData.name.trim(),
           required: optionData.required || false,
           perLayer: optionData.perLayer || false,
@@ -564,66 +564,12 @@ export const updateBakeryProduct = async (req, res) => {
       }
     }
 
-    // Handle options update
-    if (updateData.options && Array.isArray(updateData.options)) {
-      // Delete existing options
-      await ProductOption.deleteMany({ productId });
-
-      // Create new options
-      for (const optionData of updateData.options) {
-        if (!optionData.name || !optionData.choices || !Array.isArray(optionData.choices)) {
-          return res.status(400).json({
-            message: "Each option must have name and choices array.",
-          });
-        }
-
-        for (const choice of optionData.choices) {
-          if (!choice.name || !choice.ingredientId || choice.quantity === undefined) {
-            return res.status(400).json({
-              message: "Each choice must have name, ingredientId, and quantity.",
-            });
-          }
-
-          if (!isValidObjectId(choice.ingredientId)) {
-            return res.status(400).json({
-              message: "choice.ingredientId must be a valid id.",
-            });
-          }
-
-          const ingredientDoc = await Ingredient.findOne({
-            _id: choice.ingredientId,
-            bakeryId: user.bakeryManaged._id,
-          });
-
-          if (!ingredientDoc) {
-            return res.status(400).json({
-              message: `Ingredient with id ${choice.ingredientId} not found in your bakery.`,
-            });
-          }
-        }
-
-        await ProductOption.create({
-          productId,
-          name: optionData.name.trim(),
-          required: optionData.required || false,
-          perLayer: optionData.perLayer || false,
-          maxSelections: optionData.maxSelections || null,
-          choices: optionData.choices.map((choice) => ({
-            name: choice.name.trim(),
-            ingredientId: choice.ingredientId,
-            quantity: Number(choice.quantity),
-            extraPrice: Number(choice.extraPrice) || 0,
-          })),
-        });
-      }
-    }
-
     // Update product
     Object.assign(product, updateData);
     await product.save();
 
     // Get updated options
-    const options = await ProductOption.find({ productId }).lean();
+    const options = await ProductOption.find({ categoryId: product.categoryId }).lean();
 
     const serializedProduct = serializeProduct(product, serializeOptions(options));
 
@@ -671,9 +617,6 @@ export const deleteBakeryProduct = async (req, res) => {
         message: "Product not found in your bakery.",
       });
     }
-
-    // Delete associated options
-    await ProductOption.deleteMany({ productId });
 
     // Delete product
     await Product.findByIdAndDelete(productId);
@@ -745,18 +688,18 @@ export const getBakeryMenuProductsByBakeryId = async (req, res) => {
       Product.countDocuments(filter),
     ]);
 
-    const productIds = products.map((product) => product._id);
+    const categoryIds = products.map((product) => product.categoryId);
     const optionDocs = await ProductOption.find({
-      productId: { $in: productIds },
+      categoryId: { $in: categoryIds },
     }).lean();
 
-    const optionsByProductId = new Map();
+    const optionsByCategoryId = new Map();
     for (const option of optionDocs) {
-      const productId = toIdString(option.productId);
-      if (!optionsByProductId.has(productId)) {
-        optionsByProductId.set(productId, []);
+      const categoryId = toIdString(option.categoryId);
+      if (!optionsByCategoryId.has(categoryId)) {
+        optionsByCategoryId.set(categoryId, []);
       }
-      optionsByProductId.get(productId).push(option);
+      optionsByCategoryId.get(categoryId).push(option);
     }
 
     const categoryIds = [
@@ -777,7 +720,7 @@ export const getBakeryMenuProductsByBakeryId = async (req, res) => {
     const serializedProducts = products.map((product) => {
       const serializedProduct = serializeProduct(
         product,
-        serializeOptions(optionsByProductId.get(toIdString(product._id)) || []),
+        serializeOptions(optionsByCategoryId.get(toIdString(product.categoryId)) || []),
       );
 
       const category = categoryById.get(toIdString(product.categoryId));
@@ -859,7 +802,7 @@ export const getBakeryMenuProductById = async (req, res) => {
 
     const optionDocs =
       product.type === "CUSTOMIZABLE"
-        ? await ProductOption.find({ productId: product._id }).lean()
+        ? await ProductOption.find({ categoryId: product.categoryId }).lean()
         : [];
 
     const serializedProduct = serializeProduct(

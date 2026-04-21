@@ -344,21 +344,21 @@ export const placeOrder = async (req, res) => {
       products.map((product) => [toIdString(product._id), product]),
     );
 
-    const customizableProductIds = products
+    const customizableCategoryIds = products
       .filter((product) => product.type === PRODUCT_TYPE_CUSTOMIZABLE)
-      .map((product) => product._id);
+      .map((product) => product.categoryId);
 
     const productOptions = await ProductOption.find({
-      productId: { $in: customizableProductIds },
+      categoryId: { $in: customizableCategoryIds },
     }).lean();
 
-    const optionsByProductId = new Map();
+    const optionsByCategoryId = new Map();
     for (const option of productOptions) {
-      const key = toIdString(option.productId);
-      if (!optionsByProductId.has(key)) {
-        optionsByProductId.set(key, []);
+      const key = toIdString(option.categoryId);
+      if (!optionsByCategoryId.has(key)) {
+        optionsByCategoryId.set(key, []);
       }
-      optionsByProductId.get(key).push(option);
+      optionsByCategoryId.get(key).push(option);
     }
 
     const ingredientUsageMap = new Map();
@@ -419,7 +419,7 @@ export const placeOrder = async (req, res) => {
 
         const selectedOptions = normalizedSelectionResult.value;
         const optionDocs =
-          optionsByProductId.get(toIdString(product._id)) || [];
+          optionsByCategoryId.get(toIdString(product.categoryId)) || [];
 
         if (!optionDocs.length) {
           return res.status(400).json({

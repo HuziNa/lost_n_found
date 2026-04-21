@@ -9,22 +9,22 @@ const optionChoiceSchema = new mongoose.Schema(
       // for the chocolate sponge option, the choice of chocolate would link compund ingreidient we have made
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
-      required: true,
+      required: false,
     },
 
-    quantity: { type: Number, required: true },
+    quantity: { type: Number, required: false },
     extraPrice: { type: Number, default: 0 },
   },
   { _id: false }
 );
 
-// defines an option/choice a user can make for a product for example sponge of a cake
+// defines an option/choice a user can make for a category for example sponge of a cake
 // for exm the spinge of a cake and then in the option choices we have chocolate, vanilla etc
 const productOptionSchema = new mongoose.Schema(
   {
-    productId: {
+    categoryId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
+      ref: "Category",
       required: true,
     },
 
