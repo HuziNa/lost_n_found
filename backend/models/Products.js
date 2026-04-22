@@ -34,8 +34,41 @@ const productOptionSchema = new mongoose.Schema(
     perLayer: { type: Boolean, default: false },
     maxSelections: { type: Number }, // for example max 3 layers of sponge
 
-    templateKey: { type: String }, // Links to standard segments like 'frosting_color'
-    choices: [optionChoiceSchema],
+    basePrice: { type: Number, required: true },
+
+    description: { type: String, default: "" },
+
+    imageUrl: { type: String, default: "" },
+
+    ingredientsText: { type: String, default: "" },
+
+    description: { type: String, default: "" },
+
+    imageUrl: { type: String, default: "" },
+
+    ingredientsText: { type: String, default: "" },
+
+    // for the fixed items 
+    ingredients: {
+      type: [productIngredientSchema],
+      default: [],
+    },
+
+    allergens: {
+      type: [String],
+      default: [],
+    },
+
+    nutrition: nutritionSchema,
+
+    selectedTemplate: {
+      type: String,
+      default: "",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

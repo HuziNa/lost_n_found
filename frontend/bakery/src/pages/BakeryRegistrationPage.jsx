@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signupUser } from "../api/auth";
 
 export default function BakeryRegistrationPage() {
   const navigate = useNavigate();
@@ -12,32 +13,40 @@ export default function BakeryRegistrationPage() {
     phone: "",
     description: "",
   });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In a real scenario, you would call:
-    // fetch(`${import.meta.env.VITE_API_URL}/auth/signup`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     name: formData.ownerName,
-    //     email: formData.email,
-    //     password: formData.password,
-    //     role: 'owner',
-    //     phoneNumber: formData.phone,
-    //     address: formData.bakeryAddress,
-    //     bakeryName: formData.bakeryName,
-    //     bakeryAddress: formData.bakeryAddress,
-    //   })
-    // })
+    setError("");
+    setSuccess("");
+    setIsSubmitting(true);
 
-    alert("Registration submitted! Our team will contact you soon.");
-    navigate("/");
+    try {
+      const response = await signupUser({
+        name: formData.ownerName,
+        email: formData.email,
+        password: formData.password,
+        role: "owner",
+        contactNumber: formData.phone,
+        address: formData.bakeryAddress,
+        bakeryName: formData.bakeryName,
+        bakeryAddress: formData.bakeryAddress,
+      });
+
+      setSuccess(response?.message || "Registration submitted successfully.");
+      setTimeout(() => navigate("/"), 1400);
+    } catch (err) {
+      setError(err?.data?.message || "Unable to submit registration.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -126,7 +135,7 @@ export default function BakeryRegistrationPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="+1 (555) 000-0000"
+                placeholder="03xxxxxxxxx"
                 required
               />
             </div>
@@ -146,13 +155,16 @@ export default function BakeryRegistrationPage() {
           </div>
 
           <div className="registration-actions">
-            <button type="submit" className="btn-primary">
-              Submit Application
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Application"}
             </button>
             <button type="button" className="btn-outline" onClick={() => navigate("/")}>
               Cancel
             </button>
           </div>
+
+          {error && <div className="auth-error" style={{ marginTop: "12px" }}>{error}</div>}
+          {success && <div className="auth-success" style={{ marginTop: "12px" }}>{success}</div>}
         </form>
       </div>
     </div>

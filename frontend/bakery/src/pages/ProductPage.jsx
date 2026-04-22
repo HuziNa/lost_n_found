@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CAKES } from "../data/cakes";
+import { useQuery } from "@tanstack/react-query";
+import { getBakeryMenuProduct } from "../api/bakery";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
-import '../styles/product.css';
+import "../styles/product.css";
 
-// SVGs for Allergens to match the "Anti-Slop" premium feel
 const AllergenIcon = ({ name, path }) => (
   <div className="allergen-item">
     <div className="allergen-icon-circle">
@@ -17,19 +17,36 @@ const AllergenIcon = ({ name, path }) => (
   </div>
 );
 
+const DEFAULT_IMAGE =
+  "https://images.unsplash.com/photo-1509409137281-5a36f620dddf?w=1200&q=80&auto=format&fit=crop";
+
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { quickAdd } = useApp();
+  const { addToCart, quickAdd } = useApp();
   const { user, openAuthModal } = useAuth();
-  const isRestricted = user?.role === "admin" || user?.role === "owner";
+  const canOrder = user?.role === "customer";
 
-  const cakeId = parseInt(id, 10);
-  const cake = CAKES.find((c) => c.id === cakeId);
+  const productQuery = useQuery({
+    queryKey: ["menuProduct", id],
+    queryFn: () => getBakeryMenuProduct(id),
+    enabled: !!id,
+  });
+
+  const product = productQuery.data?.product;
+  const [errorStatus, setErrorStatus] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  const nutritionEntries = useMemo(() => {
+    const nutrition = product?.nutrition || {};
+    return Object.entries(nutrition);
+  }, [product]);
+
+  const isCustomizable = product?.type === "CUSTOMIZABLE" || Boolean(product?.selectedTemplate);
+  const hasCustomizationOptions = Boolean(product?.options?.length) || Boolean(product?.selectedTemplate);
 
   const handleAction = (action) => {
     if (!user) {
@@ -37,19 +54,35 @@ export default function ProductPage() {
       return;
     }
 
-    if (isRestricted) {
-      alert("Admins and bakery owners cannot place orders.");
+    if (!canOrder) {
+      alert("Only customers can add items to the cart.");
       return;
     }
 
+    if (!product) return;
+
     if (action === "add") {
-      quickAdd(cake.name, cake.price);
+      quickAdd(product);
     } else if (action === "customize") {
-      navigate("/customize");
+      if (!isCustomizable) {
+        setErrorStatus("This product is not available for customization.");
+        return;
+      }
+      // Use the id from params or product.id
+      const pid = product.id || id;
+      navigate(`/customize/${pid}`);
     }
   };
 
-  if (!cake) {
+  if (productQuery.isLoading) {
+    return (
+      <div className="page active" style={{ padding: "120px 20px", textAlign: "center" }}>
+        <h2>Loading product...</h2>
+      </div>
+    );
+  }
+
+  if (productQuery.isError || !product) {
     return (
       <div className="page active" style={{ padding: "120px 20px", textAlign: "center" }}>
         <h2>Product not found.</h2>
@@ -58,93 +91,115 @@ export default function ProductPage() {
     );
   }
 
-  // Generate some mock ingredients based on the name to make it look realistic
-  const getIngredients = (name) => {
-    return `${name} [wheat flour (gluten), butter (milk), pearl sugar, water, eggs, yeast, invert sugar, milk powder, salt, natural vanilla flavor], Coating chocolate, Sugar powder.`;
-  };
-
   return (
     <div className="page active product-page">
       <div className="product-container">
-        
-        {/* Left Column */}
         <div className="product-column product-left">
           <div className="product-image-wrapper">
-            <img src={cake.img} alt={cake.name} className="product-main-image" />
+            <img
+              src={product.imageUrl || DEFAULT_IMAGE}
+              alt={product.name}
+              className="product-main-image"
+            />
           </div>
-          
+
           <div className="product-ingredients-section">
             <h3 className="section-label">INGREDIENTS</h3>
-            <p className="ingredients-text">{getIngredients(cake.name)}</p>
+            <p className="ingredients-text">
+              {product.ingredientsText || "Ingredient details are managed by the bakery."}
+            </p>
+            {product.ingredients?.length > 0 && (
+              <ul style={{ marginTop: "10px", paddingLeft: "18px", color: "var(--ink-soft)", fontSize: "13px" }}>
+                {product.ingredients.map((item, index) => (
+                  <li key={`${item.ingredientId || "ingredient"}-${index}`}>
+                    {(item.name || item.ingredientName || `Ingredient ${index + 1}`)}: {Number(item.quantity || 0)}
+                    {item.unit ? ` ${item.unit}` : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="product-column product-right">
-          <h1 className="product-title">{cake.name}</h1>
+          <h1 className="product-title">{product.name}</h1>
+          <p className="product-desc" style={{ color: "var(--ink-muted)" }}>
+            {product.description || (product.category?.name ? `Category: ${product.category.name}` : "Bakery collection")}
+          </p>
+
+          {isCustomizable && (
+            <div className="product-customize-banner">
+              <div className="customize-banner-content">
+                <span className="banner-icon">✦</span>
+                <div>
+                  <div className="banner-title">Make it uniquely yours</div>
+                  <div className="banner-text">Personalize flavors, toppings, and design in our premium builder.</div>
+                </div>
+              </div>
+              <button className="btn-rose" onClick={() => handleAction("customize")}>
+                Start Customizing
+              </button>
+            </div>
+          )}
 
           <div className="product-nutrition-section">
             <div className="nutrition-header">
-              <span className="nutrition-heading">Nutritional Information | Per Serving</span>
+              <span className="nutrition-heading">Nutritional Information</span>
             </div>
-            <table className="nutrition-table">
-              <tbody>
-                <tr>
-                  <td>Calories</td>
-                  <td>430</td>
-                </tr>
-                <tr>
-                  <td>Total Fat (g)</td>
-                  <td>24</td>
-                </tr>
-                <tr>
-                  <td>Saturated Fat (g)</td>
-                  <td>16</td>
-                </tr>
-                <tr>
-                  <td>Trans Fat (g)</td>
-                  <td>0</td>
-                </tr>
-                <tr>
-                  <td>Total Carbohydrate (g)</td>
-                  <td>49</td>
-                </tr>
-                <tr>
-                  <td>Total Sugar (g)</td>
-                  <td>26</td>
-                </tr>
-                <tr>
-                  <td>Protein (g)</td>
-                  <td>5(g)</td>
-                </tr>
-              </tbody>
-            </table>
+            {nutritionEntries.length > 0 ? (
+              <table className="nutrition-table">
+                <tbody>
+                  {nutritionEntries.map(([label, value]) => (
+                    <tr key={label}>
+                      <td>{label}</td>
+                      <td>{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ color: "var(--ink-muted)", fontSize: "13px" }}>Nutrition details are not available.</div>
+            )}
           </div>
 
           <div className="product-allergens-section">
             <h3 className="section-label">ALLERGENS</h3>
-            <div className="allergens-grid">
-              <AllergenIcon name="Wheat" path={<path d="M12 21v-8m0 0a4 4 0 014-4h1a4 4 0 00-4-4 4 4 0 00-4 4h1a4 4 0 014 4z" />} />
-              <AllergenIcon name="Milk" path={<path d="M7 6v12a2 2 0 002 2h6a2 2 0 002-2V6M7 6h10M7 6l2-4h6l2 4" />} />
-              <AllergenIcon name="Egg" path={<path d="M12 22c4.418 0 8-4.477 8-10S16.418 2 12 2 4 6.477 4 12s3.582 10 8 10z" />} />
-              <AllergenIcon name="Soy" path={<path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zM8 12a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4zm-4 6a2 2 0 100-4 2 2 0 000 4z" />} />
-              <AllergenIcon name="Tree Nut" path={<path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm2 14c-2 0-3-1-3-3s1-3 3-3 3 1 3 3-1 3-3 3zm-4-8c-1.5 0-2.5-.5-2.5-2S8.5 4 10 4s2.5.5 2.5 2T10 8z" />} />
-            </div>
+            {product.allergens?.length ? (
+              <div className="allergens-grid">
+                {product.allergens.map((allergen) => (
+                  <AllergenIcon
+                    key={allergen}
+                    name={allergen}
+                    path={<path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2z" />}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: "var(--ink-muted)", fontSize: "13px" }}>Allergen details are not listed.</div>
+            )}
           </div>
 
-          <div className="product-disclaimer">
-            2,000 Calories a day is used for general nutrition advice, but calorie needs may vary. Additional nutritional information available upon request. Customization of your order may impact the accuracy and/or completeness of the available nutritional information. <a href="#">Allergen and Nutrition Information</a>
+          <div className="product-disclaimer" style={{ marginTop: "24px", fontSize: "12px", fontStyle: "italic" }}>
+            Additional product details are available upon request from the bakery.
           </div>
 
-          <div className="product-actions-bar">
-            <div className="product-price-large">Rs {cake.price.toLocaleString()}</div>
-            <div className="product-buttons">
-              <button className="btn-sage product-btn" onClick={() => handleAction("add")}>
+          {errorStatus && <div className="option-error-message" style={{ color: "#d9534f", marginTop: "10px" }}>{errorStatus}</div>}
+
+          <div className="product-actions-bar" style={{ marginTop: "32px", borderTop: "1px solid var(--border)", paddingTop: "24px" }}>
+            <div className="product-price-large" style={{ fontSize: "24px", fontWeight: "300" }}>Rs {Number(product.basePrice || 0).toLocaleString()}</div>
+            <div className="product-buttons" style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+              <button className="btn-sage product-btn" onClick={() => handleAction("add")} style={{ flex: 1, padding: "14px" }}>
                 Add to Cart
               </button>
-              <button className="btn-rose product-btn" onClick={() => handleAction("customize")}>
-                Customize Order
-              </button>
+              {isCustomizable && (
+                <button
+                  className="btn-rose product-btn"
+                  onClick={() => handleAction("customize")}
+                  style={{ flex: 1, padding: "14px" }}
+                > 
+                  Customize Order
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -152,5 +207,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-import '../styles/product.css';

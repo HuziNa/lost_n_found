@@ -28,10 +28,17 @@ export default function AuthModal() {
         setError(result.message);
       }
     } else {
-      const result = await signup({ name, email, password, phoneNumber, role: "customer" });
+      const result = await signup({
+        name,
+        email,
+        password,
+        contactNumber: phoneNumber,
+        role: "customer",
+      });
       if (result.success) {
-        setSuccessMsg(result.message);
-        setTimeout(() => setAuthMode("login"), 2000);
+        if (result.message) {
+          setSuccessMsg(result.message);
+        }
       } else {
         setError(result.message);
       }

@@ -1,59 +1,108 @@
-import React, { useState } from "react";
-import { REVIEWS_DATA, AVATAR_COLORS, AVATAR_TEXT } from "../data/reviews";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createBakeryReview, getBakeryReviews } from "../api/bakery";
+import { useAuth } from "../context/AuthContext";
 import { Icon } from "./customize/Icons";
 
-export default function ReviewsSection() {
-  const [reviews, setReviews] = useState(REVIEWS_DATA);
+const AVATAR_COLORS = ["#E8C4BF", "#C8DFF0", "#B8D8B9", "#D4B8E0", "#F5CBA7", "#C4847A"];
+const AVATAR_TEXT = ["#9B5A52", "#185FA5", "#3B6D11", "#7B3A6B", "#854F0B", "#FAF6EF"];
+
+const buildInitials = (name) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+
+export default function ReviewsSection({ bakeryId }) {
+  const queryClient = useQueryClient();
+  const { user, openAuthModal } = useAuth();
   const [userRating, setUserRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
-  const [name, setName] = useState("");
-  const [product, setProduct] = useState("");
   const [text, setText] = useState("");
   const [success, setSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const reviewsQuery = useQuery({
+    queryKey: ["bakeryReviews", bakeryId],
+    queryFn: () => getBakeryReviews(bakeryId),
+    enabled: !!bakeryId,
+  });
+
+  const reviews = reviewsQuery.data?.reviews || [];
+
+  const averageRating = reviewsQuery.data?.averageRating || 0;
+
+  const reviewMutation = useMutation({
+    mutationFn: (payload) => createBakeryReview(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryReviews", bakeryId], exact: true });
+      setSuccess(true);
+      setSubmitError("");
+      setText("");
+      setUserRating(0);
+      setTimeout(() => setSuccess(false), 3000);
+    },
+    onError: (error) => {
+      setSubmitError(error?.data?.message || "Unable to submit review.");
+      setSuccess(false);
+    },
+  });
+
+  const canReview = user && user.role === "customer";
+  const reviewNotice = user
+    ? "Only customers can submit reviews."
+    : "Log in as a customer to share your experience.";
 
   const handleSubmit = () => {
-    const nName = name.trim();
-    const nProd = product.trim() || "SweetCraft Cake";
-    const nText = text.trim();
-
-    if (!nName || !nText || userRating === 0) {
-      alert("Please fill your name, rating, and review text.");
+    if (!bakeryId) {
       return;
     }
 
-    const initials = nName
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
+    setSubmitError("");
 
-    const newReview = {
-      name: nName,
-      initials,
-      product: nProd,
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
+
+    if (!canReview) {
+      alert("Only customers can submit reviews.");
+      return;
+    }
+
+    const nText = text.trim();
+    if (!nText || userRating === 0) {
+      alert("Please provide a rating and your review.");
+      return;
+    }
+
+    reviewMutation.mutate({
+      bakeryId,
       rating: userRating,
-      date: "Just now",
-      text: nText,
-      helpful: 0,
-      color: reviews.length % 6,
-    };
-
-    setReviews([newReview, ...reviews]);
-    setSuccess(true);
-    setName("");
-    setProduct("");
-    setText("");
-    setUserRating(0);
-
-    setTimeout(() => setSuccess(false), 3000);
+      comment: nText,
+    });
   };
 
-  const handleHelpful = (index) => {
-    const newReviews = [...reviews];
-    newReviews[index] = { ...newReviews[index], helpful: newReviews[index].helpful + 1, _voted: true };
-    setReviews(newReviews);
-  };
+  const parsedReviews = useMemo(
+    () =>
+      reviews.map((review, index) => {
+        const name = review.customer?.name || "Guest";
+        const initials = buildInitials(name);
+        return {
+          id: review.id,
+          name,
+          initials,
+          rating: review.rating,
+          date: review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "",
+          text: review.comment,
+          color: index % AVATAR_COLORS.length,
+        };
+      }),
+    [reviews]
+  );
 
   return (
     <section className="section reviews-section">
@@ -83,10 +132,10 @@ export default function ReviewsSection() {
                 lineHeight: 1,
               }}
             >
-              4.9
+              {averageRating.toFixed(1)}
             </div>
             <div style={{ color: "var(--gold)", fontSize: "18px", letterSpacing: "3px" }}>
-              ★★★★★
+              {"★".repeat(Math.round(averageRating || 0)).padEnd(5, "☆")}
             </div>
             <div
               style={{
@@ -97,13 +146,22 @@ export default function ReviewsSection() {
                 textTransform: "uppercase",
               }}
             >
-              Based on 2,400+ reviews
+              Based on {reviewsQuery.data?.totalReviews || 0} reviews
             </div>
           </div>
         </div>
 
         <div className="reviews-grid">
-          {reviews.map((r, i) => (
+          {reviewsQuery.isLoading && <div className="placeholder-box">Loading reviews...</div>}
+          {reviewsQuery.isError && (
+            <div className="placeholder-box">
+              Unable to load reviews.
+            </div>
+          )}
+          {!reviewsQuery.isLoading && parsedReviews.length === 0 && (
+            <div className="placeholder-box">No reviews yet.</div>
+          )}
+          {parsedReviews.map((r, i) => (
             <div className="review-card" key={i}>
               <div className="review-header">
                 <div
@@ -117,7 +175,6 @@ export default function ReviewsSection() {
                 </div>
                 <div className="review-meta">
                   <div className="review-name">{r.name}</div>
-                  <div className="review-product">{r.product}</div>
                   <div className="review-stars">
                     {"★".repeat(r.rating)}
                     {"☆".repeat(5 - r.rating)}
@@ -128,14 +185,10 @@ export default function ReviewsSection() {
               <div className="review-text">{r.text}</div>
               <div className="review-helpful">
                 <span>Helpful?</span>
-                <button 
-                  onClick={() => handleHelpful(i)}
-                  disabled={r._voted}
-                >
+                <button disabled aria-label="Helpful">
                   <Icon name="thumbUp" size={12} />
-                  {r.helpful}
                 </button>
-                <button disabled={r._voted} aria-label="Not helpful">
+                <button disabled aria-label="Not helpful">
                   <Icon name="thumbDown" size={12} />
                 </button>
               </div>
@@ -147,66 +200,79 @@ export default function ReviewsSection() {
         <div className="write-review">
           <div className="write-review-title">Share Your Experience</div>
           <div className="write-review-sub">
-            Ordered from us? We'd love to hear what you think.
+            {canReview
+              ? "Ordered from us? We'd love to hear what you think."
+              : reviewNotice}
           </div>
-          <div className="form-grid">
-            <input
-              className="form-input"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <input
-              className="form-input"
-              placeholder="Product ordered (e.g. Red Velvet)"
-              value={product}
-              onChange={(e) => setProduct(e.target.value)}
-            />
-          </div>
-          <div className="star-label">Your Rating</div>
-          <div className="star-picker" onMouseLeave={() => setHoveredStar(0)}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span
-                key={star}
-                className="star-pick"
-                onClick={() => setUserRating(star)}
-                onMouseEnter={() => setHoveredStar(star)}
-                style={{
-                  color: star <= (hoveredStar || userRating) ? (hoveredStar && star <= hoveredStar ? "#D4B46A" : "#B8973A") : "#D3B89A",
-                  cursor: "pointer",
-                  transition: "0.15s",
-                }}
+          {canReview ? (
+            <>
+              <div className="star-label">Your Rating</div>
+              <div className="star-picker" onMouseLeave={() => setHoveredStar(0)}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className="star-pick"
+                    onClick={() => setUserRating(star)}
+                    onMouseEnter={() => setHoveredStar(star)}
+                    style={{
+                      color: star <= (hoveredStar || userRating) ? (hoveredStar && star <= hoveredStar ? "#D4B46A" : "#B8973A") : "#D3B89A",
+                      cursor: "pointer",
+                      transition: "0.15s",
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <textarea
+                className="form-textarea"
+                rows="3"
+                placeholder="Tell us about your experience — the taste, the presentation, the delivery..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              ></textarea>
+              <button
+                className="btn-primary"
+                style={{ marginTop: "16px" }}
+                onClick={handleSubmit}
+                disabled={reviewMutation.isPending || !bakeryId}
               >
-                ★
-              </span>
-            ))}
-          </div>
-          <textarea
-            className="form-textarea"
-            rows="3"
-            placeholder="Tell us about your experience — the taste, the presentation, the delivery..."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          ></textarea>
-          <button className="btn-primary" style={{ marginTop: "16px" }} onClick={handleSubmit}>
-            Submit Review
-          </button>
-          
-          {success && (
-            <div
-              style={{
-                marginTop: "12px",
-                color: "var(--sage-dark)",
-                fontSize: "13px",
-                fontWeight: 500,
-                letterSpacing: "0.5px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <Icon name="check" size={14} />
-              Thank you! Your review has been posted.
+                Submit Review
+              </button>
+
+              {success && (
+                <div
+                  style={{
+                    marginTop: "12px",
+                    color: "var(--sage-dark)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    letterSpacing: "0.5px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Icon name="check" size={14} />
+                  Thank you! Your review has been posted.
+                </div>
+              )}
+            </>
+          ) : (
+            !user && (
+              <button
+                className="btn-primary"
+                style={{ marginTop: "16px" }}
+                onClick={() => openAuthModal("login")}
+              >
+                Login to Review
+              </button>
+            )
+          )}
+
+          {submitError && (
+            <div className="auth-error" style={{ marginTop: "12px" }}>
+              {submitError}
             </div>
           )}
         </div>

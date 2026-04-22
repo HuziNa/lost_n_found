@@ -9,7 +9,8 @@ export default function BakerySidebar({ activeTab, setActiveTab, bakeryLink = "/
 
   const menuItems = [
     { id: "overview", label: "Overview", icon: "chart" },
-    { id: "products", label: "Inventory", icon: "inventory" },
+    { id: "ingredients", label: "Ingredients", icon: "inventory" },
+    { id: "products", label: "Products", icon: "cake" },
     { id: "orders", label: "Active Orders", icon: "orders" },
     { id: "reviews", label: "Reviews", icon: "reviews" },
     { id: "settings", label: "Settings", icon: "settings" },

@@ -1,43 +1,38 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function CakeCard({ cake }) {
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=600&q=80&auto=format&fit=crop";
+
+export default function CakeCard({ product }) {
   const navigate = useNavigate();
-  const [imgError, setImgError] = useState(false);
 
   return (
     <div className="cake-card">
       <div 
         className="cake-card-img" 
         style={{ 
-          backgroundColor: imgError ? '#eee' : 'transparent',
+          backgroundColor: '#eee',
           position: 'relative',
           overflow: 'hidden'
         }}
       >
         <img
-          src={cake.img}
-          alt={cake.name}
+          src={product.imageUrl || FALLBACK_IMAGE}
+          alt={product.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          onError={(e) => {
-            setImgError(true);
-            e.target.style.display = "none";
-          }}
         />
-        {cake.badge && (
-          <div className={`cake-badge ${cake.badge}`}>
-            {cake.badge}
-          </div>
-        )}
       </div>
       <div className="cake-card-body">
-        <h3 className="cake-card-name">{cake.name}</h3>
-        <p className="cake-card-desc">{cake.desc}</p>
+        <h3 className="cake-card-name">{product.name}</h3>
+        <p className="cake-card-desc">{product.category?.name || "Signature item"}</p>
         <div className="cake-card-footer" style={{ borderTop: 'none', paddingTop: 0, flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
-          <div className="cake-price" style={{ marginBottom: '4px' }}>Rs {cake.price.toLocaleString()}</div>
+          <div className="cake-price" style={{ marginBottom: '4px' }}>
+            Rs {Number(product.basePrice || 0).toLocaleString()}
+          </div>
           <button
             className="btn-primary"
-            onClick={() => navigate(`/product/${cake.id}`)}
+            onClick={() => navigate(`/product/${product.id}`)}
             style={{ width: '100%' }}
           >
             Explore Creation

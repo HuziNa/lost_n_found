@@ -1,50 +1,150 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  createBakeryCategory,
+  createBakeryIngredient,
+  createBakeryProduct,
+  deleteBakeryProduct,
+  getBakeryAnalytics,
+  getBakeryCategories,
+  getBakeryIngredients,
+  getBakeryOrders,
+  getBakeryProducts,
+  getBakeryReviews,
+  updateBakeryOrderStatus,
+  updateBakeryCategory,
+  updateBakeryProfile,
+  updateBakeryProduct,
+  updateBakeryIngredient,
+  deleteBakeryIngredient,
+} from "../api/bakery";
 import BakerySidebar from "../components/BakerySidebar";
 import { Icon } from "../components/customize/Icons";
-import { BAKERIES } from "../data/bakeries";
+import { useAuth } from "../context/AuthContext";
+import { getCategoryImage, setCategoryImage } from "../utils/categoryImages";
+import { getTemplateByCategory, CUSTOMIZER_TEMPLATES, getPresetToppingsForTemplate } from "../constants/customizerTemplates";
 
-const MOCK_PRODUCTS = [
-  { id: 1, name: "Vintage Vanilla Cake", price: 45, stock: 5, category: "Cakes", status: "In Stock" },
-  { id: 2, name: "Artisan Sourdough", price: 12, stock: 2, category: "Bread", status: "Low Stock" },
-  { id: 3, name: "Gold Leaf Macarons", price: 28, stock: 15, category: "Pastries", status: "In Stock" },
-];
+const ORDER_STATUSES = ["pending", "baking", "ready", "completed", "cancelled"];
 
-const MOCK_ORDERS = [
-  { id: "ORD-1201", customer: "John Doe", total: 45, status: "Preparing", date: "2 mins ago" },
-  { id: "ORD-1202", customer: "Jane Smith", total: 120, status: "Pending", date: "15 mins ago" },
-];
+const EMPTY_NUTRITION = {
+  calories: "",
+  protein: "",
+  carbohydrates: "",
+  fats: "",
+  sugar: "",
+  fiber: "",
+};
+
+const createEmptyProductOptionChoice = () => ({
+  name: "",
+  ingredientId: "",
+  quantity: "1",
+  extraPrice: "",
+});
+
+const createPresetChoice = (name, extraPrice = "") => ({
+  name,
+  ingredientId: "",
+  quantity: "1",
+  extraPrice: extraPrice === "" ? "" : String(extraPrice),
+});
+
+const createEmptyProductOption = () => ({
+  name: "",
+  required: false,
+  perLayer: false,
+  maxSelections: "1",
+  choices: [createEmptyProductOptionChoice()],
+});
+
+const createOptionFromSegment = (segment, templateKey) => {
+  let choices = [createEmptyProductOptionChoice()];
+  const presetToppings = getPresetToppingsForTemplate(templateKey);
+  
+  if (segment.key === "tiers") {
+    choices = [
+      createPresetChoice("1 Tier", 0),
+      createPresetChoice("2 Tiers", 500),
+      createPresetChoice("3 Tiers", 1200),
+    ];
+  } else if (segment.key === "frosting_color") {
+    choices = [
+      "Classic White", "Lavender Mist", "Soft Pink", "Mint Green", 
+      "Lemon Sorbet", "Chocolate Ganache", "Caramel Cream"
+    ].map(color => createPresetChoice(color, 0));
+  } else if (segment.key === "toppings") {
+    choices = presetToppings.map((topping) => createPresetChoice(topping.name, topping.extraPrice));
+  } else if (segment.key === "message") {
+      choices = [createPresetChoice("Personalized Message", 0)];
+  }
+
+  return {
+    name: segment.name,
+    required: segment.key === "size" || segment.key === "tiers",
+    perLayer: false,
+    templateKey: segment.key,
+    maxSelections: segment.key === "toppings" ? "5" : "1",
+    choices: choices,
+  };
+};
+
+const EMPTY_PRODUCT_FORM = {
+  name: "",
+  basePrice: "",
+  type: "FIXED",
+  categoryId: "",
+  description: "",
+  ingredientsText: "",
+  ingredients: [{ ingredientId: "", quantity: "" }],
+  options: [],
+  selectedTemplate: "", // e.g. "CAKE", "PIZZA"
+  allergensText: "",
+  nutrition: EMPTY_NUTRITION,
+  isActive: true,
+};
+
+const getEmptyProductForm = () => ({
+  ...EMPTY_PRODUCT_FORM,
+  ingredients: [{ ingredientId: "", quantity: "" }],
+  options: [],
+  nutrition: { ...EMPTY_NUTRITION },
+});
 
 export default function BakeryDashboard() {
-  const bakeryId = 1;
-  const profileStorageKey = `bakeryProfile_${bakeryId}`;
-  const baseBakery = BAKERIES.find((b) => b.id === bakeryId) || BAKERIES[0];
+  const { user, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
+  const bakeryId = user?.bakeryManaged?.id || user?.bakeryManaged?._id || null;
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [products, setProducts] = useState(MOCK_PRODUCTS);
-  const [orders, setOrders] = useState(MOCK_ORDERS);
   const [orderFilter, setOrderFilter] = useState("all");
   const [actionToast, setActionToast] = useState("");
-  const [bakeryProfile, setBakeryProfile] = useState(() => {
-    let storedProfile = null;
-    try {
-      const raw = localStorage.getItem(profileStorageKey);
-      storedProfile = raw ? JSON.parse(raw) : null;
-    } catch (error) {
-      storedProfile = null;
-    }
-
-    return {
-      id: bakeryId,
-      name: baseBakery.name || "",
-      category: baseBakery.category || "",
-      address: baseBakery.address || "",
-      desc: baseBakery.desc || "",
-      rating: baseBakery.rating || 0,
-      img: baseBakery.img || "",
-      fallbackBg: baseBakery.fallbackBg || "",
-      ...(storedProfile || {}),
-    };
+  const [ingredientModalOpen, setIngredientModalOpen] = useState(false);
+  const [categoryModal, setCategoryModal] = useState({ open: false, mode: "create", category: null });
+  const [productModal, setProductModal] = useState({ open: false, mode: "create", product: null });
+  const [deleteModal, setDeleteModal] = useState({ open: false, product: null });
+  const [ingredientDelModal, setIngredientDelModal] = useState({ open: false, ingredient: null });
+  const [ingredientForm, setIngredientForm] = useState({
+    id: null,
+    name: "",
+    unit: "",
+    pricePerUnit: "",
+    recipe: [],
   });
+  const [categoryForm, setCategoryForm] = useState({ name: "", imageUrl: "", globalCategoryId: "", isFeatured: false });
+  const [productForm, setProductForm] = useState(() => getEmptyProductForm());
+  const [storyForm, setStoryForm] = useState("");
+  const [quoteForm, setQuoteForm] = useState("");
+  const [imageUrlForm, setImageUrlForm] = useState("");
+  const [productOptionBuilderMode, setProductOptionBuilderMode] = useState("owner");
+  const [showAdvancedOptionFields, setShowAdvancedOptionFields] = useState(false);
+  const [statsForm, setStatsForm] = useState({
+    years: "",
+    customers: "",
+    recipes: "",
+    baked: "",
+  });
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [formError, setFormError] = useState("");
   const toastTimer = useRef(null);
 
   const showActionToast = (message) => {
@@ -63,64 +163,578 @@ export default function BakeryDashboard() {
     };
   }, []);
 
-  const handleQuickAdd = () => {
-    const newProduct = {
-      id: Date.now(),
-      name: "Signature Honey Cake",
-      price: 38,
-      stock: 6,
-      category: "Cakes",
-      status: "In Stock",
+  useEffect(() => {
+    setStoryForm(user?.bakeryManaged?.myStory || "");
+    setQuoteForm(user?.bakeryManaged?.storyQuote || "");
+    setImageUrlForm(user?.bakeryManaged?.imageUrl || "");
+    setStatsForm({
+      years: user?.bakeryManaged?.statsYears || "",
+      customers: user?.bakeryManaged?.statsCustomers || "",
+      recipes: user?.bakeryManaged?.statsRecipes || "",
+      baked: user?.bakeryManaged?.statsBaked || "",
+    });
+  }, [
+    user?.bakeryManaged?.myStory,
+    user?.bakeryManaged?.storyQuote,
+    user?.bakeryManaged?.imageUrl,
+    user?.bakeryManaged?.statsYears,
+    user?.bakeryManaged?.statsCustomers,
+    user?.bakeryManaged?.statsRecipes,
+    user?.bakeryManaged?.statsBaked,
+  ]);
+
+  const analyticsQuery = useQuery({
+    queryKey: ["bakeryAnalytics"],
+    queryFn: getBakeryAnalytics,
+    enabled: !!bakeryId,
+  });
+
+  const ingredientsQuery = useQuery({
+    queryKey: ["bakeryIngredients"],
+    queryFn: getBakeryIngredients,
+    enabled: !!bakeryId,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ["bakeryCategories"],
+    queryFn: () => getBakeryCategories(),
+    enabled: !!bakeryId,
+  });
+
+  const productsQuery = useQuery({
+    queryKey: ["bakeryProducts"],
+    queryFn: getBakeryProducts,
+    enabled: !!bakeryId,
+  });
+
+  const ordersQuery = useQuery({
+    queryKey: ["bakeryOrders", orderFilter],
+    queryFn: () => getBakeryOrders(orderFilter === "all" ? {} : { status: orderFilter }),
+    enabled: user?.role === "bakeryOwner",
+  });
+
+  const reviewsQuery = useQuery({
+    queryKey: ["bakeryOwnerReviews", bakeryId],
+    queryFn: () => getBakeryReviews(bakeryId),
+    enabled: !!bakeryId,
+  });
+
+  const createIngredientMutation = useMutation({
+    mutationFn: createBakeryIngredient,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryIngredients"] });
+      setIngredientModalOpen(false);
+      setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", recipe: [] });
+      showActionToast("Ingredient created.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to create ingredient.");
+    },
+  });
+
+  const updateIngredientMutation = useMutation({
+    mutationFn: ({ ingredientId, payload }) => updateBakeryIngredient(ingredientId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryIngredients"] });
+      setIngredientModalOpen(false);
+      setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", recipe: [] });
+      showActionToast("Ingredient updated.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to update ingredient.");
+    },
+  });
+
+  const deleteIngredientMutation = useMutation({
+    mutationFn: deleteBakeryIngredient,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryIngredients"] });
+      setIngredientDelModal({ open: false, ingredient: null });
+      showActionToast("Ingredient deleted.");
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: createBakeryCategory,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] });
+      const categoryId = data?.category?.id;
+      if (categoryId && categoryForm.imageUrl) {
+        setCategoryImage(categoryId, categoryForm.imageUrl.trim());
+      }
+      setCategoryModal({ open: false, mode: "create", category: null });
+      setCategoryForm({ name: "", imageUrl: "", globalCategoryId: "", isFeatured: false });
+      showActionToast("Category created.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to create category.");
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ categoryId, payload }) => updateBakeryCategory(categoryId, payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] });
+      const categoryId = data?.category?.id || categoryModal.category?.id;
+      if (categoryId && categoryForm.imageUrl) {
+        setCategoryImage(categoryId, categoryForm.imageUrl.trim());
+      }
+      setCategoryModal({ open: false, mode: "create", category: null });
+      setCategoryForm({ name: "", imageUrl: "", globalCategoryId: "", isFeatured: false });
+      showActionToast("Category updated.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to update category.");
+    },
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: createBakeryProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryProducts"] });
+      setProductModal({ open: false, mode: "create", product: null });
+      setProductForm({
+        ...getEmptyProductForm(),
+        categoryId: categories[0]?.id || "",
+      });
+      showActionToast("Product created.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to create product.");
+    },
+  });
+  const updateProductMutation = useMutation({
+    mutationFn: ({ productId, payload }) => updateBakeryProduct(productId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryProducts"] });
+      setProductModal({ open: false, mode: "create", product: null });
+      setProductForm({
+        ...getEmptyProductForm(),
+        categoryId: categories[0]?.id || "",
+      });
+      showActionToast("Product updated.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to update product.");
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (productId) => deleteBakeryProduct(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryProducts"] });
+      setDeleteModal({ open: false, product: null });
+      showActionToast("Product deleted.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to delete product.");
+    },
+  });
+
+  const updateOrderMutation = useMutation({
+    mutationFn: ({ orderId, status }) => updateBakeryOrderStatus(orderId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryOrders"] });
+      showActionToast("Order status updated.");
+    },
+  });
+
+  const updateBakeryProfileMutation = useMutation({
+    mutationFn: updateBakeryProfile,
+    onSuccess: async () => {
+      await refreshUser();
+      showActionToast("Bakery profile updated.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to update bakery profile.");
+    },
+  });
+
+  const analytics = analyticsQuery.data?.analytics || {};
+  const ordersByStatus = analytics.ordersByStatus || {};
+  const ingredients = ingredientsQuery.data?.ingredients || [];
+  const categories = categoriesQuery.data?.categories || [];
+  const globalCategories = categoriesQuery.data?.globals || [];
+  const products = productsQuery.data?.products || [];
+  const orders = ordersQuery.data?.orders || ordersQuery.data?.bakeryOrders || [];
+  const reviews = reviewsQuery.data?.reviews || [];
+
+  const getGlobalCategoryName = (category) => {
+    if (category?.globalCategory?.name) {
+      return category.globalCategory.name;
+    }
+
+    const matchedGlobal = globalCategories.find((gc) => gc.id === category?.globalCategoryId);
+    return matchedGlobal?.name || "None";
+  };
+
+  const openCreateProductModal = () => {
+    setFormError("");
+    setProductOptionBuilderMode("owner");
+    setShowAdvancedOptionFields(false);
+    setProductForm({
+      ...getEmptyProductForm(),
+      categoryId: categories[0]?.id || "",
+    });
+    setProductModal({ open: true, mode: "create", product: null });
+  };
+
+  const openCreateCategoryModal = () => {
+    setFormError("");
+    setCategoryForm({ name: "", imageUrl: "", globalCategoryId: globalCategories[0]?.id || "", isFeatured: false });
+    setCategoryModal({ open: true, mode: "create", category: null });
+  };
+
+  const openEditCategoryModal = (category) => {
+    setFormError("");
+    setCategoryForm({
+      name: category.name || "",
+      imageUrl: getCategoryImage(category.id) || "",
+      globalCategoryId: category.globalCategoryId || "",
+      isFeatured: !!category.isFeatured,
+    });
+    setCategoryModal({ open: true, mode: "edit", category });
+  };
+
+  const openEditProductModal = (product) => {
+    setFormError("");
+    setProductOptionBuilderMode("owner");
+    setShowAdvancedOptionFields(false);
+    setProductForm({
+      name: product.name || "",
+      basePrice: product.basePrice || "",
+      type: product.type || "FIXED",
+      categoryId: product.categoryId || categories[0]?.id || "",
+      description: product.description || "",
+      imageUrl: product.imageUrl || "",
+      ingredientsText: product.ingredientsText || "",
+      ingredients:
+        product.ingredients?.length > 0
+          ? product.ingredients.map((item) => ({
+              ingredientId: item.ingredientId || "",
+              quantity: item.quantity ?? "",
+            }))
+          : [{ ingredientId: "", quantity: "" }],
+      options:
+        product.options?.length > 0
+          ? product.options.map((option) => ({
+              name: option.name || "",
+              required: !!option.required,
+              perLayer: !!option.perLayer,
+              maxSelections:
+                option.maxSelections === null || option.maxSelections === undefined
+                  ? ""
+                  : String(option.maxSelections),
+              choices:
+                option.choices?.length > 0
+                  ? option.choices.map((choice) => ({
+                      name: choice.name || "",
+                      ingredientId: choice.ingredientId || "",
+                      quantity: choice.quantity ?? "",
+                      extraPrice: choice.extraPrice ?? "",
+                    }))
+                  : [createEmptyProductOptionChoice()],
+            }))
+          : [],
+      allergensText: (product.allergens || []).join(", "),
+      nutrition: {
+        calories: product.nutrition?.calories ?? "",
+        protein: product.nutrition?.protein ?? "",
+        carbohydrates: product.nutrition?.carbohydrates ?? "",
+        fats: product.nutrition?.fats ?? "",
+        sugar: product.nutrition?.sugar ?? "",
+        fiber: product.nutrition?.fiber ?? "",
+      },
+      isActive: product.isActive !== false,
+    });
+    setProductModal({ open: true, mode: "edit", product });
+  };
+
+  const toggleProductIngredientSelection = (ingredientId, checked) => {
+    setProductForm((prev) => {
+      const current = prev.ingredients || [];
+      const exists = current.some((item) => String(item.ingredientId) === String(ingredientId));
+
+      if (checked) {
+        if (exists) return prev;
+        return {
+          ...prev,
+          ingredients: [...current, { ingredientId, quantity: "1" }],
+        };
+      }
+
+      return {
+        ...prev,
+        ingredients: current.filter((item) => String(item.ingredientId) !== String(ingredientId)),
+      };
+    });
+  };
+
+  const updateProductIngredientQuantityById = (ingredientId, quantity) => {
+    setProductForm((prev) => ({
+      ...prev,
+      ingredients: (prev.ingredients || []).map((item) =>
+        String(item.ingredientId) === String(ingredientId) ? { ...item, quantity } : item,
+      ),
+    }));
+  };
+
+  const addProductOptionGroup = () => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: [...(prev.options || []), createEmptyProductOption()],
+    }));
+  };
+
+  const removeProductOptionGroup = (index) => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: (prev.options || []).filter((_, optionIndex) => optionIndex !== index),
+    }));
+  };
+
+  const updateProductOptionGroup = (index, field, value) => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: (prev.options || []).map((option, optionIndex) =>
+        optionIndex === index ? { ...option, [field]: value } : option,
+      ),
+    }));
+  };
+
+  const addProductOptionChoice = (optionIndex) => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: (prev.options || []).map((option, rowIndex) =>
+        rowIndex === optionIndex
+          ? { ...option, choices: [...(option.choices || []), createEmptyProductOptionChoice()] }
+          : option,
+      ),
+    }));
+  };
+
+  const removeProductOptionChoice = (optionIndex, choiceIndex) => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: (prev.options || []).map((option, rowIndex) => {
+        if (rowIndex !== optionIndex) return option;
+        const nextChoices = (option.choices || []).filter((_, currentChoiceIndex) => currentChoiceIndex !== choiceIndex);
+        return {
+          ...option,
+          choices: nextChoices.length > 0 ? nextChoices : [createEmptyProductOptionChoice()],
+        };
+      }),
+    }));
+  };
+
+  const updateProductOptionChoice = (optionIndex, choiceIndex, field, value) => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: (prev.options || []).map((option, rowIndex) => {
+        if (rowIndex !== optionIndex) return option;
+        return {
+          ...option,
+          choices: (option.choices || []).map((choice, currentChoiceIndex) =>
+            currentChoiceIndex === choiceIndex ? { ...choice, [field]: value } : choice,
+          ),
+        };
+      }),
+    }));
+  };
+
+  const applyProductOptionPreset = (preset) => {
+    setProductForm((prev) => ({
+      ...prev,
+      options: preset,
+    }));
+    setFormError("");
+  };
+
+  const handleIngredientSubmit = (event) => {
+    event.preventDefault();
+    setFormError("");
+    const payload = {
+      name: ingredientForm.name,
+      unit: ingredientForm.unit,
+      pricePerUnit: ingredientForm.pricePerUnit === "" ? undefined : Number(ingredientForm.pricePerUnit),
+      recipe: (ingredientForm.recipe || [])
+        .map((r) => ({
+          ingredientId: r.ingredientId,
+          quantity: Number(r.quantity),
+        }))
+        .filter((r) => r.ingredientId && r.quantity > 0),
     };
-    setProducts((prev) => [newProduct, ...prev]);
-    setActiveTab("products");
-    showActionToast("Added a new product to inventory.");
+
+    if (ingredientForm.id) {
+      updateIngredientMutation.mutate({ ingredientId: ingredientForm.id, payload });
+    } else {
+      createIngredientMutation.mutate(payload);
+    }
   };
 
-  const handleEditProduct = (productId) => {
-    setProducts((prev) =>
-      prev.map((prod) => {
-        if (prod.id !== productId) return prod;
-        const nextStock = prod.stock + 1;
-        const nextStatus = nextStock <= 3 ? "Low Stock" : "In Stock";
-        return { ...prod, stock: nextStock, status: nextStatus };
-      })
-    );
-    showActionToast("Updated stock count.");
+  const handleCategorySubmit = (event) => {
+    event.preventDefault();
+    setFormError("");
+    const payload = {
+      name: categoryForm.name,
+      globalCategoryId: categoryForm.globalCategoryId,
+      isFeatured: categoryForm.isFeatured,
+    };
+
+    if (categoryModal.mode === "edit" && categoryModal.category) {
+      updateCategoryMutation.mutate({
+        categoryId: categoryModal.category.id,
+        payload,
+      });
+    } else {
+      createCategoryMutation.mutate(payload);
+    }
   };
 
-  const handleUpdateOrder = (orderId) => {
-    const order = orders.find((o) => o.id === orderId);
-    const flow = ["Pending", "Preparing", "Ready"];
-    const currentIndex = order ? flow.indexOf(order.status) : 0;
-    const nextStatus = flow[(currentIndex + 1) % flow.length];
+  const handleProductSubmit = (event) => {
+    event.preventDefault();
+    setFormError("");
 
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus, date: "Just now" } : o))
-    );
-    showActionToast(`Order ${orderId} moved to ${nextStatus}.`);
+    const parsedIngredients = (productForm.ingredients || [])
+      .map((item) => ({
+        ingredientId: String(item.ingredientId || "").trim(),
+        quantity: Number(item.quantity),
+      }))
+      .filter((item) => item.ingredientId && Number.isFinite(item.quantity) && item.quantity > 0);
+
+    const parsedAllergens = String(productForm.allergensText || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const parsedNutrition = Object.entries(productForm.nutrition || {}).reduce((acc, [key, value]) => {
+      if (value === "" || value === null || value === undefined) {
+        return acc;
+      }
+
+      const numericValue = Number(value);
+      if (Number.isFinite(numericValue)) {
+        acc[key] = numericValue;
+      }
+      return acc;
+    }, {});
+
+    const parsedOptions = [];
+
+    if (productForm.type === "CUSTOMIZABLE") {
+      const rawOptions = productForm.options || [];
+
+      if (rawOptions.length === 0) {
+        setFormError("Add at least one option group for CUSTOMIZABLE products.");
+        return;
+      }
+
+      for (let optionIndex = 0; optionIndex < rawOptions.length; optionIndex += 1) {
+        const rawOption = rawOptions[optionIndex];
+        const optionName = String(rawOption.name || "").trim();
+
+        if (!optionName) {
+          setFormError(`Option group #${optionIndex + 1} needs a name.`);
+          return;
+        }
+
+        const rawMaxSelections = String(rawOption.maxSelections ?? "").trim();
+        const maxSelections = rawMaxSelections === "" ? null : Number(rawMaxSelections);
+
+        if (maxSelections !== null && (!Number.isInteger(maxSelections) || maxSelections <= 0)) {
+          setFormError(`Option group \"${optionName}\" must have a valid max selections value.`);
+          return;
+        }
+
+        const parsedChoices = [];
+        const rawChoices = rawOption.choices || [];
+
+        for (let choiceIndex = 0; choiceIndex < rawChoices.length; choiceIndex += 1) {
+          const rawChoice = rawChoices[choiceIndex];
+          const choiceName = String(rawChoice.name || "").trim();
+          const ingredientId = String(rawChoice.ingredientId || "").trim();
+          const quantity =
+            rawChoice.quantity === "" || rawChoice.quantity === null || rawChoice.quantity === undefined
+              ? 1
+              : Number(rawChoice.quantity);
+          const extraPrice = rawChoice.extraPrice === "" ? 0 : Number(rawChoice.extraPrice);
+
+          if (!choiceName || !ingredientId || !Number.isFinite(quantity) || quantity <= 0) {
+            setFormError(
+              `Option \"${optionName}\", choice #${choiceIndex + 1} requires name, ingredient, and quantity > 0.`,
+            );
+            return;
+          }
+
+          parsedChoices.push({
+            name: choiceName,
+            ingredientId,
+            quantity,
+            extraPrice: Number.isFinite(extraPrice) ? extraPrice : 0,
+          });
+        }
+
+        if (parsedChoices.length === 0) {
+          setFormError(`Option group \"${optionName}\" must include at least one choice.`);
+          return;
+        }
+
+        parsedOptions.push({
+          name: optionName,
+          required: !!rawOption.required,
+          perLayer: !!rawOption.perLayer,
+          templateKey: rawOption.templateKey || null,
+          maxSelections,
+          choices: parsedChoices,
+        });
+      }
+    }
+
+    const payload = {
+      name: productForm.name,
+      basePrice: Number(productForm.basePrice || 0),
+      type: productForm.type,
+      selectedTemplate: productForm.selectedTemplate || "",
+      categoryId: productForm.categoryId,
+      description: productForm.description,
+      imageUrl: productForm.imageUrl,
+      ingredientsText: productForm.ingredientsText,
+      ingredients: parsedIngredients,
+      options: productForm.type === "CUSTOMIZABLE" ? parsedOptions : [],
+      allergens: parsedAllergens,
+      nutrition: parsedNutrition,
+      isActive: productForm.isActive,
+    };
+
+    if (productModal.mode === "edit" && productModal.product) {
+      updateProductMutation.mutate({ productId: productModal.product.id, payload });
+    } else {
+      createProductMutation.mutate(payload);
+    }
   };
 
-  const filteredOrders =
-    orderFilter === "all"
-      ? orders
-      : orders.filter((order) => order.status.toLowerCase() === orderFilter);
-
-  const updateBakeryProfile = (field, value) => {
-    setBakeryProfile((prev) => ({ ...prev, [field]: value }));
+  const handleStorySubmit = (event) => {
+    event.preventDefault();
+    setFormError("");
+    updateBakeryProfileMutation.mutate({
+      myStory: storyForm,
+      storyQuote: quoteForm,
+      statsYears: statsForm.years,
+      statsCustomers: statsForm.customers,
+      statsRecipes: statsForm.recipes,
+      statsBaked: statsForm.baked,
+      imageUrl: imageUrlForm,
+    });
   };
 
-  const handleSaveProfile = () => {
-    localStorage.setItem(profileStorageKey, JSON.stringify(bakeryProfile));
-    showActionToast("Bakery profile updated.");
-  };
+  const filteredOrders = orders;
 
   return (
     <div className="bakery-portal">
       <BakerySidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        bakeryLink={`/bakery/${bakeryProfile.id || bakeryId}`}
+        bakeryLink={bakeryId ? `/bakery/${bakeryId}` : "/bakery"}
       />
       
       <main className="bakery-main">
@@ -130,9 +744,9 @@ export default function BakeryDashboard() {
             <p className="header-subtitle">Welcome back to your artisan workspace.</p>
           </div>
           <div className="header-actions">
-            <button className="btn-primary-sm" onClick={handleQuickAdd}>
+            <button className="btn-primary-sm" onClick={openCreateProductModal}>
               <Icon name="plus" className="btn-icon" />
-              Quick Add Product
+              Add Product
             </button>
             <div className="bakery-status">
               <span className="pips active"></span> Live
@@ -147,20 +761,16 @@ export default function BakeryDashboard() {
             <div className="dashboard-grid">
               <div className="stat-card-gold">
                 <span className="card-label">Daily Revenue</span>
-                <span className="card-value">$1,240.00</span>
-                <span className="card-trend positive">+12% from yesterday</span>
+                <span className="card-value">Rs {Number(analytics.totalRevenue || 0).toLocaleString()}</span>
+                <span className="card-trend">Last 30 days</span>
               </div>
               <div className="stat-card-gold">
                 <span className="card-label">Active Orders</span>
-                <span className="card-value">12</span>
-                <span className="card-trend">4 pending approval</span>
+                <span className="card-value">{analytics.totalOrders || 0}</span>
+                <span className="card-trend">
+                  {ordersByStatus.pending || 0} pending / {ordersByStatus.completed || 0} completed
+                </span>
               </div>
-              <div className="stat-card-gold highlight">
-                <span className="card-label">Expiring Stock</span>
-                <span className="card-value">3 items</span>
-                <span className="card-trend negative">Urgent restock needed</span>
-              </div>
-
               <div className="chart-placeholder">
                 <div className="chart-header">
                   <h3>Revenue Trends</h3>
@@ -178,45 +788,251 @@ export default function BakeryDashboard() {
             </div>
           )}
 
-          {activeTab === "products" && (
+          {activeTab === "ingredients" && (
             <div className="data-table-section">
               <div className="table-header">
-                <h2>Inventory Management</h2>
-                <input type="text" placeholder="Search products..." className="table-search" />
+                <div>
+                  <h2>Inventory Management</h2>
+                  <p style={{ margin: "6px 0 0", color: "var(--ink-muted)", fontSize: "13px" }}>
+                    Track raw materials and items prepared in-house.
+                  </p>
+                </div>
+                <button
+                  className="btn-sage"
+                  onClick={() => {
+                    setFormError("");
+                    setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", recipe: [] });
+                    setIngredientModalOpen(true);
+                  }}
+                >
+                  Add Ingredient
+                </button>
               </div>
-              <table className="bakery-table">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((prod) => (
-                    <tr key={prod.id}>
-                      <td className="font-medium">{prod.name}</td>
-                      <td>{prod.category}</td>
-                      <td>${prod.price}</td>
-                      <td>{prod.stock} units</td>
-                      <td>
-                        <span className={`badge ${prod.status.toLowerCase().replace(" ", "-")}`}>
-                          {prod.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button className="icon-btn" onClick={() => handleEditProduct(prod.id)}>
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+              {ingredientsQuery.isLoading && <div className="placeholder-box">Loading ingredients...</div>}
+              {ingredientsQuery.isError && <div className="placeholder-box">Unable to load ingredients.</div>}
+              {!ingredientsQuery.isLoading && ingredients.length === 0 && (
+                <div className="placeholder-box">No ingredients in inventory.</div>
+              )}
+
+              {ingredients.length > 0 && (
+                <div style={{ display: "grid", gap: "32px" }}>
+                  {/* RAW MATERIALS */}
+                  <div>
+                    <h3 style={{ fontSize: "16px", marginBottom: "12px", color: "var(--ink-soft)" }}>Raw Materials</h3>
+                    <table className="bakery-table">
+                      <thead>
+                        <tr>
+                          <th>Ingredient</th>
+                          <th>Unit</th>
+                          <th>Price / Unit</th>
+                          <th style={{ textAlign: "right" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ingredients.filter(ing => !ing.recipe || ing.recipe.length === 0).map((item) => (
+                          <tr key={item.id}>
+                            <td className="font-medium">{item.name}</td>
+                            <td>{item.unit}</td>
+                            <td>
+                              {item.pricePerUnit !== undefined && item.pricePerUnit !== null
+                                ? `Rs ${Number(item.pricePerUnit).toLocaleString()}`
+                                : "-"}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <button
+                                className="icon-btn"
+                                onClick={() => {
+                                  setIngredientForm({
+                                    id: item.id,
+                                    name: item.name,
+                                    unit: item.unit,
+                                    pricePerUnit: item.pricePerUnit ?? "",
+                                    recipe: item.recipe || [],
+                                  });
+                                  setIngredientModalOpen(true);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="icon-btn"
+                                onClick={() => setIngredientDelModal({ open: true, ingredient: item })}
+                                style={{ marginLeft: "12px" }}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* PREPARED ITEMS */}
+                  {ingredients.some(ing => ing.recipe && ing.recipe.length > 0) && (
+                    <div>
+                      <h3 style={{ fontSize: "16px", marginBottom: "12px", color: "var(--ink-soft)" }}>Prepared House Items (Compound)</h3>
+                      <table className="bakery-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Components</th>
+                            <th>Unit</th>
+                            <th>Manual Price Override</th>
+                            <th style={{ textAlign: "right" }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ingredients.filter(ing => ing.recipe && ing.recipe.length > 0).map((item) => (
+                            <tr key={item.id}>
+                              <td className="font-medium">{item.name}</td>
+                              <td style={{ fontSize: "12px", color: "var(--ink-muted)" }}>
+                                {item.recipe.length} item{item.recipe.length > 1 ? "s" : ""}
+                              </td>
+                              <td>{item.unit}</td>
+                              <td>
+                                {item.pricePerUnit !== undefined && item.pricePerUnit !== null
+                                  ? `Rs ${Number(item.pricePerUnit).toLocaleString()}`
+                                  : "-"}
+                              </td>
+                              <td style={{ textAlign: "right" }}>
+                                <button
+                                  className="icon-btn"
+                                  onClick={() => {
+                                    setIngredientForm({
+                                      id: item.id,
+                                      name: item.name,
+                                      unit: item.unit,
+                                      pricePerUnit: item.pricePerUnit ?? "",
+                                      recipe: item.recipe || [],
+                                    });
+                                    setIngredientModalOpen(true);
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className="icon-btn"
+                                  onClick={() => setIngredientDelModal({ open: true, ingredient: item })}
+                                  style={{ marginLeft: "12px" }}
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+          )}
+
+          {activeTab === "products" && (
+            <>
+              <div className="data-table-section" style={{ marginBottom: "32px" }}>
+                <div className="table-header">
+                  <div>
+                    <h2>Categories</h2>
+                    <p style={{ margin: "6px 0 0", color: "var(--ink-muted)", fontSize: "13px" }}>
+                      Manage your categories and link them to global templates.
+                    </p>
+                  </div>
+                  <button className="btn-primary-sm" onClick={openCreateCategoryModal}>
+                    Add Category
+                  </button>
+                </div>
+                {categoriesQuery.isLoading && <div className="placeholder-box">Loading categories...</div>}
+                {categoriesQuery.isError && <div className="placeholder-box">Unable to load categories.</div>}
+                {!categoriesQuery.isLoading && categories.length === 0 && (
+                  <div className="placeholder-box">No categories yet.</div>
+                )}
+                {categories.length > 0 && (
+                  <table className="bakery-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Type (Global)</th>
+                        <th>Featured</th>
+                        <th style={{ textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories.map((category) => (
+                        <tr key={category.id}>
+                          <td className="font-medium">{category.name}</td>
+                          <td>{getGlobalCategoryName(category)}</td>
+                          <td>
+                            {category.isFeatured ? (
+                              <span className="badge in-stock">Yes</span>
+                            ) : (
+                              <span className="badge" style={{ background: "#eee", color: "#666" }}>No</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <button className="icon-btn" onClick={() => openEditCategoryModal(category)}>
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="data-table-section">
+                <div className="table-header">
+                  <h2>Product Catalog</h2>
+                  <button className="btn-primary-sm" onClick={openCreateProductModal}>
+                    Add Product
+                  </button>
+                </div>
+              {productsQuery.isLoading && <div className="placeholder-box">Loading products...</div>}
+              {productsQuery.isError && <div className="placeholder-box">Unable to load products.</div>}
+              {!productsQuery.isLoading && products.length === 0 && (
+                <div className="placeholder-box">No products found.</div>
+              )}
+              {products.length > 0 && (
+                <table className="bakery-table">
+                  <thead>
+                    <tr>
+                      <th>Product Name</th>
+                      <th>Type</th>
+                      <th>Price</th>
+                      <th>Active</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((prod) => (
+                      <tr key={prod.id}>
+                        <td className="font-medium">{prod.name}</td>
+                        <td>{prod.type}</td>
+                        <td>Rs {Number(prod.basePrice || 0).toLocaleString()}</td>
+                        <td>
+                          <span className={`badge ${prod.isActive ? "in-stock" : "low-stock"}`}>
+                            {prod.isActive ? "Yes" : "No"}
+                          </span>
+                        </td>
+                        <td>
+                          <button className="icon-btn" onClick={() => openEditProductModal(prod)}>
+                            Edit
+                          </button>
+                          <button className="icon-btn" onClick={() => setDeleteModal({ open: true, product: prod })}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+                </div>
+              </>
           )}
 
           {activeTab === "orders" && (
@@ -231,59 +1047,143 @@ export default function BakeryDashboard() {
                     All
                   </button>
                   <button
-                    className={`btn-filter ${orderFilter === "preparing" ? "active" : ""}`}
-                    onClick={() => setOrderFilter("preparing")}
+                    className={`btn-filter ${orderFilter === "pending" ? "active" : ""}`}
+                    onClick={() => setOrderFilter("pending")}
                   >
-                    Preparing
+                    Pending
                   </button>
                   <button
-                    className={`btn-filter ${orderFilter === "ready" ? "active" : ""}`}
-                    onClick={() => setOrderFilter("ready")}
+                    className={`btn-filter ${orderFilter === "completed" ? "active" : ""}`}
+                    onClick={() => setOrderFilter("completed")}
                   >
-                    Ready
+                    Completed
                   </button>
                 </div>
               </div>
-              <table className="bakery-table">
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Customer</th>
-                    <th>Total</th>
-                    <th>Time</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="font-mono">{order.id}</td>
-                      <td>{order.customer}</td>
-                      <td>${order.total}</td>
-                      <td>{order.date}</td>
-                      <td>
-                        <span className={`status-dot ${order.status.toLowerCase()}`}></span>
-                        {order.status}
-                      </td>
-                      <td>
-                        <button className="btn-outline-xs" onClick={() => handleUpdateOrder(order.id)}>
-                          Update
-                        </button>
-                      </td>
+              {ordersQuery.isLoading && <div className="placeholder-box">Loading orders...</div>}
+              {ordersQuery.isError && <div className="placeholder-box">Unable to load orders.</div>}
+              {!ordersQuery.isLoading && filteredOrders.length === 0 && (
+                <div className="placeholder-box">No orders in this status.</div>
+              )}
+              {filteredOrders.length > 0 && (
+                <table className="bakery-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Customer</th>
+                      <th>Total</th>
+                      <th>Time</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.map((order) => (
+                      <React.Fragment key={order.id}>
+                        <tr
+                          className={expandedOrderId === order.id ? "row-expanded" : ""}
+                          onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <td className="font-mono">{order.id}</td>
+                          <td>{order.customer?.name || "Customer"}</td>
+                          <td>Rs {Number(order.totalAmount || order.totalPrice || 0).toLocaleString()}</td>
+                          <td>{order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}</td>
+                          <td>
+                            <span className={`status-dot ${order.status}`}></span>
+                            {order.status}
+                          </td>
+                          <td>
+                            <select
+                              value={order.status}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(event) =>
+                                updateOrderMutation.mutate({ orderId: order.id, status: event.target.value })
+                              }
+                            >
+                              {ORDER_STATUSES.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                        </tr>
+                        {expandedOrderId === order.id && (
+                          <tr className="order-details-expanded">
+                            <td colSpan="6">
+                              <div className="details-card">
+                                <div className="details-grid">
+                                  <div className="details-group">
+                                    <h4>Delivery Info</h4>
+                                    <p><strong>Option:</strong> {order.deliveryOption || "Standard"}</p>
+                                    <p><strong>Address:</strong> {order.deliveryAddress ? `${order.deliveryAddress.street}, ${order.deliveryAddress.city} ${order.deliveryAddress.postalCode}` : "N/A"}</p>
+                                    {order.deliveryInstructions && <p><strong>Instructions:</strong> {order.deliveryInstructions}</p>}
+                                  </div>
+                                  <div className="details-group">
+                                    <h4>Contact & Payment</h4>
+                                    <p><strong>Phone:</strong> {order.customerPhone || "N/A"}</p>
+                                    <p><strong>Payment Method:</strong> {order.paymentMethod?.toUpperCase() || "COD"}</p>
+                                  </div>
+                                  <div className="details-group full-width">
+                                    <h4>Ordered Items</h4>
+                                    <div className="items-list">
+                                      {(order.items || []).map((item, idx) => (
+                                        <div key={idx} className="item-line" style={{ display: "grid", gap: "6px" }}>
+                                          <div style={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
+                                            <span>{item.quantity} × {item.productName || "Product"}</span>
+                                            <span>Rs {Number(item.finalPrice || 0).toLocaleString()}</span>
+                                          </div>
+                                          {Array.isArray(item.selectedOptions) && item.selectedOptions.length > 0 && (
+                                            <div className="item-options" style={{ color: "var(--ink-muted)", fontSize: "12px", lineHeight: 1.5 }}>
+                                              {item.selectedOptions.map((option, optionIndex) => (
+                                                <div key={`${idx}-${optionIndex}`}>
+                                                  <strong>{option.optionName}:</strong> {option.choiceName}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
           {activeTab === "reviews" && (
             <div className="reviews-grid">
-              <div className="placeholder-box">
-                <h3>Customer Feedback</h3>
-                <p>Loading recent reviews...</p>
-              </div>
+              {reviewsQuery.isLoading && <div className="placeholder-box">Loading reviews...</div>}
+              {reviewsQuery.isError && <div className="placeholder-box">Unable to load reviews.</div>}
+              {!reviewsQuery.isLoading && reviews.length === 0 && (
+                <div className="placeholder-box">No reviews yet.</div>
+              )}
+              {reviews.map((review) => (
+                <div className="review-card" key={review.id}>
+                  <div className="review-header">
+                    <div className="review-meta">
+                      <div className="review-name">{review.customer?.name || "Customer"}</div>
+                      <div className="review-stars">
+                        {"★".repeat(review.rating)}
+                        {"☆".repeat(5 - review.rating)}
+                      </div>
+                    </div>
+                    <div className="review-date">
+                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ""}
+                    </div>
+                  </div>
+                  <div className="review-text">{review.comment}</div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -291,70 +1191,832 @@ export default function BakeryDashboard() {
             <div className="settings-panel">
               <div className="settings-header">
                 <h2>Bakery Profile</h2>
-                <button className="btn-outline-xs" onClick={handleSaveProfile}>
-                  Save Changes
-                </button>
               </div>
               <div className="settings-grid">
                 <label className="settings-field">
                   <span>Name</span>
-                  <input
-                    type="text"
-                    value={bakeryProfile.name}
-                    onChange={(e) => updateBakeryProfile("name", e.target.value)}
-                  />
+                  <input type="text" value={user?.bakeryManaged?.name || ""} readOnly />
                 </label>
                 <label className="settings-field">
-                  <span>Category</span>
-                  <input
-                    type="text"
-                    value={bakeryProfile.category}
-                    onChange={(e) => updateBakeryProfile("category", e.target.value)}
-                  />
+                  <span>Status</span>
+                  <input type="text" value={user?.bakeryManaged?.isActive ? "Active" : "Inactive"} readOnly />
                 </label>
                 <label className="settings-field">
                   <span>Address</span>
-                  <input
-                    type="text"
-                    value={bakeryProfile.address}
-                    onChange={(e) => updateBakeryProfile("address", e.target.value)}
-                  />
+                  <input type="text" value={user?.bakeryManaged?.address || ""} readOnly />
                 </label>
                 <label className="settings-field">
-                  <span>Rating</span>
+                  <span>Contact</span>
+                  <input type="text" value={user?.bakeryManaged?.contactNumber || ""} readOnly />
+                </label>
+                <label className="settings-field settings-span">
+                  <span>Bakery Image URL</span>
                   <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={bakeryProfile.rating}
-                    onChange={(e) => {
-                      const next = parseFloat(e.target.value);
-                      updateBakeryProfile("rating", Number.isNaN(next) ? "" : next);
-                    }}
+                    type="text"
+                    value={imageUrlForm}
+                    onChange={(event) => setImageUrlForm(event.target.value)}
+                    placeholder="https://..."
                   />
                 </label>
                 <label className="settings-field settings-span">
-                  <span>Description</span>
+                  <span>Owner</span>
+                  <textarea rows="2" value={user?.name || ""} readOnly></textarea>
+                </label>
+                <label className="settings-field settings-span">
+                  <span>My Story</span>
                   <textarea
-                    rows="4"
-                    value={bakeryProfile.desc}
-                    onChange={(e) => updateBakeryProfile("desc", e.target.value)}
+                    rows="6"
+                    value={storyForm}
+                    onChange={(event) => setStoryForm(event.target.value)}
+                    placeholder="Share your bakery's story..."
                   ></textarea>
                 </label>
                 <label className="settings-field settings-span">
-                  <span>Hero Image URL</span>
+                  <span>Quote</span>
+                  <textarea
+                    rows="3"
+                    value={quoteForm}
+                    onChange={(event) => setQuoteForm(event.target.value)}
+                    placeholder="Add a short quote for your bakery."
+                  ></textarea>
+                </label>
+                <label className="settings-field">
+                  <span>Years of Heritage</span>
                   <input
                     type="text"
-                    value={bakeryProfile.img}
-                    onChange={(e) => updateBakeryProfile("img", e.target.value)}
+                    value={statsForm.years}
+                    onChange={(event) =>
+                      setStatsForm((prev) => ({ ...prev, years: event.target.value }))
+                    }
+                    placeholder="115+"
+                  />
+                </label>
+                <label className="settings-field">
+                  <span>Happy Customers</span>
+                  <input
+                    type="text"
+                    value={statsForm.customers}
+                    onChange={(event) =>
+                      setStatsForm((prev) => ({ ...prev, customers: event.target.value }))
+                    }
+                    placeholder="50K+"
+                  />
+                </label>
+                <label className="settings-field">
+                  <span>Unique Recipes</span>
+                  <input
+                    type="text"
+                    value={statsForm.recipes}
+                    onChange={(event) =>
+                      setStatsForm((prev) => ({ ...prev, recipes: event.target.value }))
+                    }
+                    placeholder="200+"
+                  />
+                </label>
+                <label className="settings-field">
+                  <span>Baked Fresh Daily</span>
+                  <input
+                    type="text"
+                    value={statsForm.baked}
+                    onChange={(event) =>
+                      setStatsForm((prev) => ({ ...prev, baked: event.target.value }))
+                    }
+                    placeholder="24/7"
                   />
                 </label>
               </div>
+              {formError && <div className="auth-error" style={{ marginTop: "12px" }}>{formError}</div>}
+              <button
+                className="btn-primary"
+                style={{ marginTop: "16px" }}
+                onClick={handleStorySubmit}
+                disabled={updateBakeryProfileMutation.isPending}
+              >
+                {updateBakeryProfileMutation.isPending ? "Saving..." : "Save Profile"}
+              </button>
             </div>
           )}
         </div>
       </main>
+
+      {ingredientModalOpen && (
+        <div className="auth-overlay" onClick={() => setIngredientModalOpen(false)}>
+          <div className="auth-modal dashboard-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>{ingredientForm.id ? "Edit Ingredient" : "Add Ingredient"}</h3>
+            <form onSubmit={handleIngredientSubmit}>
+              <div className="auth-field">
+                <label>Name</label>
+                <input
+                  value={ingredientForm.name}
+                  onChange={(event) => setIngredientForm((prev) => ({ ...prev, name: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label>Unit</label>
+                <select
+                  value={ingredientForm.unit}
+                  onChange={(event) => setIngredientForm((prev) => ({ ...prev, unit: event.target.value }))}
+                  required
+                >
+                  <option value="" disabled>
+                    Select unit
+                  </option>
+                  <option value="g">g</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                </select>
+              </div>
+              <div className="auth-field">
+                <label>Price Per Unit</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={ingredientForm.pricePerUnit}
+                  onChange={(event) =>
+                    setIngredientForm((prev) => ({ ...prev, pricePerUnit: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="auth-field">
+                <label>Inventory Composition (Recipe)</label>
+                <div className="product-option-note" style={{ marginBottom: "12px" }}>
+                  Define if this is a prepared item made from other ingredients. Leave empty for raw items.
+                </div>
+                
+                <div className="recipe-builder">
+                  {(ingredientForm.recipe || []).map((row, idx) => (
+                    <div key={idx} className="recipe-row" style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-end" }}>
+                      <div style={{ flex: 1 }}>
+                        <select
+                          value={row.ingredientId}
+                          onChange={(e) => {
+                            const newRecipe = [...ingredientForm.recipe];
+                            newRecipe[idx].ingredientId = e.target.value;
+                            setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
+                          }}
+                          required
+                        >
+                          <option value="">Select ingredient</option>
+                          {ingredients.filter(ing => ing.id !== ingredientForm.id).map(ing => (
+                            <option key={ing.id} value={ing.id}>{ing.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ width: "100px" }}>
+                        <input
+                          type="number"
+                          placeholder="Qty"
+                          value={row.quantity}
+                          onChange={(e) => {
+                            const newRecipe = [...ingredientForm.recipe];
+                            newRecipe[idx].quantity = e.target.value;
+                            setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
+                          }}
+                          required
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        className="icon-btn" 
+                        style={{ color: "var(--rose)", marginBottom: "8px" }}
+                        onClick={() => {
+                          const newRecipe = ingredientForm.recipe.filter((_, i) => i !== idx);
+                          setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
+                        }}
+                      >
+                        <Icon name="trash" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    className="btn-outline-sm"
+                    onClick={() => {
+                      setIngredientForm(prev => ({
+                        ...prev,
+                        recipe: [...(prev.recipe || []), { ingredientId: "", quantity: "1" }]
+                      }));
+                    }}
+                  >
+                    + Add Sub-Ingredient
+                  </button>
+                </div>
+              </div>
+              {formError && <div className="auth-error">{formError}</div>}
+              <button
+                className="btn-primary"
+                disabled={createIngredientMutation.isPending || updateIngredientMutation.isPending}
+              >
+                {createIngredientMutation.isPending || updateIngredientMutation.isPending
+                  ? "Saving..."
+                  : ingredientForm.id
+                  ? "Update Ingredient"
+                  : "Create Ingredient"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {ingredientDelModal.open && (
+        <div className="auth-overlay" onClick={() => setIngredientDelModal({ open: false, ingredient: null })}>
+          <div className="auth-modal dashboard-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Delete Ingredient</h3>
+            <p>Are you sure you want to delete {ingredientDelModal.ingredient?.name}?</p>
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              <button
+                className="btn-primary"
+                onClick={() => deleteIngredientMutation.mutate(ingredientDelModal.ingredient?.id)}
+                disabled={deleteIngredientMutation.isPending}
+              >
+                {deleteIngredientMutation.isPending ? "Deleting..." : "Confirm"}
+              </button>
+              <button className="btn-outline" onClick={() => setIngredientDelModal({ open: false, ingredient: null })}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {categoryModal.open && (
+        <div className="auth-overlay" onClick={() => setCategoryModal({ open: false, mode: "create", category: null })}>
+          <div className="auth-modal dashboard-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>{categoryModal.mode === "edit" ? "Edit Category" : "Add Category"}</h3>
+            <form onSubmit={handleCategorySubmit}>
+              <div className="auth-field">
+                <label>Name</label>
+                <input
+                  value={categoryForm.name}
+                  onChange={(event) =>
+                    setCategoryForm((prev) => ({ ...prev, name: event.target.value }))
+                  }
+                  placeholder="e.g. Best Sellers or Summer Specials"
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label>Global Template</label>
+                <select
+                  value={categoryForm.globalCategoryId}
+                  onChange={(event) =>
+                    setCategoryForm((prev) => ({ ...prev, globalCategoryId: event.target.value }))
+                  }
+                  required
+                >
+                  <option value="" disabled>
+                    Select a template
+                  </option>
+                  {globalCategories.map((gc) => (
+                    <option key={gc.id} value={gc.id}>
+                      {gc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="auth-field">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <input
+                    type="checkbox"
+                    id="isFeatured"
+                    checked={categoryForm.isFeatured}
+                    onChange={(event) =>
+                      setCategoryForm((prev) => ({ ...prev, isFeatured: event.target.checked }))
+                    }
+                  />
+                  <label htmlFor="isFeatured" style={{ marginBottom: 0 }}>Featured (Show in top section)</label>
+                </div>
+              </div>
+              <div className="auth-field">
+                <label>Image URL</label>
+                <input
+                  value={categoryForm.imageUrl}
+                  onChange={(event) =>
+                    setCategoryForm((prev) => ({ ...prev, imageUrl: event.target.value }))
+                  }
+                  placeholder="https://..."
+                />
+              </div>
+              {formError && <div className="auth-error">{formError}</div>}
+              <button
+                className="btn-primary"
+                disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+              >
+                {createCategoryMutation.isPending || updateCategoryMutation.isPending
+                  ? "Saving..."
+                  : categoryModal.mode === "edit"
+                  ? "Save Category"
+                  : "Create Category"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {productModal.open && (
+        <div className="auth-overlay" onClick={() => setProductModal({ open: false, mode: "create", product: null })}>
+          <div className="auth-modal dashboard-modal product-editor-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>{productModal.mode === "edit" ? "Edit Product" : "Add Product"}</h3>
+            <form onSubmit={handleProductSubmit} className="product-editor-form">
+              <div className="auth-field">
+                <label>Name</label>
+                <input
+                  value={productForm.name}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, name: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label>Category ID</label>
+                <select
+                  value={productForm.categoryId}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, categoryId: event.target.value }))}
+                  required
+                >
+                  <option value="" disabled>
+                    Select a category
+                  </option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                {categories.length === 0 && (
+                  <div className="auth-error" style={{ marginTop: "8px" }}>
+                    No categories yet. Add one first.
+                  </div>
+                )}
+              </div>
+              <div className="auth-field">
+                <label>Base Price</label>
+                <input
+                  type="number"
+                  value={productForm.basePrice}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, basePrice: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label>Image URL</label>
+                <input
+                  value={productForm.imageUrl}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="auth-field">
+                <label>Description</label>
+                <textarea
+                  rows="3"
+                  value={productForm.description}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, description: event.target.value }))}
+                  placeholder="Short product summary"
+                ></textarea>
+              </div>
+              <div className="auth-field">
+                <label>Ingredients Text</label>
+                <textarea
+                  rows="3"
+                  value={productForm.ingredientsText}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, ingredientsText: event.target.value }))}
+                  placeholder="Ingredient details shown on product page"
+                ></textarea>
+              </div>
+              <div className="auth-field">
+                <label>Recipe Ingredients (from inventory)</label>
+                <div className="product-ingredient-checklist">
+                  {ingredients.map((ingredient) => {
+                    const selected = (productForm.ingredients || []).find(
+                      (item) => String(item.ingredientId) === String(ingredient.id),
+                    );
+
+                    return (
+                      <div
+                        key={ingredient.id}
+                        className={`product-ingredient-check ${selected ? "selected" : ""}`}
+                      >
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={!!selected}
+                            onChange={(event) =>
+                              toggleProductIngredientSelection(ingredient.id, event.target.checked)
+                            }
+                          />
+                          <span>{ingredient.name}</span>
+                          <small>{ingredient.unit}</small>
+                        </label>
+                        {selected && (
+                          <div className="ingredient-quantity-field">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={selected.quantity}
+                              onChange={(event) =>
+                                updateProductIngredientQuantityById(ingredient.id, event.target.value)
+                              }
+                              placeholder="Stock usage"
+                            />
+                            <span className="ingredient-unit-hint is-set">{ingredient.unit}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="product-option-note" style={{ marginTop: "8px" }}>
+                  Checked ingredients with quantity are what reduce inventory when this product is ordered.
+                </div>
+                {ingredients.length === 0 && (
+                  <div style={{ color: "var(--ink-muted)", fontSize: "12px", marginTop: "8px" }}>
+                    Add bakery ingredients first to select here.
+                  </div>
+                )}
+              </div>
+              <div className="auth-field">
+                <label>Allergens (comma-separated)</label>
+                <input
+                  value={productForm.allergensText}
+                  onChange={(event) => setProductForm((prev) => ({ ...prev, allergensText: event.target.value }))}
+                  placeholder="e.g. Gluten, Dairy, Nuts"
+                />
+              </div>
+              <div className="auth-field">
+                <label>Nutrition</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.nutrition.calories}
+                    onChange={(event) =>
+                      setProductForm((prev) => ({
+                        ...prev,
+                        nutrition: { ...prev.nutrition, calories: event.target.value },
+                      }))
+                    }
+                    placeholder="Calories"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.nutrition.protein}
+                    onChange={(event) =>
+                      setProductForm((prev) => ({
+                        ...prev,
+                        nutrition: { ...prev.nutrition, protein: event.target.value },
+                      }))
+                    }
+                    placeholder="Protein"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.nutrition.carbohydrates}
+                    onChange={(event) =>
+                      setProductForm((prev) => ({
+                        ...prev,
+                        nutrition: { ...prev.nutrition, carbohydrates: event.target.value },
+                      }))
+                    }
+                    placeholder="Carbohydrates"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.nutrition.fats}
+                    onChange={(event) =>
+                      setProductForm((prev) => ({
+                        ...prev,
+                        nutrition: { ...prev.nutrition, fats: event.target.value },
+                      }))
+                    }
+                    placeholder="Fats"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.nutrition.sugar}
+                    onChange={(event) =>
+                      setProductForm((prev) => ({
+                        ...prev,
+                        nutrition: { ...prev.nutrition, sugar: event.target.value },
+                      }))
+                    }
+                    placeholder="Sugar"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={productForm.nutrition.fiber}
+                    onChange={(event) =>
+                      setProductForm((prev) => ({
+                        ...prev,
+                        nutrition: { ...prev.nutrition, fiber: event.target.value },
+                      }))
+                    }
+                    placeholder="Fiber"
+                  />
+                </div>
+              </div>
+              <div className="auth-field">
+                <label>Type</label>
+                <select
+                  value={productForm.type}
+                  onChange={(event) => {
+                    const nextType = event.target.value;
+                    setProductForm((prev) => ({
+                      ...prev,
+                      type: nextType,
+                      options:
+                        nextType === "CUSTOMIZABLE" && (prev.options || []).length === 0
+                          ? [createEmptyProductOption()]
+                          : prev.options,
+                    }));
+                  }}
+                >
+                  <option value="FIXED">FIXED</option>
+                  <option value="CUSTOMIZABLE">CUSTOMIZABLE</option>
+                </select>
+              </div>
+              {productForm.type === "CUSTOMIZABLE" && (
+                <div className="auth-field">
+                  <label>Customization Setup</label>
+                  <div className="product-option-builder-header">
+                    <div className="product-option-helper-text">
+                      1. Add what customer can choose (Size, Flavor). 2. Add choices. 3. Set extra price.
+                    </div>
+                    <div className="product-option-builder-controls">
+                      <select
+                        value={productOptionBuilderMode}
+                        onChange={(event) => setProductOptionBuilderMode(event.target.value)}
+                      >
+                        <option value="owner">Owner mode</option>
+                        <option value="advanced">Advanced mode</option>
+                      </select>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => setShowAdvancedOptionFields((prev) => !prev)}
+                      >
+                        {showAdvancedOptionFields ? "Hide advanced" : "Show advanced"}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="product-option-presets" style={{ flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
+                    <div style={{ width: "100%" }}>
+                      <label style={{ fontSize: "12px", color: "var(--ink-muted)", marginBottom: "4px", display: "block" }}>Builder Template</label>
+                      <select 
+                        style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid var(--sage-light)" }}
+                        value={productForm.selectedTemplate}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setProductForm(prev => ({ ...prev, selectedTemplate: val }));
+                        }}
+                      >
+                        <option value="">Manual Builder (No Template)</option>
+                        {Object.entries(CUSTOMIZER_TEMPLATES).map(([key, t]) => (
+                          <option key={key} value={key}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {productForm.selectedTemplate && (
+                      <div className="template-segments-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", width: "100%" }}>
+                        {CUSTOMIZER_TEMPLATES[productForm.selectedTemplate].segments.map(seg => {
+                          const isEnabled = (productForm.options || []).some(o => o.templateKey === seg.key);
+                          return (
+                            <button
+                              key={seg.key}
+                              type="button"
+                              className={`btn-outline-sm ${isEnabled ? "active" : ""}`}
+                              style={{ 
+                                background: isEnabled ? "var(--sage-light)" : "transparent",
+                                color: isEnabled ? "var(--sage-dark)" : "inherit",
+                                borderColor: "var(--sage-light)"
+                              }}
+                              onClick={() => {
+                                if (isEnabled) {
+                                  setProductForm(prev => ({
+                                    ...prev,
+                                    options: prev.options.filter(o => o.templateKey !== seg.key)
+                                  }));
+                                } else {
+                                  setProductForm(prev => ({
+                                    ...prev,
+                                    options: [...(prev.options || []), createOptionFromSegment(seg, productForm.selectedTemplate)]
+                                  }));
+                                }
+                              }}
+                            >
+                              {isEnabled ? "✓" : "+"} {seg.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <div className="product-options-builder">
+                    {(productForm.options || []).map((option, optionIndex) => (
+                      <div key={`option-${optionIndex}`} className="product-option-group">
+                        <div className="product-option-header">
+                          <h4>Customer Choice Group {optionIndex + 1}</h4>
+                          <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={() => removeProductOptionGroup(optionIndex)}
+                          >
+                            Remove Group
+                          </button>
+                        </div>
+                        <div
+                          className={`product-option-grid ${(showAdvancedOptionFields || productOptionBuilderMode === "advanced") ? "product-option-grid-advanced" : "product-option-grid-simple"}`}
+                        >
+                          <input
+                            value={option.name}
+                            onChange={(event) =>
+                              updateProductOptionGroup(optionIndex, "name", event.target.value)
+                            }
+                            placeholder="What can customer choose? (e.g. Size, Flavor, Toppings)"
+                          />
+                          <input
+                            type="number"
+                            min="1"
+                            value={option.maxSelections}
+                            onChange={(event) =>
+                              updateProductOptionGroup(optionIndex, "maxSelections", event.target.value)
+                            }
+                            placeholder="How many can customer pick?"
+                          />
+                          <label className="product-option-toggle">
+                            <input
+                              type="checkbox"
+                              checked={!!option.required}
+                              onChange={(event) =>
+                                updateProductOptionGroup(optionIndex, "required", event.target.checked)
+                              }
+                            />
+                            Customer must choose this
+                          </label>
+                          {(showAdvancedOptionFields || productOptionBuilderMode === "advanced") && (
+                            <label className="product-option-toggle">
+                              <input
+                                type="checkbox"
+                                checked={!!option.perLayer}
+                                onChange={(event) =>
+                                  updateProductOptionGroup(optionIndex, "perLayer", event.target.checked)
+                                }
+                              />
+                              Per layer (advanced)
+                            </label>
+                          )}
+                        </div>
+
+                        <div className="product-option-choices">
+                          {(option.choices || []).map((choice, choiceIndex) => (
+                            <div
+                              key={`choice-${choiceIndex}`}
+                              className={`product-option-choice-row ${(showAdvancedOptionFields || productOptionBuilderMode === "advanced") ? "product-option-choice-row-advanced" : "product-option-choice-row-simple"}`}
+                            >
+                              <input
+                                value={choice.name}
+                                onChange={(event) =>
+                                  updateProductOptionChoice(optionIndex, choiceIndex, "name", event.target.value)
+                                }
+                                placeholder="Choice customer sees (e.g. Chocolate, Large)"
+                              />
+                              <select
+                                value={choice.ingredientId}
+                                onChange={(event) =>
+                                  updateProductOptionChoice(optionIndex, choiceIndex, "ingredientId", event.target.value)
+                                }
+                              >
+                                <option value="">Map to ingredient</option>
+                                {ingredients.map((ingredient) => (
+                                  <option key={ingredient.id} value={ingredient.id}>
+                                    {ingredient.name} ({ingredient.unit})
+                                  </option>
+                                ))}
+                              </select>
+                              {(showAdvancedOptionFields || productOptionBuilderMode === "advanced") && (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={choice.quantity}
+                                  onChange={(event) =>
+                                    updateProductOptionChoice(optionIndex, choiceIndex, "quantity", event.target.value)
+                                  }
+                                  placeholder="Stock usage per order"
+                                />
+                              )}
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={choice.extraPrice}
+                                onChange={(event) =>
+                                  updateProductOptionChoice(optionIndex, choiceIndex, "extraPrice", event.target.value)
+                                }
+                                placeholder="Extra price customer pays"
+                              />
+                              <button
+                                type="button"
+                                className="btn-outline"
+                                onClick={() => removeProductOptionChoice(optionIndex, choiceIndex)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="product-option-actions">
+                          <button
+                            type="button"
+                            className="btn-outline"
+                            onClick={() => addProductOptionChoice(optionIndex)}
+                          >
+                            Add Choice
+                          </button>
+                          {ingredients.length === 0 && (
+                            <span className="product-option-note">
+                              Add bakery ingredients first to map choices.
+                            </span>
+                          )}
+                          <span className="product-option-note">
+                            Tip: set "How many can customer pick" to 1 for single-choice groups.
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" className="btn-outline" onClick={addProductOptionGroup}>
+                    Add Option Group
+                  </button>
+                </div>
+              )}
+              <div className="auth-field">
+                <label>Active</label>
+                <select
+                  value={productForm.isActive ? "true" : "false"}
+                  onChange={(event) =>
+                    setProductForm((prev) => ({ ...prev, isActive: event.target.value === "true" }))
+                  }
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              {formError && <div className="auth-error">{formError}</div>}
+              <button
+                className="btn-primary"
+                disabled={
+                  createProductMutation.isPending ||
+                  updateProductMutation.isPending ||
+                  categories.length === 0
+                }
+              >
+                {createProductMutation.isPending || updateProductMutation.isPending ? "Saving..." : "Save Product"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deleteModal.open && (
+        <div className="auth-overlay" onClick={() => setDeleteModal({ open: false, product: null })}>
+          <div className="auth-modal dashboard-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Delete Product</h3>
+            <p>Are you sure you want to delete {deleteModal.product?.name}?</p>
+            {formError && <div className="auth-error">{formError}</div>}
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              <button
+                className="btn-primary"
+                onClick={() => deleteProductMutation.mutate(deleteModal.product?.id)}
+                disabled={deleteProductMutation.isPending}
+              >
+                {deleteProductMutation.isPending ? "Deleting..." : "Confirm"}
+              </button>
+              <button className="btn-outline" onClick={() => setDeleteModal({ open: false, product: null })}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

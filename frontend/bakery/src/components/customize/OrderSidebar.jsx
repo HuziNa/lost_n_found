@@ -22,7 +22,7 @@ const PRODUCT_TOPPINGS = {
 export default function OrderSidebar() {
   const { state, calcTotal, applyVoucher, addToCart } = useApp();
   const { user, openAuthModal } = useAuth();
-  const isRestricted = user?.role === "admin" || user?.role === "owner";
+  const canOrder = user?.role === "customer";
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
   const [voucherType, setVoucherType] = useState("");
@@ -282,8 +282,8 @@ export default function OrderSidebar() {
       return;
     }
 
-    if (isRestricted) {
-      alert("Admins and bakery owners cannot place orders.");
+    if (!canOrder) {
+      alert("Only customers can add items to the cart.");
       return;
     }
 

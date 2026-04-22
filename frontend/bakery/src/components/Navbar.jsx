@@ -8,7 +8,7 @@ export default function Navbar() {
   const { state } = useApp();
   const { user, logout, openAuthModal } = useAuth();
   const location = useLocation();
-  const isRestricted = user?.role === "admin" || user?.role === "owner";
+  const isRestricted = user?.role === "admin" || user?.role === "bakeryOwner";
 
   const handleCollectionScroll = (e) => {
     if (location.pathname.startsWith("/bakery")) {
@@ -58,9 +58,14 @@ export default function Navbar() {
                     Admin Portal
                   </Link>
                 )}
-                {user?.role === "owner" && (
+                {user?.role === "bakeryOwner" && user?.bakeryManaged?.isActive && (
                   <Link to="/bakery/dashboard" className="nav-link admin-portal-link">
                     My Bakery
+                  </Link>
+                )}
+                {user && user.role !== "admin" && (
+                  <Link to="/profile" className={`nav-link ${location.pathname === "/profile" ? "active" : ""}`}>
+                    Profile
                   </Link>
                 )}
                 {!isRestricted && (
