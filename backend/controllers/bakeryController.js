@@ -794,28 +794,30 @@ export const createBakeryProduct = async (req, res) => {
         }
 
         for (const choice of option.choices) {
-          if (!choice.name || !choice.ingredientId || choice.quantity === undefined) {
+          if (!choice.name || choice.quantity === undefined) {
             return res.status(400).json({
-              message: "Each choice must have name, ingredientId, and quantity.",
+              message: "Each choice must have name and quantity.",
             });
           }
 
-          if (!isValidObjectId(choice.ingredientId)) {
-            return res.status(400).json({
-              message: "choice.ingredientId must be a valid id.",
-            });
-          }
+          if (choice.ingredientId) {
+            if (!isValidObjectId(choice.ingredientId)) {
+              return res.status(400).json({
+                message: "choice.ingredientId must be a valid id.",
+              });
+            }
 
-          // Verify ingredient belongs to this bakery
-          const ingredientDoc = await Ingredient.findOne({
-            _id: choice.ingredientId,
-            bakeryId: user.bakeryManaged._id,
-          });
-
-          if (!ingredientDoc) {
-            return res.status(400).json({
-              message: `Ingredient with id ${choice.ingredientId} not found in your bakery.`,
+            // Verify ingredient belongs to this bakery
+            const ingredientDoc = await Ingredient.findOne({
+              _id: choice.ingredientId,
+              bakeryId: user.bakeryManaged._id,
             });
+
+            if (!ingredientDoc) {
+              return res.status(400).json({
+                message: `Ingredient with id ${choice.ingredientId} not found in your bakery.`,
+              });
+            }
           }
         }
       }
@@ -991,27 +993,29 @@ export const updateBakeryProduct = async (req, res) => {
         }
 
         for (const choice of optionData.choices) {
-          if (!choice.name || !choice.ingredientId || choice.quantity === undefined) {
+          if (!choice.name || choice.quantity === undefined) {
             return res.status(400).json({
-              message: "Each choice must have name, ingredientId, and quantity.",
+              message: "Each choice must have name and quantity.",
             });
           }
 
-          if (!isValidObjectId(choice.ingredientId)) {
-            return res.status(400).json({
-              message: "choice.ingredientId must be a valid id.",
-            });
-          }
+          if (choice.ingredientId) {
+            if (!isValidObjectId(choice.ingredientId)) {
+              return res.status(400).json({
+                message: "choice.ingredientId must be a valid id.",
+              });
+            }
 
-          const ingredientDoc = await Ingredient.findOne({
-            _id: choice.ingredientId,
-            bakeryId: user.bakeryManaged._id,
-          });
-
-          if (!ingredientDoc) {
-            return res.status(400).json({
-              message: `Ingredient with id ${choice.ingredientId} not found in your bakery.`,
+            const ingredientDoc = await Ingredient.findOne({
+              _id: choice.ingredientId,
+              bakeryId: user.bakeryManaged._id,
             });
+
+            if (!ingredientDoc) {
+              return res.status(400).json({
+                message: `Ingredient with id ${choice.ingredientId} not found in your bakery.`,
+              });
+            }
           }
         }
 
@@ -1024,7 +1028,7 @@ export const updateBakeryProduct = async (req, res) => {
           maxSelections: optionData.maxSelections || null,
           choices: optionData.choices.map((choice) => ({
             name: choice.name.trim(),
-            ingredientId: choice.ingredientId,
+            ingredientId: choice.ingredientId || null,
             quantity: Number(choice.quantity),
             extraPrice: Number(choice.extraPrice) || 0,
           })),

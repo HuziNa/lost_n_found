@@ -9,7 +9,7 @@ const optionChoiceSchema = new mongoose.Schema(
       // for the chocolate sponge option, the choice of chocolate would link compund ingreidient we have made
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
-      required: true,
+      required: false,
     },
 
     quantity: { type: Number, required: true },
