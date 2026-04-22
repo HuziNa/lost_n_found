@@ -1,25 +1,26 @@
 import mongoose from "mongoose";
 
-// schema for the options selected for a product in an order
-const selectedOptionSchema = new mongoose.Schema(
+// defines the actual options available to choose from for that option (compund ingredient)
+const optionChoiceSchema = new mongoose.Schema(
   {
-    optionName: { type: String, required: true }, // sponge
-    choiceName: { type: String }, // chocolate
+    name: { type: String, required: true }, // chocolate, vanilla etc
 
-    ingredientId: {
+    ingredientId: { // coca powder for chocolate sponge, vanilla extract for vanilla sponge 
+      // for the chocolate sponge option, the choice of chocolate would link compund ingreidient we have made
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
       required: true,
     },
 
     quantity: { type: Number, required: true },
-    layer: { type: Number }, // optional (1)
+    extraPrice: { type: Number, default: 0 },
   },
   { _id: false }
 );
 
-// schema for a product in an order
-const orderItemSchema = new mongoose.Schema(
+// defines an option/choice a user can make for a product for example sponge of a cake
+// for exm the spinge of a cake and then in the option choices we have chocolate, vanilla etc
+const productOptionSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,41 +28,16 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
     },
 
-    quantity: { type: Number, required: true },
+    name: { type: String, required: true },
+    required: { type: Boolean, default: false },
 
-    selectedOptions: [selectedOptionSchema],
+    perLayer: { type: Boolean, default: false },
+    maxSelections: { type: Number }, // for example max 3 layers of sponge
 
-    finalPrice: { type: Number, required: true },
-  },
-  { _id: false }
-);
-
-// the full order schema
-const orderSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
-    bakeryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Bakery",
-      required: true,
-    },
-
-    items: [orderItemSchema],
-
-    totalPrice: { type: Number, required: true },
-
-    status: {
-      type: String,
-      enum: ["pending", "completed"],
-      default: "pending",
-    },
+    templateKey: { type: String }, // Links to standard segments like 'frosting_color'
+    choices: [optionChoiceSchema],
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Order", orderSchema);
+export default mongoose.model("ProductOption", productOptionSchema);

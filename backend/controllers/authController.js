@@ -37,6 +37,7 @@ function sanitizeUser(userDoc) {
         contactNumber: userDoc.bakeryManaged.contactNumber || null,
         ownerId: toIdString(userDoc.bakeryManaged.ownerId),
         isActive: userDoc.bakeryManaged.isActive,
+        approvalStatus: userDoc.bakeryManaged.approvalStatus,
       };
     } else {
       baseUser.bakeryManaged = userDoc.bakeryManaged
@@ -53,7 +54,7 @@ const findUserForResponse = (userId) =>
     .select("-password")
     .populate(
       "bakeryManaged",
-      "_id name address contactNumber ownerId isActive",
+      "_id name address contactNumber ownerId isActive approvalStatus",
     );
 
 const saveSession = (req, userDoc) =>
@@ -148,6 +149,8 @@ export const registerUser = async (req, res) => {
           ownerId: user._id,
           address: String(bakeryAddress).trim(),
           contactNumber: providedContactNumber,
+          isActive: false,
+          approvalStatus: "pending",
         });
 
         user.bakeryManaged = bakery._id;
@@ -161,12 +164,17 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    await saveSession(req, user);
+    if (selectedRole !== OWNER_ROLE) {
+      await saveSession(req, user);
+    }
 
     user = await findUserForResponse(user._id);
 
     return res.status(201).json({
-      message: "Signup successful.",
+      message:
+        selectedRole === OWNER_ROLE
+          ? "Signup submitted. Your bakery is pending admin approval."
+          : "Signup successful.",
       user: sanitizeUser(user),
       redirectTo: HERO_PAGE_PATH,
     });
@@ -207,6 +215,33 @@ export const loginUser = async (req, res) => {
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    if (user.role === OWNER_ROLE) {
+      const bakery = user.bakeryManaged
+        ? await Bakery.findById(user.bakeryManaged)
+        : await Bakery.findOne({ ownerId: user._id });
+
+      if (!bakery) {
+        return res.status(403).json({
+          message: "Bakery profile not found. Please contact support.",
+        });
+      }
+
+      const approvalStatus = bakery.approvalStatus || "approved";
+      if (approvalStatus !== "approved") {
+        const statusMessage =
+          approvalStatus === "rejected"
+            ? "Your bakery application was rejected. Please contact support."
+            : "Your bakery application is pending approval.";
+        return res.status(403).json({ message: statusMessage });
+      }
+
+      if (!bakery.isActive) {
+        return res.status(403).json({
+          message: "Your bakery is currently inactive. Please contact support.",
+        });
+      }
     }
 
     await saveSession(req, user);

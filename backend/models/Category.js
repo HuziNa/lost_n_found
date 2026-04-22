@@ -8,6 +8,12 @@ const categorySchema = new mongoose.Schema(
       required: true,
     },
     name: { type: String, required: true },
+    globalCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GlobalCategory",
+      required: true,
+    },
+    isFeatured: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
