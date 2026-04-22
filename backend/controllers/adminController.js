@@ -1,12 +1,12 @@
 import Bakery from "../models/Bakery.js";
-import GlobalCategory from "../models/GlobalCategory.js";
+import Category from "../models/Category.js";
 import Order from "../models/Order.js";
 import { sendBakeryApprovalEmail, sendBakeryRejectionEmail } from "../services/emailService.js";
 import { ensureGlobalCategories } from "../utils/globalCategories.js";
 
 const toIdString = (value) => (value ? value.toString() : null);
 
-const serializeGlobalCategory = (categoryDoc) => ({
+const serializeCategory = (categoryDoc) => ({
   id: toIdString(categoryDoc._id),
   name: categoryDoc.name,
   createdAt: categoryDoc.createdAt,
@@ -422,7 +422,7 @@ export const listGlobalCategories = async (_req, res) => {
 
     return res.status(200).json({
       message: "Global categories fetched successfully.",
-      categories: categories.map(serializeGlobalCategory),
+      categories: categories.map(serializeCategory),
     });
   } catch (error) {
     return res.status(500).json({
@@ -437,8 +437,8 @@ export const listGlobalCategories = async (_req, res) => {
 // - Session cookie from /api/auth/login
 // - Logged in user must be admin
 // - Body: { name: String }
-// Returns: created global category
-export const createGlobalCategory = async (req, res) => {
+// Returns: created category
+export const createCategory = async (req, res) => {
   try {
     const name = normalizeCategoryName(req.body?.name);
 
@@ -448,25 +448,25 @@ export const createGlobalCategory = async (req, res) => {
       });
     }
 
-    const existing = await GlobalCategory.findOne({
+    const existing = await Category.findOne({
       name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") },
     }).lean();
 
     if (existing) {
       return res.status(409).json({
-        message: "A global category with this name already exists.",
+        message: "A category with this name already exists.",
       });
     }
 
-    const category = await GlobalCategory.create({ name });
+    const category = await Category.create({ name });
 
     return res.status(201).json({
-      message: "Global category created successfully.",
-      category: serializeGlobalCategory(category),
+      message: "Category created successfully.",
+      category: serializeCategory(category),
     });
   } catch (error) {
     return res.status(500).json({
-      message: "Error creating global category.",
+      message: "Error creating category.",
       error: error.message,
     });
   }

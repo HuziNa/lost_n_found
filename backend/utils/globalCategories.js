@@ -1,9 +1,9 @@
-import GlobalCategory from "../models/GlobalCategory.js";
+import Category from "../models/Category.js";
 
 export const DEFAULT_GLOBAL_CATEGORIES = ["Cake", "Cupcake", "Pizza", "Bread"];
 
 export const ensureGlobalCategories = async () => {
-  const existing = await GlobalCategory.find({
+  const existing = await Category.find({
     name: { $in: DEFAULT_GLOBAL_CATEGORIES },
   }).lean();
 
@@ -17,7 +17,7 @@ export const ensureGlobalCategories = async () => {
 
   if (toCreate.length > 0) {
     try {
-      await GlobalCategory.insertMany(toCreate, { ordered: false });
+      await Category.insertMany(toCreate, { ordered: false });
     } catch (error) {
       if (error.code !== 11000) {
         throw error;
@@ -25,5 +25,5 @@ export const ensureGlobalCategories = async () => {
     }
   }
 
-  return GlobalCategory.find().sort({ name: 1 }).lean();
+  return Category.find().sort({ name: 1 }).lean();
 };

@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import Bakery from "../models/Bakery.js";
 import BakeryInventory from "../models/BakeryInventory.js";
 import Category from "../models/Category.js";
-import GlobalCategory from "../models/GlobalCategory.js";
 import Ingredient from "../models/Ingredients.js";
 import Order from "../models/Order.js";
 import ProductOption from "../models/ProductOption.js";
@@ -36,29 +35,15 @@ const buildCategoryMap = async (categoryIds, bakeryId) => {
     return map;
   }
 
-  const globalCategories = await GlobalCategory.find({
+  const categories = await Category.find({
     _id: { $in: uniqueIds },
   })
     .select("_id name")
     .lean();
 
-  globalCategories.forEach((category) => {
+  categories.forEach((category) => {
     map.set(toIdString(category._id), category);
   });
-
-  const missingIds = uniqueIds.filter((id) => !map.has(toIdString(id)));
-  if (missingIds.length > 0) {
-    const fallbackCategories = await Category.find({
-      _id: { $in: missingIds },
-      bakeryId,
-    })
-      .select("_id name")
-      .lean();
-
-    fallbackCategories.forEach((category) => {
-      map.set(toIdString(category._id), category);
-    });
-  }
 
   return map;
 };
@@ -66,19 +51,7 @@ const buildCategoryMap = async (categoryIds, bakeryId) => {
 const resolveCategoryById = async (categoryId, bakeryId) => {
   if (!categoryId) return null;
 
-  const globalCategory = await GlobalCategory.findById(categoryId)
-    .select("_id name")
-    .lean();
-
-  if (globalCategory) {
-    return globalCategory;
-  }
-
-  if (!bakeryId) {
-    return null;
-  }
-
-  return Category.findOne({ _id: categoryId, bakeryId })
+  return Category.findById(categoryId)
     .select("_id name")
     .lean();
 };
@@ -157,17 +130,6 @@ function serializeOptions(optionDocs) {
   }));
 }
 
-function serializeCategory(categoryDoc) {
-  return {
-    id: toIdString(categoryDoc._id),
-    name: categoryDoc.name,
-    globalCategoryId: toIdString(categoryDoc.globalCategoryId),
-    isFeatured: categoryDoc.isFeatured || false,
-    createdAt: categoryDoc.createdAt,
-    updatedAt: categoryDoc.updatedAt,
-  };
-}
-
 function serializePublicBakery(bakeryDoc) {
   return {
     id: toIdString(bakeryDoc._id),
@@ -183,22 +145,14 @@ function serializePublicBakery(bakeryDoc) {
 
 // API: GET /api/bakery/categories/public/:bakeryId
 // Returns:
-// - 200 with categories list ONLY for specific bakery (no globals)
+// - 200 with global categories list
 export const listPublicBakeryCategories = async (req, res) => {
   try {
-    const { bakeryId } = req.params;
-
-    if (!isValidObjectId(bakeryId)) {
-      return res.status(400).json({ message: "Invalid Bakery ID." });
-    }
-
-    const categories = await Category.find({ bakeryId })
-      .sort({ name: 1 })
-      .lean();
+    const categories = await ensureGlobalCategories();
 
     return res.status(200).json({
       message: "Categories fetched successfully.",
-      categories: categories.map(serializeCategory),
+      categories: categories.map((c) => ({ id: toIdString(c._id), name: c.name })),
     });
   } catch (error) {
     console.error("[Bakery Controller] listPublicBakeryCategories Error:", error);
@@ -212,34 +166,19 @@ export const listPublicBakeryCategories = async (req, res) => {
 // API: GET /api/bakery/categories
 // - Session cookie from /api/auth/login
 // Returns:
-// - 200 with categories list for owner's bakery (both global list for selection and current local ones)
+// - 200 with global categories list for selection
 export const listBakeryCategories = async (req, res) => {
   try {
-    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
-
-    if (!user || !user.bakeryManaged) {
-      return res.status(404).json({
-        message: "Bakery not found for this owner.",
-      });
-    }
-
-    const globals = await ensureGlobalCategories();
-    console.log(`[Bakery Controller] Fetched ${globals.length} global categories.`);
-    const localCategories = await Category.find({
-      bakeryId: user.bakeryManaged._id,
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+    const categories = await ensureGlobalCategories();
 
     return res.status(200).json({
-      message: "Bakery categories fetched successfully.",
-      globals: globals.map((g) => ({ id: toIdString(g._id), name: g.name })),
-      categories: localCategories.map(serializeCategory),
+      message: "Categories fetched successfully.",
+      categories: categories.map((c) => ({ id: toIdString(c._id), name: c.name })),
     });
   } catch (error) {
     console.error('[Bakery Controller] listBakeryCategories Error:', error);
     return res.status(500).json({
-      message: "Error fetching bakery categories.",
+      message: "Error fetching categories.",
       error: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
@@ -249,53 +188,6 @@ export const listBakeryCategories = async (req, res) => {
 // API: POST /api/bakery/categories
 // - Session cookie from /api/auth/login
 // - Body: { name: String, globalCategoryId: String, isFeatured?: Boolean }
-// Returns:
-// - 201 with created category
-export const createBakeryCategory = async (req, res) => {
-  try {
-    const { name, globalCategoryId, isFeatured } = req.body;
-
-    if (!name || !globalCategoryId) {
-      return res.status(400).json({
-        message: "name and globalCategoryId are required.",
-      });
-    }
-
-    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
-
-    if (!user || !user.bakeryManaged) {
-      return res.status(404).json({
-        message: "Bakery not found for this owner.",
-      });
-    }
-
-    // Verify global category exists
-    const globalCat = await GlobalCategory.findById(globalCategoryId);
-    if (!globalCat) {
-      return res.status(400).json({
-        message: "Invalid globalCategoryId.",
-      });
-    }
-
-    const category = await Category.create({
-      bakeryId: user.bakeryManaged._id,
-      name: name.trim(),
-      globalCategoryId,
-      isFeatured: !!isFeatured,
-    });
-
-    return res.status(201).json({
-      message: "Category created successfully.",
-      category: serializeCategory(category),
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Error creating category.",
-      error: error.message,
-    });
-  }
-};
-
 // API: PATCH /api/bakery/profile
 // - Session cookie from /api/auth/login
 // - Body: { myStory?: String, storyQuote?: String, statsYears?: String, statsCustomers?: String, statsRecipes?: String, statsBaked?: String, imageUrl?: String }
@@ -386,57 +278,6 @@ export const updateBakeryProfile = async (req, res) => {
 
 // API: PATCH /api/bakery/categories/:categoryId
 // - Session cookie from /api/auth/login
-// - Body: { name?: String, globalCategoryId?: String, isFeatured?: Boolean }
-// Returns:
-// - 200 with updated category
-export const updateBakeryCategory = async (req, res) => {
-  try {
-    const { categoryId } = req.params;
-    const { name, globalCategoryId, isFeatured } = req.body;
-
-    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
-
-    if (!user || !user.bakeryManaged) {
-      return res.status(404).json({
-        message: "Bakery not found for this owner.",
-      });
-    }
-
-    const category = await Category.findOne({
-      _id: categoryId,
-      bakeryId: user.bakeryManaged._id,
-    });
-
-    if (!category) {
-      return res.status(404).json({
-        message: "Category not found in your bakery.",
-      });
-    }
-
-    if (name) category.name = name.trim();
-    if (globalCategoryId) {
-      const globalCat = await GlobalCategory.findById(globalCategoryId);
-      if (!globalCat) {
-        return res.status(400).json({ message: "Invalid globalCategoryId." });
-      }
-      category.globalCategoryId = globalCategoryId;
-    }
-    if (isFeatured !== undefined) category.isFeatured = !!isFeatured;
-
-    await category.save();
-
-    return res.status(200).json({
-      message: "Category updated successfully.",
-      category: serializeCategory(category),
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Error updating category.",
-      error: error.message,
-    });
-  }
-};
-
 // API: GET /api/bakery/ingredients
 // - Session cookie from /api/auth/login
 // Returns:

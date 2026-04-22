@@ -1,12 +1,37 @@
 import mongoose from "mongoose";
 
-// defines the actual options available to choose from for that option (compund ingredient)
+// Ingredient used in products (for fixed products)
+const productIngredientSchema = new mongoose.Schema(
+  {
+    ingredientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
+    quantity: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
+// Nutrition information
+const nutritionSchema = new mongoose.Schema(
+  {
+    calories: { type: Number, default: 0 },
+    protein: { type: Number, default: 0 },
+    carbs: { type: Number, default: 0 },
+    fat: { type: Number, default: 0 },
+    sugar: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+// defines the actual options available to choose from for that option (compound ingredient)
 const optionChoiceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true }, // chocolate, vanilla etc
 
-    ingredientId: { // coca powder for chocolate sponge, vanilla extract for vanilla sponge 
-      // for the chocolate sponge option, the choice of chocolate would link compund ingreidient we have made
+    ingredientId: { // coca powder for chocolate sponge, vanilla extract for vanilla sponge
+      // for the chocolate sponge option, the choice of chocolate would link compound ingredient we have made
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
       required: true,
@@ -19,7 +44,7 @@ const optionChoiceSchema = new mongoose.Schema(
 );
 
 // defines an option/choice a user can make for a product for example sponge of a cake
-// for exm the spinge of a cake and then in the option choices we have chocolate, vanilla etc
+// for e.g. the sponge of a cake and then in the option choices we have chocolate, vanilla etc
 const productOptionSchema = new mongoose.Schema(
   {
     productId: {
@@ -42,29 +67,41 @@ const productOptionSchema = new mongoose.Schema(
 
     ingredientsText: { type: String, default: "" },
 
-    description: { type: String, default: "" },
+    choices: [optionChoiceSchema],
+  },
+  { timestamps: true }
+);
 
-    imageUrl: { type: String, default: "" },
-
-    ingredientsText: { type: String, default: "" },
-
-    // for the fixed items 
+// Product schema
+const productSchema = new mongoose.Schema(
+  {
+    bakeryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bakery",
+      required: true,
+    },
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+    name: { type: String, required: true },
+    type: {
+      type: String,
+      enum: ["FIXED", "CUSTOMIZABLE"],
+      required: true,
+    },
+    basePrice: { type: Number, required: true },
+    // Only for FIXED products
     ingredients: {
       type: [productIngredientSchema],
       default: [],
     },
-
     allergens: {
       type: [String],
       default: [],
     },
-
     nutrition: nutritionSchema,
-
-    selectedTemplate: {
-      type: String,
-      default: "",
-    },
     isActive: {
       type: Boolean,
       default: true,
@@ -73,4 +110,5 @@ const productOptionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("ProductOption", productOptionSchema);
+export default mongoose.model("Product", productSchema);
+export { productOptionSchema, optionChoiceSchema, productIngredientSchema, nutritionSchema };

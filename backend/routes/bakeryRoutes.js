@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  createBakeryCategory,
   createBakeryReview,
   createBakeryIngredient,
   createBakeryProduct,
@@ -17,7 +16,6 @@ import {
   listBakeryReviews,
   updateBakeryProfile,
   updateBakeryOrderStatus,
-  updateBakeryCategory,
   updateBakeryProduct,
   updateBakeryIngredient,
   deleteBakeryIngredient,
@@ -52,8 +50,6 @@ router.use(requireAuth, requireBakeryOwner);
 
 // Protected Category management List 
 router.get("/categories", listBakeryCategories);
-router.post("/categories", createBakeryCategory);
-router.patch("/categories/:categoryId", updateBakeryCategory);
 
 router.patch("/profile", updateBakeryProfile);
 
