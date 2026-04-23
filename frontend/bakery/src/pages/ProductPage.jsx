@@ -188,9 +188,11 @@ export default function ProductPage() {
           <div className="product-actions-bar" style={{ marginTop: "32px", borderTop: "1px solid var(--border)", paddingTop: "24px" }}>
             <div className="product-price-large" style={{ fontSize: "24px", fontWeight: "300" }}>Rs {Number(product.basePrice || 0).toLocaleString()}</div>
             <div className="product-buttons" style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
-              <button className="btn-sage product-btn" onClick={() => handleAction("add")} style={{ flex: 1, padding: "14px" }}>
-                Add to Cart
-              </button>
+              {!isCustomizable && (
+                <button className="btn-sage product-btn" onClick={() => handleAction("add")} style={{ flex: 1, padding: "14px" }}>
+                  Add to Cart
+                </button>
+              )}
               {isCustomizable && (
                 <button
                   className="btn-rose product-btn"

@@ -369,6 +369,7 @@ export default function BakeryDashboard() {
               name: option.name || "",
               required: !!option.required,
               perLayer: !!option.perLayer,
+              templateKey: option.templateKey || "",
               maxSelections:
                 option.maxSelections === null || option.maxSelections === undefined
                   ? ""
