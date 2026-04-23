@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createBakeryCategory,
   createBakeryIngredient,
   createBakeryProduct,
   deleteBakeryProduct,
@@ -12,7 +11,6 @@ import {
   getBakeryProducts,
   getBakeryReviews,
   updateBakeryOrderStatus,
-  updateBakeryCategory,
   updateBakeryProfile,
   updateBakeryProduct,
   updateBakeryIngredient,
@@ -21,7 +19,6 @@ import {
 import BakerySidebar from "../components/BakerySidebar";
 import { Icon } from "../components/customize/Icons";
 import { useAuth } from "../context/AuthContext";
-import { getCategoryImage, setCategoryImage } from "../utils/categoryImages";
 import { getTemplateByCategory, CUSTOMIZER_TEMPLATES, getPresetToppingsForTemplate } from "../constants/customizerTemplates";
 
 const ORDER_STATUSES = ["pending", "baking", "ready", "completed", "cancelled"];
@@ -119,7 +116,6 @@ export default function BakeryDashboard() {
   const [orderFilter, setOrderFilter] = useState("all");
   const [actionToast, setActionToast] = useState("");
   const [ingredientModalOpen, setIngredientModalOpen] = useState(false);
-  const [categoryModal, setCategoryModal] = useState({ open: false, mode: "create", category: null });
   const [productModal, setProductModal] = useState({ open: false, mode: "create", product: null });
   const [deleteModal, setDeleteModal] = useState({ open: false, product: null });
   const [ingredientDelModal, setIngredientDelModal] = useState({ open: false, ingredient: null });
@@ -128,9 +124,10 @@ export default function BakeryDashboard() {
     name: "",
     unit: "",
     pricePerUnit: "",
+    stock: "",
+    minStock: "",
     recipe: [],
   });
-  const [categoryForm, setCategoryForm] = useState({ name: "", imageUrl: "", globalCategoryId: "", isFeatured: false });
   const [productForm, setProductForm] = useState(() => getEmptyProductForm());
   const [storyForm, setStoryForm] = useState("");
   const [quoteForm, setQuoteForm] = useState("");
@@ -224,7 +221,7 @@ export default function BakeryDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bakeryIngredients"] });
       setIngredientModalOpen(false);
-      setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", recipe: [] });
+      setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", stock: "", minStock: "", recipe: [] });
       showActionToast("Ingredient created.");
     },
     onError: (error) => {
@@ -237,7 +234,7 @@ export default function BakeryDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bakeryIngredients"] });
       setIngredientModalOpen(false);
-      setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", recipe: [] });
+      setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", stock: "", minStock: "", recipe: [] });
       showActionToast("Ingredient updated.");
     },
     onError: (error) => {
@@ -254,39 +251,6 @@ export default function BakeryDashboard() {
     },
   });
 
-  const createCategoryMutation = useMutation({
-    mutationFn: createBakeryCategory,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] });
-      const categoryId = data?.category?.id;
-      if (categoryId && categoryForm.imageUrl) {
-        setCategoryImage(categoryId, categoryForm.imageUrl.trim());
-      }
-      setCategoryModal({ open: false, mode: "create", category: null });
-      setCategoryForm({ name: "", imageUrl: "", globalCategoryId: "", isFeatured: false });
-      showActionToast("Category created.");
-    },
-    onError: (error) => {
-      setFormError(error?.data?.message || "Unable to create category.");
-    },
-  });
-
-  const updateCategoryMutation = useMutation({
-    mutationFn: ({ categoryId, payload }) => updateBakeryCategory(categoryId, payload),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] });
-      const categoryId = data?.category?.id || categoryModal.category?.id;
-      if (categoryId && categoryForm.imageUrl) {
-        setCategoryImage(categoryId, categoryForm.imageUrl.trim());
-      }
-      setCategoryModal({ open: false, mode: "create", category: null });
-      setCategoryForm({ name: "", imageUrl: "", globalCategoryId: "", isFeatured: false });
-      showActionToast("Category updated.");
-    },
-    onError: (error) => {
-      setFormError(error?.data?.message || "Unable to update category.");
-    },
-  });
 
   const createProductMutation = useMutation({
     mutationFn: createBakeryProduct,
@@ -354,18 +318,19 @@ export default function BakeryDashboard() {
   const ordersByStatus = analytics.ordersByStatus || {};
   const ingredients = ingredientsQuery.data?.ingredients || [];
   const categories = categoriesQuery.data?.categories || [];
-  const globalCategories = categoriesQuery.data?.globals || [];
   const products = productsQuery.data?.products || [];
   const orders = ordersQuery.data?.orders || ordersQuery.data?.bakeryOrders || [];
   const reviews = reviewsQuery.data?.reviews || [];
 
-  const getGlobalCategoryName = (category) => {
-    if (category?.globalCategory?.name) {
-      return category.globalCategory.name;
+  const getStockLabel = (ingredient) => {
+    const stockValue = ingredient?.stock;
+    if (stockValue === null || stockValue === undefined || Number.isNaN(Number(stockValue))) {
+      return "Not tracked";
     }
 
-    const matchedGlobal = globalCategories.find((gc) => gc.id === category?.globalCategoryId);
-    return matchedGlobal?.name || "None";
+    const numericStock = Number(stockValue);
+    const unitSuffix = ingredient?.unit ? ` ${ingredient.unit}` : "";
+    return `${numericStock.toLocaleString()}${unitSuffix}`;
   };
 
   const openCreateProductModal = () => {
@@ -377,23 +342,6 @@ export default function BakeryDashboard() {
       categoryId: categories[0]?.id || "",
     });
     setProductModal({ open: true, mode: "create", product: null });
-  };
-
-  const openCreateCategoryModal = () => {
-    setFormError("");
-    setCategoryForm({ name: "", imageUrl: "", globalCategoryId: globalCategories[0]?.id || "", isFeatured: false });
-    setCategoryModal({ open: true, mode: "create", category: null });
-  };
-
-  const openEditCategoryModal = (category) => {
-    setFormError("");
-    setCategoryForm({
-      name: category.name || "",
-      imageUrl: getCategoryImage(category.id) || "",
-      globalCategoryId: category.globalCategoryId || "",
-      isFeatured: !!category.isFeatured,
-    });
-    setCategoryModal({ open: true, mode: "edit", category });
   };
 
   const openEditProductModal = (product) => {
@@ -553,10 +501,26 @@ export default function BakeryDashboard() {
   const handleIngredientSubmit = (event) => {
     event.preventDefault();
     setFormError("");
+
+    const parsedStock = ingredientForm.stock === "" ? 0 : Number(ingredientForm.stock);
+    const parsedMinStock = ingredientForm.minStock === "" ? 0 : Number(ingredientForm.minStock);
+
+    if (!Number.isFinite(parsedStock) || parsedStock < 0) {
+      setFormError("Stock must be a number greater than or equal to 0.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedMinStock) || parsedMinStock < 0) {
+      setFormError("Low-stock alert must be a number greater than or equal to 0.");
+      return;
+    }
+
     const payload = {
       name: ingredientForm.name,
       unit: ingredientForm.unit,
       pricePerUnit: ingredientForm.pricePerUnit === "" ? undefined : Number(ingredientForm.pricePerUnit),
+      stock: parsedStock,
+      minStock: parsedMinStock,
       recipe: (ingredientForm.recipe || [])
         .map((r) => ({
           ingredientId: r.ingredientId,
@@ -569,25 +533,6 @@ export default function BakeryDashboard() {
       updateIngredientMutation.mutate({ ingredientId: ingredientForm.id, payload });
     } else {
       createIngredientMutation.mutate(payload);
-    }
-  };
-
-  const handleCategorySubmit = (event) => {
-    event.preventDefault();
-    setFormError("");
-    const payload = {
-      name: categoryForm.name,
-      globalCategoryId: categoryForm.globalCategoryId,
-      isFeatured: categoryForm.isFeatured,
-    };
-
-    if (categoryModal.mode === "edit" && categoryModal.category) {
-      updateCategoryMutation.mutate({
-        categoryId: categoryModal.category.id,
-        payload,
-      });
-    } else {
-      createCategoryMutation.mutate(payload);
     }
   };
 
@@ -801,7 +746,7 @@ export default function BakeryDashboard() {
                   className="btn-sage"
                   onClick={() => {
                     setFormError("");
-                    setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", recipe: [] });
+                    setIngredientForm({ id: null, name: "", unit: "", pricePerUnit: "", stock: "", minStock: "", recipe: [] });
                     setIngredientModalOpen(true);
                   }}
                 >
@@ -825,6 +770,7 @@ export default function BakeryDashboard() {
                         <tr>
                           <th>Ingredient</th>
                           <th>Unit</th>
+                          <th>Available Stock</th>
                           <th>Price / Unit</th>
                           <th style={{ textAlign: "right" }}>Actions</th>
                         </tr>
@@ -834,6 +780,14 @@ export default function BakeryDashboard() {
                           <tr key={item.id}>
                             <td className="font-medium">{item.name}</td>
                             <td>{item.unit}</td>
+                            <td>
+                              {getStockLabel(item)}
+                              {item.minStock !== null && item.minStock !== undefined && (
+                                <div style={{ fontSize: "11px", color: "var(--ink-muted)" }}>
+                                  Alert below {Number(item.minStock).toLocaleString()} {item.unit}
+                                </div>
+                              )}
+                            </td>
                             <td>
                               {item.pricePerUnit !== undefined && item.pricePerUnit !== null
                                 ? `Rs ${Number(item.pricePerUnit).toLocaleString()}`
@@ -848,6 +802,8 @@ export default function BakeryDashboard() {
                                     name: item.name,
                                     unit: item.unit,
                                     pricePerUnit: item.pricePerUnit ?? "",
+                                    stock: item.stock ?? "",
+                                    minStock: item.minStock ?? "",
                                     recipe: item.recipe || [],
                                   });
                                   setIngredientModalOpen(true);
@@ -879,6 +835,7 @@ export default function BakeryDashboard() {
                             <th>Name</th>
                             <th>Components</th>
                             <th>Unit</th>
+                            <th>Available Stock</th>
                             <th>Manual Price Override</th>
                             <th style={{ textAlign: "right" }}>Actions</th>
                           </tr>
@@ -891,6 +848,14 @@ export default function BakeryDashboard() {
                                 {item.recipe.length} item{item.recipe.length > 1 ? "s" : ""}
                               </td>
                               <td>{item.unit}</td>
+                              <td>
+                                {getStockLabel(item)}
+                                {item.minStock !== null && item.minStock !== undefined && (
+                                  <div style={{ fontSize: "11px", color: "var(--ink-muted)" }}>
+                                    Alert below {Number(item.minStock).toLocaleString()} {item.unit}
+                                  </div>
+                                )}
+                              </td>
                               <td>
                                 {item.pricePerUnit !== undefined && item.pricePerUnit !== null
                                   ? `Rs ${Number(item.pricePerUnit).toLocaleString()}`
@@ -905,6 +870,8 @@ export default function BakeryDashboard() {
                                       name: item.name,
                                       unit: item.unit,
                                       pricePerUnit: item.pricePerUnit ?? "",
+                                      stock: item.stock ?? "",
+                                      minStock: item.minStock ?? "",
                                       recipe: item.recipe || [],
                                     });
                                     setIngredientModalOpen(true);
@@ -938,12 +905,9 @@ export default function BakeryDashboard() {
                   <div>
                     <h2>Categories</h2>
                     <p style={{ margin: "6px 0 0", color: "var(--ink-muted)", fontSize: "13px" }}>
-                      Manage your categories and link them to global templates.
+                      Admin-defined categories used to organize products.
                     </p>
                   </div>
-                  <button className="btn-primary-sm" onClick={openCreateCategoryModal}>
-                    Add Category
-                  </button>
                 </div>
                 {categoriesQuery.isLoading && <div className="placeholder-box">Loading categories...</div>}
                 {categoriesQuery.isError && <div className="placeholder-box">Unable to load categories.</div>}
@@ -955,28 +919,12 @@ export default function BakeryDashboard() {
                     <thead>
                       <tr>
                         <th>Name</th>
-                        <th>Type (Global)</th>
-                        <th>Featured</th>
-                        <th style={{ textAlign: "right" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {categories.map((category) => (
                         <tr key={category.id}>
                           <td className="font-medium">{category.name}</td>
-                          <td>{getGlobalCategoryName(category)}</td>
-                          <td>
-                            {category.isFeatured ? (
-                              <span className="badge in-stock">Yes</span>
-                            ) : (
-                              <span className="badge" style={{ background: "#eee", color: "#666" }}>No</span>
-                            )}
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <button className="icon-btn" onClick={() => openEditCategoryModal(category)}>
-                              Edit
-                            </button>
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1340,58 +1288,107 @@ export default function BakeryDashboard() {
                   required
                 />
               </div>
+              <div className="auth-field">
+                <label>Available Stock</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={ingredientForm.stock}
+                  onChange={(event) =>
+                    setIngredientForm((prev) => ({ ...prev, stock: event.target.value }))
+                  }
+                  placeholder="e.g. 500"
+                />
+                <div className="product-option-note" style={{ marginTop: "6px" }}>
+                  Enter the current quantity available in the selected unit ({ingredientForm.unit || "unit"}).
+                </div>
+              </div>
+              <div className="auth-field">
+                <label>Low-Stock Alert Level</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={ingredientForm.minStock}
+                  onChange={(event) =>
+                    setIngredientForm((prev) => ({ ...prev, minStock: event.target.value }))
+                  }
+                  placeholder="e.g. 100"
+                />
+                <div className="product-option-note" style={{ marginTop: "6px" }}>
+                  Helps you see when an ingredient is running low.
+                </div>
+              </div>
 
               <div className="auth-field">
                 <label>Inventory Composition (Recipe)</label>
                 <div className="product-option-note" style={{ marginBottom: "12px" }}>
-                  Define if this is a prepared item made from other ingredients. Leave empty for raw items.
+                  Use this only for compound ingredients. Example: Frosting = sugar + butter. Leave empty for raw items.
                 </div>
                 
                 <div className="recipe-builder">
-                  {(ingredientForm.recipe || []).map((row, idx) => (
-                    <div key={idx} className="recipe-row" style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-end" }}>
-                      <div style={{ flex: 1 }}>
-                        <select
-                          value={row.ingredientId}
-                          onChange={(e) => {
-                            const newRecipe = [...ingredientForm.recipe];
-                            newRecipe[idx].ingredientId = e.target.value;
-                            setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
-                          }}
-                          required
-                        >
-                          <option value="">Select ingredient</option>
-                          {ingredients.filter(ing => ing.id !== ingredientForm.id).map(ing => (
-                            <option key={ing.id} value={ing.id}>{ing.name}</option>
-                          ))}
-                        </select>
+                  {(ingredientForm.recipe || []).map((row, idx) => {
+                    const selectedIngredient = ingredients.find((ing) => String(ing.id) === String(row.ingredientId));
+                    const selectedStock =
+                      selectedIngredient?.stock === undefined || selectedIngredient?.stock === null
+                        ? "Not tracked"
+                        : `${Number(selectedIngredient.stock).toLocaleString()} ${selectedIngredient.unit}`;
+
+                    return (
+                      <div key={idx} style={{ marginBottom: "10px" }}>
+                        <div className="recipe-row" style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
+                          <div style={{ flex: 1 }}>
+                            <select
+                              value={row.ingredientId}
+                              onChange={(e) => {
+                                const newRecipe = [...ingredientForm.recipe];
+                                newRecipe[idx].ingredientId = e.target.value;
+                                setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
+                              }}
+                              required
+                            >
+                              <option value="">Select ingredient</option>
+                              {ingredients.filter(ing => ing.id !== ingredientForm.id).map(ing => (
+                                <option key={ing.id} value={ing.id}>{ing.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div style={{ width: "140px" }}>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="Qty to consume"
+                              value={row.quantity}
+                              onChange={(e) => {
+                                const newRecipe = [...ingredientForm.recipe];
+                                newRecipe[idx].quantity = e.target.value;
+                                setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
+                              }}
+                              required
+                            />
+                          </div>
+                          <button 
+                            type="button" 
+                            className="icon-btn" 
+                            style={{ color: "var(--rose)", marginBottom: "8px" }}
+                            onClick={() => {
+                              const newRecipe = ingredientForm.recipe.filter((_, i) => i !== idx);
+                              setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
+                            }}
+                          >
+                            <Icon name="trash" />
+                          </button>
+                        </div>
+                        {selectedIngredient && (
+                          <div style={{ fontSize: "11px", color: "var(--ink-muted)", marginTop: "4px" }}>
+                            Unit: {selectedIngredient.unit} | Available: {selectedStock}
+                          </div>
+                        )}
                       </div>
-                      <div style={{ width: "100px" }}>
-                        <input
-                          type="number"
-                          placeholder="Qty"
-                          value={row.quantity}
-                          onChange={(e) => {
-                            const newRecipe = [...ingredientForm.recipe];
-                            newRecipe[idx].quantity = e.target.value;
-                            setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
-                          }}
-                          required
-                        />
-                      </div>
-                      <button 
-                        type="button" 
-                        className="icon-btn" 
-                        style={{ color: "var(--rose)", marginBottom: "8px" }}
-                        onClick={() => {
-                          const newRecipe = ingredientForm.recipe.filter((_, i) => i !== idx);
-                          setIngredientForm(prev => ({ ...prev, recipe: newRecipe }));
-                        }}
-                      >
-                        <Icon name="trash" />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                   
                   <button
                     type="button"
@@ -1440,80 +1437,6 @@ export default function BakeryDashboard() {
                 Cancel
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {categoryModal.open && (
-        <div className="auth-overlay" onClick={() => setCategoryModal({ open: false, mode: "create", category: null })}>
-          <div className="auth-modal dashboard-modal" onClick={(event) => event.stopPropagation()}>
-            <h3>{categoryModal.mode === "edit" ? "Edit Category" : "Add Category"}</h3>
-            <form onSubmit={handleCategorySubmit}>
-              <div className="auth-field">
-                <label>Name</label>
-                <input
-                  value={categoryForm.name}
-                  onChange={(event) =>
-                    setCategoryForm((prev) => ({ ...prev, name: event.target.value }))
-                  }
-                  placeholder="e.g. Best Sellers or Summer Specials"
-                  required
-                />
-              </div>
-              <div className="auth-field">
-                <label>Global Template</label>
-                <select
-                  value={categoryForm.globalCategoryId}
-                  onChange={(event) =>
-                    setCategoryForm((prev) => ({ ...prev, globalCategoryId: event.target.value }))
-                  }
-                  required
-                >
-                  <option value="" disabled>
-                    Select a template
-                  </option>
-                  {globalCategories.map((gc) => (
-                    <option key={gc.id} value={gc.id}>
-                      {gc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="auth-field">
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <input
-                    type="checkbox"
-                    id="isFeatured"
-                    checked={categoryForm.isFeatured}
-                    onChange={(event) =>
-                      setCategoryForm((prev) => ({ ...prev, isFeatured: event.target.checked }))
-                    }
-                  />
-                  <label htmlFor="isFeatured" style={{ marginBottom: 0 }}>Featured (Show in top section)</label>
-                </div>
-              </div>
-              <div className="auth-field">
-                <label>Image URL</label>
-                <input
-                  value={categoryForm.imageUrl}
-                  onChange={(event) =>
-                    setCategoryForm((prev) => ({ ...prev, imageUrl: event.target.value }))
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              {formError && <div className="auth-error">{formError}</div>}
-              <button
-                className="btn-primary"
-                disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-              >
-                {createCategoryMutation.isPending || updateCategoryMutation.isPending
-                  ? "Saving..."
-                  : categoryModal.mode === "edit"
-                  ? "Save Category"
-                  : "Create Category"}
-              </button>
-            </form>
           </div>
         </div>
       )}

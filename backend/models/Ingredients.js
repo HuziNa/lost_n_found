@@ -25,6 +25,9 @@ const ingredientSchema = new mongoose.Schema(
     name: { type: String, required: true },
     unit: { type: String, enum: ["g", "ml", "pcs"], required: true },
     pricePerUnit: { type: Number, required: true },
+    stock: { type: Number, default: 0 },
+    minStock: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
 
     // if empty then raw ingredient not compound
     recipe: [ingredientRecipeSchema],

@@ -2,7 +2,6 @@ import Bakery from "../models/Bakery.js";
 import Category from "../models/Category.js";
 import Order from "../models/Order.js";
 import { sendBakeryApprovalEmail, sendBakeryRejectionEmail } from "../services/emailService.js";
-import { ensureGlobalCategories } from "../utils/globalCategories.js";
 
 const toIdString = (value) => (value ? value.toString() : null);
 
@@ -12,10 +11,6 @@ const serializeCategory = (categoryDoc) => ({
   createdAt: categoryDoc.createdAt,
   updatedAt: categoryDoc.updatedAt,
 });
-
-const normalizeCategoryName = (value) => String(value || "").trim();
-
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const toBooleanFromQuery = (value) => {
   if (value === undefined) {
@@ -418,7 +413,7 @@ export const getTopRevenueBakery = async (_req, res) => {
 // Returns: list of global categories
 export const listGlobalCategories = async (_req, res) => {
   try {
-    const categories = await ensureGlobalCategories();
+    const categories = await Category.find().sort({ name: 1 }).lean();
 
     return res.status(200).json({
       message: "Global categories fetched successfully.",
@@ -432,42 +427,3 @@ export const listGlobalCategories = async (_req, res) => {
   }
 };
 
-// API: POST /api/admin/categories
-// Expects:
-// - Session cookie from /api/auth/login
-// - Logged in user must be admin
-// - Body: { name: String }
-// Returns: created category
-export const createCategory = async (req, res) => {
-  try {
-    const name = normalizeCategoryName(req.body?.name);
-
-    if (!name) {
-      return res.status(400).json({
-        message: "name is required.",
-      });
-    }
-
-    const existing = await Category.findOne({
-      name: { $regex: new RegExp(`^${escapeRegex(name)}$`, "i") },
-    }).lean();
-
-    if (existing) {
-      return res.status(409).json({
-        message: "A category with this name already exists.",
-      });
-    }
-
-    const category = await Category.create({ name });
-
-    return res.status(201).json({
-      message: "Category created successfully.",
-      category: serializeCategory(category),
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Error creating category.",
-      error: error.message,
-    });
-  }
-};

@@ -21,6 +21,7 @@ const nutritionSchema = new mongoose.Schema(
     carbs: { type: Number, default: 0 },
     fat: { type: Number, default: 0 },
     sugar: { type: Number, default: 0 },
+    fiber: { type: Number, default: 0 },
   },
   { _id: false }
 );
@@ -92,6 +93,10 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     basePrice: { type: Number, required: true },
+    selectedTemplate: { type: String, default: "" },
+    description: { type: String, default: "" },
+    imageUrl: { type: String, default: "" },
+    ingredientsText: { type: String, default: "" },
     // Only for FIXED products
     ingredients: {
       type: [productIngredientSchema],

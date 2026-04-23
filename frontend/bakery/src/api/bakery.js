@@ -19,18 +19,6 @@ export const getBakeryCategories = async (bakeryId) => {
   return apiRequest("/bakery/categories");
 };
 
-export const createBakeryCategory = async (payload) =>
-  apiRequest("/bakery/categories", {
-    method: "POST",
-    body: payload,
-  });
-
-export const updateBakeryCategory = async (categoryId, payload) =>
-  apiRequest(`/bakery/categories/${categoryId}`, {
-    method: "PATCH",
-    body: payload,
-  });
-
 export const updateBakeryProfile = async (payload) =>
   apiRequest("/bakery/profile", {
     method: "PATCH",

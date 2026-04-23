@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  createCategory,
   getTopOrdersBakery,
   getTopRevenueBakery,
   listAdminBakeries,
@@ -18,6 +17,5 @@ router.patch("/bakeries/:bakeryId/approval", updateBakeryApproval);
 router.get("/bakeries/top-orders", getTopOrdersBakery);
 router.get("/bakeries/top-revenue", getTopRevenueBakery);
 router.get("/categories", listGlobalCategories);
-router.post("/categories", createCategory);
 
 export default router;

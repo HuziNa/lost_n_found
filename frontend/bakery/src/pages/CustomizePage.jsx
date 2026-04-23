@@ -214,7 +214,7 @@ export default function CustomizePage() {
 
     if (customMessage) {
         selections.push({
-            optionName: "Cake Message",
+        optionName: "Message",
             choiceName: `${customMessage} (Font: ${selectedFont})`
         });
     }

@@ -139,6 +139,10 @@ const findChoiceByName = (optionDoc, choiceName) => {
   );
 };
 
+const isFreeTextMessageOption = (optionDoc) =>
+  String(optionDoc?.templateKey || "").toLowerCase() === "message" ||
+  String(optionDoc?.name || "").toLowerCase() === "message";
+
 const serializeOrder = (orderDoc) => ({
   id:         toIdString(orderDoc._id),
   userId:     toIdString(orderDoc.userId),
@@ -179,12 +183,23 @@ const addIngredientUsage = (usageMap, ingredientId, quantity) => {
 const rollbackDeductions = async (bakeryId, deductions) => {
   if (!deductions.length) return;
   await Promise.all(
-    deductions.map((d) =>
-      BakeryInventory.updateOne(
-        { bakeryId, ingredientId: d.ingredientId },
-        { $inc: { quantityAvailable: d.quantity } }
+    deductions.map(async (d) => {
+      const restored = await Ingredient.findOneAndUpdate(
+        { _id: d.ingredientId, bakeryId },
+        { $inc: { stock: d.quantity } },
+        { new: true },
       )
-    )
+        .select("_id stock")
+        .lean();
+
+      const restoredStock = Number(restored?.stock || 0);
+
+      await BakeryInventory.updateOne(
+        { bakeryId, ingredientId: d.ingredientId },
+        { $set: { quantityAvailable: restoredStock } },
+        { upsert: true },
+      );
+    })
   );
 };
 
@@ -321,7 +336,7 @@ export const placeOrder = async (req, res) => {
           }
 
           const choiceDoc = findChoiceByName(optionDoc, selectedOption.choiceName);
-          if (!choiceDoc) {
+          if (!choiceDoc && !isFreeTextMessageOption(optionDoc)) {
             return res.status(400).json({ message: `items[${index}] choice ${selectedOption.choiceName} is not valid for option ${optionDoc.name}.` });
           }
 
@@ -337,17 +352,19 @@ export const placeOrder = async (req, res) => {
             return res.status(400).json({ message: `items[${index}] option ${optionDoc.name} exceeds maxSelections ${optionDoc.maxSelections}.` });
           }
 
-          finalUnitPrice += Number(choiceDoc.extraPrice || 0);
+          finalUnitPrice += Number(choiceDoc?.extraPrice || 0);
 
           orderItem.selectedOptions.push({
             optionName:   optionDoc.name,
-            choiceName:   choiceDoc.name,
-            ingredientId: choiceDoc.ingredientId,
-            quantity:     Number(choiceDoc.quantity),
+            choiceName:   choiceDoc?.name || selectedOption.choiceName,
+            ingredientId: choiceDoc?.ingredientId,
+            quantity:     Number(choiceDoc?.quantity || 0),
             layer:        selectedOption.layer,
           });
 
-          addIngredientUsage(ingredientUsageMap, choiceDoc.ingredientId, roundQuantity(Number(choiceDoc.quantity) * quantity));
+          if (choiceDoc?.ingredientId) {
+            addIngredientUsage(ingredientUsageMap, choiceDoc.ingredientId, roundQuantity(Number(choiceDoc.quantity) * quantity));
+          }
         }
 
         for (const optionDoc of optionDocs) {
@@ -371,14 +388,21 @@ export const placeOrder = async (req, res) => {
       expandIngredientToRaw({ ingredientId, quantity, ingredientMap, rawUsageMap });
     }
 
+    // Keep existing raw-material deduction and also decrement stock for compound
+    // ingredients used directly in product/option definitions.
+    const totalDeductionMap = new Map(rawUsageMap);
+    for (const [ingredientId, quantity] of ingredientUsageMap.entries()) {
+      const ingredientDoc = ingredientMap.get(ingredientId);
+      if (ingredientDoc && Array.isArray(ingredientDoc.recipe) && ingredientDoc.recipe.length > 0) {
+        addIngredientUsage(totalDeductionMap, ingredientId, quantity);
+      }
+    }
+
     const rawIngredientIds = [...rawUsageMap.keys()];
-    const inventoryRows    = await BakeryInventory.find({ bakeryId, ingredientId: { $in: rawIngredientIds } })
-      .select("ingredientId quantityAvailable").lean();
-    const inventoryMap = new Map(inventoryRows.map((r) => [toIdString(r.ingredientId), r.quantityAvailable]));
 
     const insufficient = [];
-    for (const [id, required] of rawUsageMap.entries()) {
-      const available = Number(inventoryMap.get(id) || 0);
+    for (const [id, required] of totalDeductionMap.entries()) {
+      const available = Number(ingredientMap.get(id)?.stock || 0);
       if (available < required) {
         const doc = ingredientMap.get(id);
         insufficient.push({ ingredientId: id, ingredientName: doc?.name || "Unknown", required, available, unit: doc?.unit || null });
@@ -388,22 +412,32 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Insufficient inventory for one or more ingredients.", insufficientInventory: insufficient });
     }
 
-    for (const [id, required] of rawUsageMap.entries()) {
-      const updated = await BakeryInventory.findOneAndUpdate(
-        { bakeryId, ingredientId: id, quantityAvailable: { $gte: required } },
-        { $inc: { quantityAvailable: -required } },
+    for (const [id, required] of totalDeductionMap.entries()) {
+      const updated = await Ingredient.findOneAndUpdate(
+        { _id: id, bakeryId, stock: { $gte: required } },
+        { $inc: { stock: -required } },
         { new: true }
-      );
+      )
+        .select("_id stock")
+        .lean();
+
       if (!updated) {
         await rollbackDeductions(bakeryId, deductions);
-        const current = await BakeryInventory.findOne({ bakeryId, ingredientId: id }).select("quantityAvailable").lean();
+        const current = await Ingredient.findOne({ _id: id, bakeryId }).select("stock").lean();
         const doc     = ingredientMap.get(id);
         return res.status(400).json({
           message: "Inventory changed while placing order. Please retry.",
-          insufficientInventory: [{ ingredientId: id, ingredientName: doc?.name || "Unknown", required, available: Number(current?.quantityAvailable || 0), unit: doc?.unit || null }],
+          insufficientInventory: [{ ingredientId: id, ingredientName: doc?.name || "Unknown", required, available: Number(current?.stock || 0), unit: doc?.unit || null }],
         });
       }
+
       deductions.push({ ingredientId: id, quantity: required });
+
+      await BakeryInventory.updateOne(
+        { bakeryId, ingredientId: id },
+        { $set: { quantityAvailable: Number(updated.stock || 0) } },
+        { upsert: true },
+      );
     }
 
     let order;

@@ -8,7 +8,6 @@ import ProductOption from "../models/ProductOption.js";
 import Product from "../models/Products.js";
 import Review from "../models/Review.js";
 import User from "../models/User.js";
-import { ensureGlobalCategories } from "../utils/globalCategories.js";
 
 const PRODUCT_TYPES = ["FIXED", "CUSTOMIZABLE"];
 
@@ -88,6 +87,42 @@ const ensureBakeryStoryDefaults = (bakeryDoc) => {
   return updated;
 };
 
+const normalizeNutrition = (nutrition = {}) => ({
+  calories: nutrition.calories,
+  protein: nutrition.protein,
+  carbs: nutrition.carbohydrates ?? nutrition.carbs,
+  fat: nutrition.fats ?? nutrition.fat,
+  sugar: nutrition.sugar,
+  fiber: nutrition.fiber,
+});
+
+const normalizeProductFields = (payload = {}) => ({
+  description: payload.description ? String(payload.description).trim() : "",
+  imageUrl: payload.imageUrl ? String(payload.imageUrl).trim() : "",
+  ingredientsText: payload.ingredientsText ? String(payload.ingredientsText).trim() : "",
+  selectedTemplate: payload.selectedTemplate ? String(payload.selectedTemplate).trim() : "",
+});
+
+const syncBakeryInventoryForIngredient = async ({ bakeryId, ingredientId, quantityAvailable }) => {
+  const parsedQuantity = Number(quantityAvailable);
+  const safeQuantity = Number.isFinite(parsedQuantity) && parsedQuantity >= 0 ? parsedQuantity : 0;
+
+  const bakeryObjectId = new mongoose.Types.ObjectId(bakeryId);
+  const ingredientObjectId = new mongoose.Types.ObjectId(ingredientId);
+
+  await BakeryInventory.findOneAndUpdate(
+    { bakeryId: bakeryObjectId, ingredientId: ingredientObjectId },
+    {
+      $set: {
+        bakeryId: bakeryObjectId,
+        ingredientId: ingredientObjectId,
+        quantityAvailable: safeQuantity,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+};
+
 function serializeProduct(productDoc, options = []) {
   return {
     id: toIdString(productDoc._id),
@@ -145,10 +180,10 @@ function serializePublicBakery(bakeryDoc) {
 
 // API: GET /api/bakery/categories/public/:bakeryId
 // Returns:
-// - 200 with global categories list
+// - 200 with categories list
 export const listPublicBakeryCategories = async (req, res) => {
   try {
-    const categories = await ensureGlobalCategories();
+    const categories = await Category.find().sort({ name: 1 }).lean();
 
     return res.status(200).json({
       message: "Categories fetched successfully.",
@@ -166,10 +201,10 @@ export const listPublicBakeryCategories = async (req, res) => {
 // API: GET /api/bakery/categories
 // - Session cookie from /api/auth/login
 // Returns:
-// - 200 with global categories list for selection
+// - 200 with categories list for selection
 export const listBakeryCategories = async (req, res) => {
   try {
-    const categories = await ensureGlobalCategories();
+    const categories = await Category.find().sort({ name: 1 }).lean();
 
     return res.status(200).json({
       message: "Categories fetched successfully.",
@@ -185,9 +220,6 @@ export const listBakeryCategories = async (req, res) => {
   }
 };
 
-// API: POST /api/bakery/categories
-// - Session cookie from /api/auth/login
-// - Body: { name: String, globalCategoryId: String, isFeatured?: Boolean }
 // API: PATCH /api/bakery/profile
 // - Session cookie from /api/auth/login
 // - Body: { myStory?: String, storyQuote?: String, statsYears?: String, statsCustomers?: String, statsRecipes?: String, statsBaked?: String, imageUrl?: String }
@@ -331,7 +363,7 @@ export const listBakeryIngredients = async (req, res) => {
 // - 201 with created ingredient
 export const createBakeryIngredient = async (req, res) => {
   try {
-    const { name, unit, pricePerUnit, stock, minStock } = req.body;
+    const { name, unit, pricePerUnit, stock, quantityAvailable, minStock } = req.body;
 
     if (!name || !unit || pricePerUnit === undefined) {
       return res.status(400).json({
@@ -359,13 +391,22 @@ export const createBakeryIngredient = async (req, res) => {
       });
     }
 
+    const parsedStock = stock !== undefined ? Number(stock) : Number(quantityAvailable);
+    const safeStock = Number.isFinite(parsedStock) && parsedStock >= 0 ? parsedStock : 0;
+
     const ingredient = await Ingredient.create({
       bakeryId: user.bakeryManaged._id,
       name: name.trim(),
       unit: unit.trim(),
       pricePerUnit: Number(pricePerUnit),
-      stock: Number(stock) || 0,
+      stock: safeStock,
       minStock: Number(minStock) || 0,
+    });
+
+    await syncBakeryInventoryForIngredient({
+      bakeryId: user.bakeryManaged._id,
+      ingredientId: ingredient._id,
+      quantityAvailable: ingredient.stock,
     });
 
     const serializedIngredient = {
@@ -421,12 +462,24 @@ export const updateBakeryIngredient = async (req, res) => {
     if (updateData.name) ingredient.name = updateData.name.trim();
     if (updateData.unit) ingredient.unit = updateData.unit.trim();
     if (updateData.pricePerUnit !== undefined) ingredient.pricePerUnit = Number(updateData.pricePerUnit);
-    if (updateData.stock !== undefined) ingredient.stock = Number(updateData.stock);
+    const hasStockUpdate = updateData.stock !== undefined || updateData.quantityAvailable !== undefined;
+    if (hasStockUpdate) {
+      const parsedStock = updateData.stock !== undefined
+        ? Number(updateData.stock)
+        : Number(updateData.quantityAvailable);
+      ingredient.stock = Number.isFinite(parsedStock) && parsedStock >= 0 ? parsedStock : 0;
+    }
     if (updateData.minStock !== undefined) ingredient.minStock = Number(updateData.minStock);
     if (updateData.isActive !== undefined) ingredient.isActive = !!updateData.isActive;
     if (updateData.recipe) ingredient.recipe = updateData.recipe;
 
     await ingredient.save();
+
+    await syncBakeryInventoryForIngredient({
+      bakeryId: user.bakeryManaged._id,
+      ingredientId: ingredient._id,
+      quantityAvailable: ingredient.stock,
+    });
 
     return res.status(200).json({
       message: "Ingredient updated successfully.",
@@ -468,6 +521,11 @@ export const deleteBakeryIngredient = async (req, res) => {
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: "Ingredient not found." });
     }
+
+    await BakeryInventory.deleteOne({
+      bakeryId: user.bakeryManaged._id,
+      ingredientId,
+    });
 
     return res.status(200).json({ message: "Ingredient deleted successfully." });
   } catch (error) {
@@ -536,9 +594,6 @@ export const createBakeryProduct = async (req, res) => {
       name,
       type,
       basePrice,
-      description,
-      imageUrl,
-      ingredientsText,
       ingredients,
       allergens,
       nutrition,
@@ -573,14 +628,11 @@ export const createBakeryProduct = async (req, res) => {
     }
 
     // Verify category belongs to this bakery
-    const category = await Category.findOne({
-      _id: categoryId,
-      bakeryId: user.bakeryManaged._id,
-    }).lean();
+    const category = await Category.findById(categoryId).lean();
 
     if (!category) {
       return res.status(400).json({
-        message: "Category not found in your bakery catalog. Please link it to a global type first.",
+        message: "Category not found. Please select a valid category.",
       });
     }
 
@@ -665,18 +717,18 @@ export const createBakeryProduct = async (req, res) => {
     }
 
     // Create product
+    const productDisplayFields = normalizeProductFields(req.body);
+
     const product = await Product.create({
       bakeryId: user.bakeryManaged._id,
       categoryId,
       name: name.trim(),
       type,
       basePrice: Number(basePrice),
-      description: description ? String(description).trim() : "",
-      imageUrl: imageUrl ? String(imageUrl).trim() : "",
-      ingredientsText: ingredientsText ? String(ingredientsText).trim() : "",
+      ...productDisplayFields,
       ingredients: ingredients || [],
       allergens: allergens || [],
-      nutrition: nutrition || {},
+      nutrition: normalizeNutrition(nutrition || {}),
     });
 
     // Create options if provided
@@ -758,14 +810,11 @@ export const updateBakeryProduct = async (req, res) => {
         });
       }
 
-      const category = await Category.findOne({
-        _id: updateData.categoryId,
-        bakeryId: user.bakeryManaged._id,
-      }).lean();
+      const category = await Category.findById(updateData.categoryId).lean();
 
       if (!category) {
         return res.status(400).json({
-          message: "Category not found in your bakery catalog.",
+          message: "Category not found.",
         });
       }
     }
@@ -878,22 +927,34 @@ export const updateBakeryProduct = async (req, res) => {
     }
 
     // Update product
+    const productDisplayFields = normalizeProductFields(updateData);
+
     if (updateData.description !== undefined) {
-      product.description = String(updateData.description || "").trim();
+      product.description = productDisplayFields.description;
     }
 
     if (updateData.imageUrl !== undefined) {
-      product.imageUrl = String(updateData.imageUrl || "").trim();
+      product.imageUrl = productDisplayFields.imageUrl;
     }
 
     if (updateData.ingredientsText !== undefined) {
-      product.ingredientsText = String(updateData.ingredientsText || "").trim();
+      product.ingredientsText = productDisplayFields.ingredientsText;
+    }
+
+    if (updateData.selectedTemplate !== undefined) {
+      product.selectedTemplate = productDisplayFields.selectedTemplate;
+    }
+
+    if (updateData.nutrition !== undefined) {
+      product.nutrition = normalizeNutrition(updateData.nutrition || {});
     }
 
     const safeUpdateData = { ...updateData };
     delete safeUpdateData.description;
     delete safeUpdateData.imageUrl;
     delete safeUpdateData.ingredientsText;
+    delete safeUpdateData.selectedTemplate;
+    delete safeUpdateData.nutrition;
 
     Object.assign(product, safeUpdateData);
     await product.save();

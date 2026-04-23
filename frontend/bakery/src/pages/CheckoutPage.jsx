@@ -106,7 +106,24 @@ export default function CheckoutPage() {
       setTimeout(() => navigate("/orders", { replace: true }), 800);
     },
     onError: (error) => {
-      setOrderError(error?.data?.message || "Unable to place order. Please try again.");
+      const apiError = error?.data;
+      const shortages = Array.isArray(apiError?.insufficientInventory)
+        ? apiError.insufficientInventory
+        : [];
+
+      if (shortages.length > 0) {
+        const detailText = shortages
+          .map((item) => {
+            const unit = item?.unit ? ` ${item.unit}` : "";
+            return `${item?.ingredientName || "Ingredient"}: need ${Number(item?.required || 0).toLocaleString()}${unit}, available ${Number(item?.available || 0).toLocaleString()}${unit}`;
+          })
+          .join("; ");
+
+        setOrderError(`${apiError?.message || "Insufficient inventory for one or more ingredients."} ${detailText}`);
+      } else {
+        setOrderError(apiError?.message || "Unable to place order. Please try again.");
+      }
+
       setOrderSuccess("");
     },
   });

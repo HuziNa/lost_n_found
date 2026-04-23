@@ -7,9 +7,9 @@ const selectedOptionSchema = new mongoose.Schema(
     ingredientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ingredient",
-      required: true,
+      default: null,
     },
-    quantity: { type: Number, required: true },
+    quantity: { type: Number, default: 0 },
     layer: { type: Number },
   },
   { _id: false }

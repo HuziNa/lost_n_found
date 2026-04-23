@@ -40,7 +40,7 @@ router.get("/products/:productId", getBakeryMenuProductById);
 // Public bakery reviews endpoint (requires bakeryId query param).
 router.get("/reviews", listBakeryReviews);
 
-// Public global categories list (Storefront)
+// Public categories list (Storefront)
 router.get("/categories/public/:bakeryId", listPublicBakeryCategories);
 
 // Customer review submission endpoint.
@@ -48,7 +48,7 @@ router.post("/reviews", requireAuth, requireCustomer, createBakeryReview);
 
 router.use(requireAuth, requireBakeryOwner);
 
-// Protected Category management List 
+// Protected Category list
 router.get("/categories", listBakeryCategories);
 
 router.patch("/profile", updateBakeryProfile);

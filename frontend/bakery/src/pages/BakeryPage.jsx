@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getBakeryCategories, getBakeryMenuProducts } from "../api/bakery";
 import { useAuth } from "../context/AuthContext";
-import FeaturedCategories from "../components/FeaturedCategories";
 import CakeCollection from "../components/CakeCollection";
 import AboutSection from "../components/AboutSection";
 import ReviewsSection from "../components/ReviewsSection";
@@ -50,7 +49,6 @@ export default function BakeryPage() {
 
   const categoryData = categoriesQuery.data || {};
   const categories = categoryData.categories || productCategories;
-  const featuredCategories = (categoryData.categories || []).filter(c => c.isFeatured);
 
   useEffect(() => {
     if (activeCategory === "all") return;
@@ -108,10 +106,6 @@ export default function BakeryPage() {
         </div>
       </section>
 
-      <FeaturedCategories 
-        categories={featuredCategories}
-        onSelectCategory={(categoryName) => setActiveCategory(categoryName)}
-      />
       {menuQuery.isLoading && <div className="placeholder-box">Loading menu...</div>}
       {menuQuery.isError && <div className="placeholder-box">Unable to load menu.</div>}
       {!menuQuery.isLoading && (

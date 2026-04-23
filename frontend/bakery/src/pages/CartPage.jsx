@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { Icon } from "../components/customize/Icons";
 
 export default function CartPage() {
-  const { state, removeFromCart } = useApp();
+  const { state, removeFromCart, incrementCartItem, decrementCartItem } = useApp();
   const { user } = useAuth();
   const isRestricted = user?.role === "admin" || user?.role === "bakeryOwner";
 
@@ -47,17 +47,39 @@ export default function CartPage() {
         <div>
           <div className="cart-list">
             {state.cart.map(item => (
-              <div className="cart-item" key={item.id}>
+              <div className="cart-item" key={item.cartId}>
                 <div className="cart-item-icon">
                   <Icon name={item.icon || "cake"} size={36} />
                 </div>
                 <div className="cart-item-info">
                   <div className="cart-item-name">{item.name}</div>
                   <div className="cart-item-detail">{item.detail}</div>
-                  <div className="cart-item-detail">Qty: {item.quantity || 1}</div>
+                  <div className="cart-item-qty-controls" style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "8px" }}>
+                    <button
+                      type="button"
+                      className="qty-btn"
+                      style={{ width: "30px", height: "30px", borderRadius: "999px", border: "1px solid var(--border)", background: "var(--warm-white)", color: "var(--ink)", cursor: "pointer" }}
+                      onClick={() => decrementCartItem(item.cartId)}
+                      aria-label="Decrease quantity"
+                    >
+                      −
+                    </button>
+                    <div className="cart-item-detail" style={{ minWidth: "56px", textAlign: "center" }}>
+                      Qty: {item.quantity || 1}
+                    </div>
+                    <button
+                      type="button"
+                      className="qty-btn"
+                      style={{ width: "30px", height: "30px", borderRadius: "999px", border: "1px solid var(--border)", background: "var(--warm-white)", color: "var(--ink)", cursor: "pointer" }}
+                      onClick={() => incrementCartItem(item.cartId)}
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div className="cart-item-price">Rs {(item.price * (item.quantity || 1)).toLocaleString()}</div>
-                <button className="cart-item-remove" onClick={() => removeFromCart(item.id)} aria-label="Remove item">
+                <button className="cart-item-remove" onClick={() => removeFromCart(item.cartId)} aria-label="Remove item">
                   <Icon name="close" size={14} />
                 </button>
               </div>
