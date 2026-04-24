@@ -304,9 +304,9 @@ export default function CustomizerSVG({ type, selections, product }) {
           {/* Frosting Swirl */}
           <g transform="translate(0, 30)">
             {isMultiLayer && (
-                <g transform="translate(0, -35)">
-                    <path d="M -80 0 C -80 -60, 80 -60, 80 0 C 80 20, -80 20, -80 0" fill={frostingColor} stroke="rgba(0,0,0,0.05)" strokeWidth="2" />
-                </g>
+              <g transform="translate(0, -35)">
+                <path d="M -80 0 C -80 -60, 80 -60, 80 0 C 80 20, -80 20, -80 0" fill={frostingColor} stroke="rgba(0,0,0,0.05)" strokeWidth="2" />
+              </g>
             )}
             <path d="M -70 0 C -70 -50, 70 -50, 70 0 C 70 20, -70 20, -70 0" fill={frostingColor} stroke="rgba(0,0,0,0.05)" strokeWidth="2" />
             <path d="M -50 -30 C -50 -70, 50 -70, 50 -30 C 50 -10, -50 -10, -50 -30" fill={frostingColor} stroke="rgba(0,0,0,0.08)" strokeWidth="2" />
@@ -314,7 +314,7 @@ export default function CustomizerSVG({ type, selections, product }) {
             <path d="M -40 -10 Q 0 -30 40 -10" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="4" strokeLinecap="round" />
             <path d="M -20 -40 Q 0 -60 20 -40" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="3" strokeLinecap="round" />
           </g>
-          
+
           {/* Toppings */}
           {toppingList.length > 0 ? (
             <g transform={`translate(0, ${isMultiLayer ? -55 : -20})`}>
