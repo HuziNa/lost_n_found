@@ -10,7 +10,7 @@ import AuthModal from "./components/AuthModal";
 
 import HomePage from "./pages/HomePage";
 import BakeryPage from "./pages/BakeryPage";
-import CustomizePage from "./pages/CustomizePage";
+import CustomizerRouter from "./pages/CustomizerRouter";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
@@ -46,8 +46,7 @@ function App() {
               <Route path="/bakery/:id" element={<BakeryPage />} />
               <Route path="/bakery" element={<BakeryPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/customize/:productId" element={<CustomizePage />} />
-              <Route path="/customize" element={<CustomizePage />} />
+              <Route path="/customize/:categoryId/:productId" element={<CustomizerRouter />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/orders" element={<OrdersPage />} />

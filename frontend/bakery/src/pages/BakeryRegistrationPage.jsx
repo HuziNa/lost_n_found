@@ -11,7 +11,6 @@ export default function BakeryRegistrationPage() {
     email: "",
     password: "",
     phone: "",
-    description: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -139,19 +138,6 @@ export default function BakeryRegistrationPage() {
                 required
               />
             </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">About Your Bakery</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Tell us about your specialties, experience, and what makes your bakery unique..."
-              rows="5"
-              required
-            ></textarea>
           </div>
 
           <div className="registration-actions">

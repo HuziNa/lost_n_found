@@ -68,9 +68,10 @@ export default function ProductPage() {
         setErrorStatus("This product is not available for customization.");
         return;
       }
-      // Use the id from params or product.id
+      // Use the id from params or product.id, and product.categoryId
       const pid = product.id || id;
-      navigate(`/customize/${pid}`);
+      const catId = product.categoryId || product.category?._id || product.category?.id || "unknown";
+      navigate(`/customize/${catId}/${pid}`);
     }
   };
 

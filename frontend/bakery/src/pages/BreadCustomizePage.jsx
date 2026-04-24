@@ -21,7 +21,7 @@ const PRESET_COLORS = {
   "Midnight Silk": "#1C1C1C",
 };
 
-export default function CustomizePage() {
+export default function BreadCustomizePage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useApp();
@@ -444,7 +444,7 @@ export default function CustomizePage() {
               </div>
 
               <div className="order-preview">
-                 <CustomizerSVG type={template?.label || "generic"} selections={svgSelections} product={product} />
+                 <CustomizerSVG type={template?.label || "BREAD"} selections={svgSelections} product={product} />
               </div>
 
               <div className="order-summary">
