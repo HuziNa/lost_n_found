@@ -14,6 +14,8 @@ import {
   listBakeryPastOrders,
   listBakeryProducts,
   listBakeryReviews,
+  listBakeryVouchers,
+  createBakeryVoucher,
   updateBakeryProfile,
   updateBakeryOrderStatus,
   updateBakeryProduct,
@@ -67,5 +69,8 @@ router.get("/products", listBakeryProducts);
 router.post("/products", createBakeryProduct);
 router.patch("/products/:productId", updateBakeryProduct);
 router.delete("/products/:productId", deleteBakeryProduct);
+
+router.get("/vouchers", listBakeryVouchers);
+router.post("/vouchers", createBakeryVoucher);
 
 export default router;

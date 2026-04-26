@@ -47,6 +47,7 @@ const orderSchema = new mongoose.Schema(
     items: [orderItemSchema],
 
     totalPrice: { type: Number, required: true },
+    itemsTotal: { type: Number, default: 0 },
 
     status: {
       type: String,
@@ -62,6 +63,10 @@ const orderSchema = new mongoose.Schema(
     },
 
     deliveryFee: { type: Number, default: 0 },
+
+    voucherCode: { type: String, default: "" },
+    discountAmount: { type: Number, default: 0 },
+    discountType: { type: String, enum: ["fixed", "percent"], default: "fixed" },
 
     deliveryAddress: {
       street: { type: String, default: "" },
@@ -83,5 +88,9 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+orderSchema.index({ userId: 1 });
+orderSchema.index({ bakeryId: 1, status: 1 });
+orderSchema.index({ createdAt: -1 });
 
 export default mongoose.model("Order", orderSchema);
