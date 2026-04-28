@@ -35,4 +35,6 @@ const ingredientSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ingredientSchema.index({ bakeryId: 1, name: 1 }, { unique: true });
+
 export default mongoose.model("Ingredient", ingredientSchema);

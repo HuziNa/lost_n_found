@@ -6,10 +6,12 @@ import Order from "../models/Order.js";
 import ProductOption from "../models/ProductOption.js";
 import Product from "../models/Products.js";
 import User from "../models/User.js";
+import Voucher from "../models/Voucher.js";
 import { sendOrderConfirmationEmail } from "../services/emailService.js";
 
 const PRODUCT_TYPE_FIXED = "FIXED";
 const PRODUCT_TYPE_CUSTOMIZABLE = "CUSTOMIZABLE";
+const DELIVERY_FREE_THRESHOLD = 2000;
 
 const toIdString = (value) => (value ? value.toString() : null);
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
@@ -59,6 +61,11 @@ const validateDeliveryPayload = (payload) => {
     return { error: `paymentMethod must be one of: ${VALID_PAYMENT_METHODS.join(", ")}.` };
   }
 
+  const deliveryFeeValue = Number(payload?.deliveryFee || 0);
+  if (!Number.isFinite(deliveryFeeValue) || deliveryFeeValue < 0) {
+    return { error: "deliveryFee must be a non-negative number." };
+  }
+
   // Only require address fields when not picking up
   if (deliveryOption !== "pickup") {
     if (!payload?.deliveryAddress?.street?.trim()) {
@@ -72,7 +79,7 @@ const validateDeliveryPayload = (payload) => {
   return {
     value: {
       deliveryOption,
-      deliveryFee:  Number(payload?.deliveryFee  || 0),
+      deliveryFee: deliveryFeeValue,
       paymentMethod,
       customerPhone: String(payload?.customerPhone || "").trim(),
       deliveryInstructions: String(payload?.deliveryInstructions || "").trim(),
@@ -120,7 +127,13 @@ const validateOrderPayload = (payload) => {
     });
   }
 
-  return { value: { bakeryId, items: normalizedItems } };
+  return {
+    value: {
+      bakeryId,
+      items: normalizedItems,
+      voucherCode: String(payload?.voucherCode || "").trim().toUpperCase(),
+    },
+  };
 };
 
 const buildOptionMaps = (optionDocs) => {
@@ -148,6 +161,10 @@ const serializeOrder = (orderDoc) => ({
   userId:     toIdString(orderDoc.userId),
   bakeryId:   toIdString(orderDoc.bakeryId),
   totalPrice: orderDoc.totalPrice,
+  itemsTotal: orderDoc.itemsTotal || 0,
+  voucherCode: orderDoc.voucherCode || "",
+  discountAmount: orderDoc.discountAmount || 0,
+  discountType: orderDoc.discountType || "fixed",
   status:     orderDoc.status,
   // ── delivery/payment fields ──────────────────────────────────────────────
   deliveryOption:       orderDoc.deliveryOption,
@@ -253,8 +270,8 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: deliveryResult.error });
     }
 
-    const { bakeryId, items }  = payloadResult.value;
-    const deliveryData          = deliveryResult.value;   // ← NEW
+    const { bakeryId, items, voucherCode } = payloadResult.value;
+    const deliveryData = deliveryResult.value;
 
     const customer = await User.findById(req.authUser.id).select("_id role name email");
     if (!customer) return res.status(404).json({ message: "Customer not found." });
@@ -440,15 +457,60 @@ export const placeOrder = async (req, res) => {
       );
     }
 
+    let discountAmount = 0;
+    let discountType = "fixed";
+    let appliedVoucherCode = "";
+    const itemsTotal = roundQuantity(totalPrice);
+
+    if (voucherCode) {
+      const voucher = await Voucher.findOne({ bakeryId, code: voucherCode, isActive: true }).lean();
+      if (!voucher) {
+        return res.status(400).json({ message: "Invalid or inactive voucher code." });
+      }
+
+      if (voucher.expiresAt && new Date() > voucher.expiresAt) {
+        return res.status(400).json({ message: "Voucher code is expired." });
+      }
+
+      if (itemsTotal < Number(voucher.minOrderAmount || 0)) {
+        return res.status(400).json({ message: `Order must be at least ${voucher.minOrderAmount} to use this voucher.` });
+      }
+
+      if (voucher.discountType === "percent") {
+        discountAmount = roundQuantity((itemsTotal * Number(voucher.discountValue)) / 100);
+        discountType = "percent";
+      } else {
+        discountAmount = roundQuantity(Number(voucher.discountValue));
+      }
+
+      discountAmount = Math.min(discountAmount, itemsTotal);
+      appliedVoucherCode = voucher.code;
+    }
+
+    const subtotalAfterDiscount = roundQuantity(itemsTotal - discountAmount);
+    let deliveryFee = Number(deliveryData.deliveryFee || 0);
+    if (deliveryData.deliveryOption === "pickup") {
+      deliveryFee = 0;
+    }
+    if (subtotalAfterDiscount >= DELIVERY_FREE_THRESHOLD) {
+      deliveryFee = 0;
+    }
+
+    const finalTotal = roundQuantity(Math.max(0, subtotalAfterDiscount + deliveryFee));
+
     let order;
     try {
       order = await Order.create({
-        userId:   customer._id,
+        userId: customer._id,
         bakeryId,
-        items:    orderItems,
-        totalPrice: roundQuantity(totalPrice + (deliveryData.deliveryFee || 0)),
-        // ── NEW: persist all delivery/payment data ───────────────────────
+        items: orderItems,
+        totalPrice: finalTotal,
+        voucherCode: appliedVoucherCode,
+        discountAmount,
+        discountType,
+        itemsTotal,
         ...deliveryData,
+        deliveryFee,
       });
     } catch (err) {
       await rollbackDeductions(bakeryId, deductions);
