@@ -785,6 +785,47 @@ body {
   border-color: var(--gold);
 }
 
+.btn-outline-sm {
+  background: var(--warm-white);
+  color: var(--gold-dark);
+  padding: 10px 16px;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: none;
+  border: 1px solid var(--border-gold);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-outline-sm:hover {
+  background: var(--gold-pale);
+  border-color: var(--gold);
+  color: var(--ink);
+}
+
+.btn-outline-sm.active {
+  background: var(--gold-pale);
+  border-color: var(--gold);
+  color: var(--ink);
+}
+
+.recipe-add-btn {
+  background: linear-gradient(135deg, var(--gold-pale), var(--warm-white));
+  border-color: var(--gold);
+  color: var(--ink);
+  box-shadow: var(--shadow-xs);
+}
+
+.recipe-add-btn:hover {
+  background: var(--gold-light);
+}
+
 .btn-sage:hover {
   background: var(--warm-white);
   color: var(--sage-dark);

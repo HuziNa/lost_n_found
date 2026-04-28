@@ -35,6 +35,16 @@ export default function CustomizerSVG({ type, selections, product }) {
     return selection; // Might be a valid CSS color string already
   };
 
+  const TOPPING_JITTER = [
+    { x: 0, y: 0 },
+    { x: 2, y: -1 },
+    { x: -2, y: 1 },
+    { x: 1, y: 2 },
+    { x: -1, y: -2 },
+  ];
+
+  const CAKE_LINE_COLORS = ["#b8973a", "#c4847a", "#7d9e85", "#d4b46a", "#e8c4bf"];
+
   const renderTopping = (name, x, y) => {
     const lower = name.toLowerCase();
     if (lower.includes("sprinkle")) {
@@ -62,8 +72,35 @@ export default function CustomizerSVG({ type, selections, product }) {
     if (lower.includes("gold")) {
       return <path key={`${name}-${x}-${y}`} d={`M ${x} ${y} l 4 -2 l 4 2 l -4 2 z`} fill="#D4AF37" />;
     }
+    if (lower.includes("glitter") || lower.includes("spark")) {
+      return (
+        <g key={`${name}-${x}-${y}`}>
+          <path d={`M ${x} ${y - 4} L ${x + 2} ${y} L ${x} ${y + 4} L ${x - 2} ${y} Z`} fill="#f5d76e" />
+          <circle cx={x + 5} cy={y - 2} r="1.5" fill="#fff1b8" />
+        </g>
+      );
+    }
+    if (lower.includes("flower")) {
+      return (
+        <g key={`${name}-${x}-${y}`}>
+          <circle cx={x} cy={y} r="2" fill="#c77d9b" />
+          <circle cx={x} cy={y - 4} r="2" fill="#f3a6c2" />
+          <circle cx={x} cy={y + 4} r="2" fill="#f3a6c2" />
+          <circle cx={x - 4} cy={y} r="2" fill="#f3a6c2" />
+          <circle cx={x + 4} cy={y} r="2" fill="#f3a6c2" />
+        </g>
+      );
+    }
+    if (lower.includes("pearl")) {
+      return (
+        <g key={`${name}-${x}-${y}`}>
+          <circle cx={x} cy={y} r="3" fill="#f5efe8" stroke="#d8cbbd" strokeWidth="0.7" />
+          <circle cx={x - 1} cy={y - 1} r="1" fill="#ffffff" />
+        </g>
+      );
+    }
     // Generic dot for others
-    return <circle key={`${name}-${x}-${y}`} cx={x} cy={y} r="3" fill="#888" />;
+    return <circle key={`${name}-${x}-${y}`} cx={x} cy={y} r="3" fill="#b28b6b" />;
   };
 
   const renderCake = () => {
@@ -82,6 +119,40 @@ export default function CustomizerSVG({ type, selections, product }) {
     const startY = 300;
 
     const toppingList = Array.isArray(selections["toppings"]) ? selections["toppings"] : (selections["toppings"] ? [selections["toppings"]] : []);
+    const renderCakeLineTopping = (name, x, y, idx) => {
+      const lower = String(name).toLowerCase();
+      const tint = CAKE_LINE_COLORS[idx % CAKE_LINE_COLORS.length];
+
+      if (lower.includes("pearl")) {
+        return (
+          <g key={`${name}-${x}-${y}`}>
+            <circle cx={x} cy={y} r="3" fill="#f5efe8" stroke="#d8cbbd" strokeWidth="0.7" />
+            <circle cx={x - 1} cy={y - 1} r="1" fill="#ffffff" />
+          </g>
+        );
+      }
+      if (lower.includes("flower")) {
+        return (
+          <g key={`${name}-${x}-${y}`}>
+            <circle cx={x} cy={y} r="2" fill="#c4847a" />
+            <circle cx={x} cy={y - 4} r="2" fill="#e8c4bf" />
+            <circle cx={x} cy={y + 4} r="2" fill="#e8c4bf" />
+            <circle cx={x - 4} cy={y} r="2" fill="#e8c4bf" />
+            <circle cx={x + 4} cy={y} r="2" fill="#e8c4bf" />
+          </g>
+        );
+      }
+      if (lower.includes("gold")) {
+        return <path key={`${name}-${x}-${y}`} d={`M ${x} ${y} l 4 -2 l 4 2 l -4 2 z`} fill="#b8973a" />;
+      }
+      if (lower.includes("berry") || lower.includes("fruit")) {
+        return <circle key={`${name}-${x}-${y}`} cx={x} cy={y} r="4" fill="#c4847a" />;
+      }
+      if (lower.includes("chocolate") || lower.includes("shaving")) {
+        return <rect key={`${name}-${x}-${y}`} x={x - 3} y={y - 3} width="6" height="6" rx="1" fill="#4a3728" />;
+      }
+      return <circle key={`${name}-${x}-${y}`} cx={x} cy={y} r="3" fill={tint} />;
+    };
 
     return (
       <svg viewBox="0 0 400 400" className="svg-cake">
@@ -115,13 +186,20 @@ export default function CustomizerSVG({ type, selections, product }) {
         {/* Toppings on Top Tier */}
         {toppingList.length > 0 && (
           <g transform={`translate(200, ${startY - tierHeights.slice(0, numTiers).reduce((a, b) => a + b, 0)})`}>
-            {toppingList.flatMap((t, tIdx) => {
-              const positions = [
-                { x: -30, y: -5 }, { x: 0, y: -10 }, { x: 30, y: -5 },
-                { x: -15, y: -2 }, { x: 15, y: -2 }, { x: 0, y: 0 }
-              ];
-              return positions.map((pos, pIdx) => renderTopping(t, pos.x + (tIdx * 2), pos.y - (tIdx * 2)));
-            })}
+            {(() => {
+              const topWidth = tierWidths[numTiers - 1];
+              const lineLength = Math.min(topWidth * 0.75, 160);
+              const visibleCount = Math.min(toppingList.length, 6);
+              const step = visibleCount > 1 ? lineLength / (visibleCount - 1) : 0;
+              const xStart = -lineLength / 2;
+              const yBase = 6;
+
+              return toppingList.slice(0, visibleCount).map((t, idx) => {
+                const x = xStart + (idx * step);
+                const y = yBase;
+                return renderCakeLineTopping(t, x, y, idx);
+              });
+            })()}
           </g>
         )}
       </svg>
@@ -130,12 +208,24 @@ export default function CustomizerSVG({ type, selections, product }) {
 
   const renderPizza = () => {
     // Determine Crust
-    let crustColor = getFill("crust", "#d2b48c");
-    let crustStrokeWidth = 4;
-    let crustRadius = 160;
     const crustSelection = (selections["crust"] || "").toLowerCase();
-    if (crustSelection.includes("stuffed") || crustSelection.includes("thick")) {
-      crustStrokeWidth = 12;
+    let crustColor = "#d2b48c";
+    let crustStrokeColor = "#8b4513";
+    let crustStrokeWidth = 6;
+    let crustRadius = 160;
+    if (crustSelection.includes("thin")) {
+      crustStrokeWidth = 3;
+      crustRadius = 155;
+      crustColor = "#e2c59b";
+      crustStrokeColor = "#b6814f";
+    } else if (crustSelection.includes("stuffed") || crustSelection.includes("thick")) {
+      crustStrokeWidth = 14;
+      crustRadius = 170;
+      crustColor = "#c08952";
+      crustStrokeColor = "#8b4a1f";
+    } else if (crustSelection.includes("whole") || crustSelection.includes("wheat")) {
+      crustColor = "#b5825a";
+      crustStrokeColor = "#7a4c2b";
     }
 
     // Determine Shape
@@ -166,8 +256,14 @@ export default function CustomizerSVG({ type, selections, product }) {
     }
 
     // Determine Spice
-    const spiceSelection = (selections["spice"] || selections["Spice Level"] || "").toLowerCase();
-    const isSpicy = spiceSelection.includes("hot") || spiceSelection.includes("spicy");
+    const rawSpiceSelection = selections["spice"] || selections["Spice Level"] || "";
+    const spiceSelection = Array.isArray(rawSpiceSelection)
+      ? rawSpiceSelection.join(" ")
+      : String(rawSpiceSelection);
+    const spiceLower = spiceSelection.toLowerCase();
+    const spicyHits = ["hot", "spicy", "fiery", "extra"].some((word) => spiceLower.includes(word));
+    const mildHits = ["mild", "normal", "regular", "none", "no"].some((word) => spiceLower.includes(word));
+    const isSpicy = spicyHits && !mildHits;
 
     const toppingList = Array.isArray(selections["toppings"]) ? selections["toppings"] : (selections["toppings"] ? [selections["toppings"]] : []);
 
@@ -222,15 +318,55 @@ export default function CustomizerSVG({ type, selections, product }) {
         <g transform={`translate(200, 200) scale(${scale}) translate(-200, -200)`}>
           {isSquare ? (
             <g transform="translate(40, 40)">
-              <rect width="320" height="320" rx="20" fill={crustColor} stroke="#8b4513" strokeWidth={crustStrokeWidth} />
-              <rect x="15" y="15" width="290" height="290" rx="10" fill={sauceColor} />
-              <rect x="25" y="25" width="270" height="270" rx="10" fill={cheeseColor} opacity={cheeseOpacity} />
+              {(() => {
+                const squareSize = 320;
+                const crustInset = Math.max(12, Math.round(crustStrokeWidth * 1.2));
+                const sauceInset = crustInset + 14;
+                const cheeseInset = sauceInset + 10;
+                return (
+                  <>
+                    <rect
+                      width={squareSize}
+                      height={squareSize}
+                      rx="20"
+                      fill={crustColor}
+                      stroke={crustStrokeColor}
+                      strokeWidth={crustStrokeWidth}
+                    />
+                    <rect
+                      x={crustInset}
+                      y={crustInset}
+                      width={squareSize - crustInset * 2}
+                      height={squareSize - crustInset * 2}
+                      rx="14"
+                      fill={sauceColor}
+                    />
+                    <rect
+                      x={sauceInset}
+                      y={sauceInset}
+                      width={squareSize - sauceInset * 2}
+                      height={squareSize - sauceInset * 2}
+                      rx="12"
+                      fill={cheeseColor}
+                      opacity={cheeseOpacity}
+                    />
+                  </>
+                );
+              })()}
             </g>
           ) : (
             <g>
-              <circle cx="200" cy="200" r={crustRadius} fill={crustColor} stroke="#8b4513" strokeWidth={crustStrokeWidth} />
-              <circle cx="200" cy="200" r={crustRadius - 20} fill={sauceColor} />
-              <circle cx="200" cy="200" r={cheeseRadius} fill={cheeseColor} opacity={cheeseOpacity} />
+              {(() => {
+                const sauceRadius = crustRadius - 18 - (crustStrokeWidth * 0.3);
+                const nextCheeseRadius = Math.max(90, sauceRadius - 10);
+                return (
+                  <>
+                    <circle cx="200" cy="200" r={crustRadius} fill={crustColor} stroke={crustStrokeColor} strokeWidth={crustStrokeWidth} />
+                    <circle cx="200" cy="200" r={sauceRadius} fill={sauceColor} />
+                    <circle cx="200" cy="200" r={Math.min(cheeseRadius, nextCheeseRadius)} fill={cheeseColor} opacity={cheeseOpacity} />
+                  </>
+                );
+              })()}
             </g>
           )}
 
@@ -238,17 +374,26 @@ export default function CustomizerSVG({ type, selections, product }) {
           {toppingList.length > 0 && (
             <g transform="translate(200, 200)">
               {toppingList.flatMap((t, tIdx) => {
-                // Determine placement grid
-                const spread = isSquare ? 110 : 100;
-                let positions = [
-                  { x: -spread * 0.6, y: -spread * 0.6 }, { x: spread * 0.6, y: -spread * 0.6 }, { x: -spread * 0.6, y: spread * 0.6 }, { x: spread * 0.6, y: spread * 0.6 },
-                  { x: 0, y: -spread * 0.8 }, { x: 0, y: spread * 0.8 }, { x: -spread * 0.8, y: 0 }, { x: spread * 0.8, y: 0 },
-                  { x: -spread * 0.2, y: -spread * 0.2 }, { x: spread * 0.2, y: -spread * 0.2 }, { x: -spread * 0.2, y: spread * 0.2 }, { x: spread * 0.2, y: spread * 0.2 },
-                  { x: 0, y: 0 }
-                ];
-                // Offset each topping type slightly so they don't perfectly overlap
-                const offset = tIdx * 12;
-                return positions.map((pos) => renderPizzaTopping(t, pos.x + offset, pos.y + offset));
+                const positions = isSquare
+                  ? [
+                      { x: -90, y: -90 }, { x: 90, y: -90 }, { x: -90, y: 90 }, { x: 90, y: 90 },
+                      { x: 0, y: -105 }, { x: 0, y: 105 }, { x: -105, y: 0 }, { x: 105, y: 0 },
+                      { x: -55, y: -55 }, { x: 55, y: -55 }, { x: -55, y: 55 }, { x: 55, y: 55 },
+                      { x: 0, y: 0 }
+                    ]
+                  : [
+                      { x: 0, y: -110 }, { x: 78, y: -78 }, { x: 110, y: 0 }, { x: 78, y: 78 },
+                      { x: 0, y: 110 }, { x: -78, y: 78 }, { x: -110, y: 0 }, { x: -78, y: -78 },
+                      { x: 0, y: -60 }, { x: 60, y: 0 }, { x: 0, y: 60 }, { x: -60, y: 0 },
+                      { x: 0, y: 0 }
+                    ];
+                const startIndex = (tIdx * 2) % positions.length;
+                const perTopping = Math.min(3, positions.length);
+                return Array.from({ length: perTopping }).map((_, pIdx) => {
+                  const posIndex = (startIndex + (pIdx * 3)) % positions.length;
+                  const place = positions[posIndex];
+                  return renderPizzaTopping(t, place.x, place.y);
+                });
               })}
             </g>
           )}
@@ -319,11 +464,17 @@ export default function CustomizerSVG({ type, selections, product }) {
           {toppingList.length > 0 ? (
             <g transform={`translate(0, ${isMultiLayer ? -55 : -20})`}>
               {toppingList.flatMap((t, tIdx) => {
-                const offset = tIdx * 6;
                 const positions = [
                   { x: -30, y: 10 }, { x: 30, y: 10 }, { x: -15, y: -10 }, { x: 15, y: -10 }, { x: 0, y: -30 }
                 ];
-                return positions.map((pos, pIdx) => renderTopping(t, pos.x + offset, pos.y - offset));
+                const jitter = TOPPING_JITTER[tIdx % TOPPING_JITTER.length];
+                const startIndex = (tIdx * 2) % positions.length;
+                const perTopping = Math.min(3, positions.length);
+                return Array.from({ length: perTopping }).map((_, pIdx) => {
+                  const posIndex = (startIndex + pIdx) % positions.length;
+                  const place = positions[posIndex];
+                  return renderTopping(t, place.x + jitter.x, place.y + jitter.y);
+                });
               })}
             </g>
           ) : (
@@ -339,9 +490,16 @@ export default function CustomizerSVG({ type, selections, product }) {
     const bakeSelection = (selections["bake"] || selections["Bake Level"] || "").toLowerCase();
     let breadColor = "#d2b48c"; // default golden
     let strokeColor = "#8b4513";
-    if (bakeSelection.includes("half")) { breadColor = "#F5DEB3"; strokeColor = "#d2b48c"; }
-    else if (bakeSelection.includes("full")) { breadColor = "#D2691E"; strokeColor = "#8b4513"; }
-    else if (bakeSelection.includes("extra") || bakeSelection.includes("crisp")) { breadColor = "#8B4513"; strokeColor = "#3d1e09"; }
+    if (bakeSelection.includes("light")) {
+      breadColor = "#f3ddb8";
+      strokeColor = "#d5b087";
+    } else if (bakeSelection.includes("golden") || bakeSelection.includes("medium")) {
+      breadColor = "#d9a36b";
+      strokeColor = "#9c6636";
+    } else if (bakeSelection.includes("extra") || bakeSelection.includes("dark") || bakeSelection.includes("crisp")) {
+      breadColor = "#8b4a1f";
+      strokeColor = "#5a2d12";
+    }
 
     // Determine Shape
     const shapeSelection = (selections["shape"] || selections["Bread Shape"] || "").toLowerCase();
@@ -361,40 +519,53 @@ export default function CustomizerSVG({ type, selections, product }) {
 
     // Determine Glaze
     const glazeSelection = (selections["glaze"] || "").toLowerCase();
-    const hasGlaze = glazeSelection.includes("glaze") || glazeSelection.includes("egg");
+    const glazeHits = ["glaze", "egg", "wash", "honey"].some((word) => glazeSelection.includes(word));
+    const glazeNo = ["no", "none"].some((word) => glazeSelection.includes(word));
+    const hasGlaze = glazeHits && !glazeNo;
+    const glazeStroke = glazeSelection.includes("honey")
+      ? "rgba(214, 168, 74, 0.6)"
+      : "rgba(255, 255, 255, 0.45)";
 
     const toppingList = Array.isArray(selections["topping"]) ? selections["topping"] : (selections["topping"] ? [selections["topping"]] : []);
     const hasToppings = toppingList.length > 0;
 
-    const renderBreadAddons = (x, y) => {
-      return toppingList.flatMap((t, tIdx) => {
-        const lower = t.toLowerCase();
-        const offset = tIdx * 5;
-        if (lower.includes("sesame")) {
-          return <ellipse key={`${t}-${x}-${y}`} cx={x + offset} cy={y + offset} rx="2" ry="3" fill="#FFFDD0" transform={`rotate(${(x * 13) % 360}, ${x + offset}, ${y + offset})`} />;
-        }
-        if (lower.includes("herb") || lower.includes("rosemary") || lower.includes("thyme")) {
-          return <path key={`${t}-${x}-${y}`} d={`M ${x + offset} ${y + offset} L ${x + offset + 4} ${y + offset - 2}`} stroke="#2e8b57" strokeWidth="2" strokeLinecap="round" transform={`rotate(${(x * 7) % 360}, ${x + offset}, ${y + offset})`} />;
-        }
-        if (lower.includes("sunflower") || lower.includes("pumpkin")) {
-          return <ellipse key={`${t}-${x}-${y}`} cx={x + offset} cy={y + offset} rx="4" ry="2" fill="#556b2f" transform={`rotate(${(y * 11) % 360}, ${x + offset}, ${y + offset})`} />;
-        }
-        return <circle key={`${t}-${x}-${y}`} cx={x + offset} cy={y + offset} r="2" fill="#333" />;
-      });
+    const renderBreadAddon = (x, y, name, idx) => {
+      const lower = name.toLowerCase();
+      const jitter = TOPPING_JITTER[idx % TOPPING_JITTER.length];
+      const offsetX = jitter.x;
+      const offsetY = jitter.y;
+      if (lower.includes("sesame")) {
+        return <ellipse key={`${name}-${x}-${y}`} cx={x + offsetX} cy={y + offsetY} rx="2" ry="3" fill="#FFFDD0" transform={`rotate(${(x * 13) % 360}, ${x + offsetX}, ${y + offsetY})`} />;
+      }
+      if (lower.includes("herb") || lower.includes("rosemary") || lower.includes("thyme")) {
+        return <path key={`${name}-${x}-${y}`} d={`M ${x + offsetX} ${y + offsetY} L ${x + offsetX + 4} ${y + offsetY - 2}`} stroke="#2e8b57" strokeWidth="2" strokeLinecap="round" transform={`rotate(${(x * 7) % 360}, ${x + offsetX}, ${y + offsetY})`} />;
+      }
+      if (lower.includes("sunflower") || lower.includes("pumpkin")) {
+        return <ellipse key={`${name}-${x}-${y}`} cx={x + offsetX} cy={y + offsetY} rx="4" ry="2" fill="#556b2f" transform={`rotate(${(y * 11) % 360}, ${x + offsetX}, ${y + offsetY})`} />;
+      }
+      return <circle key={`${name}-${x}-${y}`} cx={x + offsetX} cy={y + offsetY} r="2" fill="#333" />;
+    };
+
+    const renderBreadToppings = (positions) => {
+      if (!hasToppings) return null;
+      const desiredCount = Math.min(positions.length, Math.max(toppingList.length * 2, toppingList.length));
+      return positions.slice(0, desiredCount).map((pos, idx) =>
+        renderBreadAddon(pos.x, pos.y, toppingList[idx % toppingList.length], idx)
+      );
     };
 
     const getAddonPositions = (type) => {
       let pos = [];
       if (type === "baguette") {
-        for (let i = -120; i <= 120; i += 30) { pos.push({ x: i, y: -10 }, { x: i + 15, y: 10 }); }
+        for (let i = -110; i <= 110; i += 40) { pos.push({ x: i, y: -8 }, { x: i + 18, y: 10 }); }
       } else if (type === "boule") {
-        for (let i = 0; i < 360; i += 45) { pos.push({ x: Math.cos(i) * 50, y: Math.sin(i) * 50 }, { x: Math.cos(i + 20) * 80, y: Math.sin(i + 20) * 80 }); }
+        for (let i = 0; i < 360; i += 60) { pos.push({ x: Math.cos(i) * 50, y: Math.sin(i) * 50 }, { x: Math.cos(i + 20) * 75, y: Math.sin(i + 20) * 75 }); }
       } else if (type === "rolls") {
         // handled per roll
       } else if (type === "slice") {
-        for (let x = -30; x <= 30; x += 30) { pos.push({ x, y: -20 }, { x: x + 15, y: 10 }, { x: x - 10, y: 40 }); }
+        for (let x = -25; x <= 25; x += 25) { pos.push({ x, y: -18 }, { x: x + 15, y: 12 }); }
       } else {
-        for (let x = -80; x <= 80; x += 40) { pos.push({ x, y: -30 }, { x: x + 20, y: 0 }, { x, y: 30 }); }
+        for (let x = -70; x <= 70; x += 35) { pos.push({ x, y: -25 }, { x: x + 20, y: 8 }); }
       }
       return pos;
     };
@@ -406,7 +577,7 @@ export default function CustomizerSVG({ type, selections, product }) {
             <g>
               <path d="M -60 20 Q -60 -70 0 -90 Q 60 -70 60 20 L 50 80 Q 0 100 -50 80 Z" fill={breadColor} stroke={strokeColor} strokeWidth="6" />
               <path d="M -50 20 Q -50 -60 0 -80 Q 50 -60 50 20 L 40 75 Q 0 90 -40 75 Z" fill="#fff5e6" />
-              {hasToppings && <g>{getAddonPositions("slice").map(p => renderBreadAddons(p.x, p.y))}</g>}
+              {hasToppings && <g>{renderBreadToppings(getAddonPositions("slice"))}</g>}
             </g>
           ) : isBaguette ? (
             <g>
@@ -414,16 +585,16 @@ export default function CustomizerSVG({ type, selections, product }) {
               <path d="M -90 -20 Q -60 -40 -30 -10" fill="none" stroke={strokeColor} strokeWidth="4" opacity="0.6" transform="rotate(-30)" />
               <path d="M -20 10 Q 10 -10 40 20" fill="none" stroke={strokeColor} strokeWidth="4" opacity="0.6" transform="rotate(-30)" />
               <path d="M 50 40 Q 80 20 110 50" fill="none" stroke={strokeColor} strokeWidth="4" opacity="0.6" transform="rotate(-30)" />
-              {hasGlaze && <path d="M -120 -60 Q 0 -90 120 -10" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="6" strokeLinecap="round" transform="rotate(-30)" />}
-              {hasToppings && <g transform="rotate(-30)">{getAddonPositions("baguette").map(p => renderBreadAddons(p.x, p.y))}</g>}
+              {hasGlaze && <path d="M -120 -60 Q 0 -90 120 -10" fill="none" stroke={glazeStroke} strokeWidth="6" strokeLinecap="round" transform="rotate(-30)" />}
+              {hasToppings && <g transform="rotate(-30)">{renderBreadToppings(getAddonPositions("baguette"))}</g>}
             </g>
           ) : isBoule ? (
             <g>
               <circle cx="0" cy="0" r="130" fill={breadColor} stroke={strokeColor} strokeWidth="3" />
               <path d="M -80 -80 L 80 80" fill="none" stroke={strokeColor} strokeWidth="6" opacity="0.6" />
               <path d="M -80 80 L 80 -80" fill="none" stroke={strokeColor} strokeWidth="6" opacity="0.6" />
-              {hasGlaze && <path d="M -60 -90 A 100 100 0 0 1 60 -90" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="8" strokeLinecap="round" />}
-              {hasToppings && <g>{getAddonPositions("boule").map(p => renderBreadAddons(p.x, p.y))}</g>}
+              {hasGlaze && <path d="M -60 -90 A 100 100 0 0 1 60 -90" fill="none" stroke={glazeStroke} strokeWidth="8" strokeLinecap="round" />}
+              {hasToppings && <g>{renderBreadToppings(getAddonPositions("boule"))}</g>}
             </g>
           ) : isRolls ? (
             <g>
@@ -431,8 +602,8 @@ export default function CustomizerSVG({ type, selections, product }) {
                 <g key={i}>
                   <circle cx={roll.cx} cy={roll.cy} r="55" fill={breadColor} stroke={strokeColor} strokeWidth="2" />
                   <path d={`M ${roll.cx - 20} ${roll.cy} Q ${roll.cx} ${roll.cy - 15} ${roll.cx + 20} ${roll.cy}`} fill="none" stroke={strokeColor} strokeWidth="3" opacity="0.6" />
-                  {hasGlaze && <path d={`M ${roll.cx - 20} ${roll.cy - 30} Q ${roll.cx} ${roll.cy - 40} ${roll.cx + 20} ${roll.cy - 30}`} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="4" strokeLinecap="round" />}
-                  {hasToppings && <g>{[{ x: roll.cx - 15, y: roll.cy - 10 }, { x: roll.cx + 15, y: roll.cy - 10 }, { x: roll.cx, y: roll.cy + 15 }].map(p => renderBreadAddons(p.x, p.y))}</g>}
+                  {hasGlaze && <path d={`M ${roll.cx - 20} ${roll.cy - 30} Q ${roll.cx} ${roll.cy - 40} ${roll.cx + 20} ${roll.cy - 30}`} fill="none" stroke={glazeStroke} strokeWidth="4" strokeLinecap="round" />}
+                  {hasToppings && <g>{renderBreadToppings([{ x: roll.cx - 15, y: roll.cy - 10 }, { x: roll.cx + 15, y: roll.cy - 10 }, { x: roll.cx, y: roll.cy + 15 }])}</g>}
                 </g>
               ))}
             </g>
@@ -443,8 +614,8 @@ export default function CustomizerSVG({ type, selections, product }) {
               <path d="M -80 -20 Q 0 -80 80 -20" fill="none" stroke={strokeColor} strokeWidth="4" opacity="0.6" />
               <path d="M -60 20 Q 0 -40 60 20" fill="none" stroke={strokeColor} strokeWidth="4" opacity="0.6" />
               <path d="M -40 60 Q 0 0 40 60" fill="none" stroke={strokeColor} strokeWidth="4" opacity="0.6" />
-              {hasGlaze && <path d="M -100 -50 Q 0 -110 100 -50" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="8" strokeLinecap="round" />}
-              {hasToppings && <g>{getAddonPositions("classic").map(p => renderBreadAddons(p.x, p.y))}</g>}
+              {hasGlaze && <path d="M -100 -50 Q 0 -110 100 -50" fill="none" stroke={glazeStroke} strokeWidth="8" strokeLinecap="round" />}
+              {hasToppings && <g>{renderBreadToppings(getAddonPositions("classic"))}</g>}
             </g>
           )}
         </g>

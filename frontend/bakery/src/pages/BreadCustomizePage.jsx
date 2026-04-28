@@ -27,6 +27,8 @@ export default function BreadCustomizePage() {
   const { addToCart } = useApp();
   const { user, openAuthModal } = useAuth();
   const canOrder = user?.role === "customer";
+  const heroSubtitle = "Shape the loaf, choose the bake, and finish with seeds or glaze.";
+  const orderTitle = "Your Artisan Bread";
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["menuProduct", productId],
@@ -259,7 +261,7 @@ export default function BreadCustomizePage() {
   const svgSelections = {};
   Object.entries(selectedOptions).forEach(([k, v]) => {
     if (v.length > 0) {
-      if (k === "toppings") {
+      if (k === "toppings" || k === "topping") {
         svgSelections[k] = v.map(item => item.name);
       } else {
         svgSelections[k] = v[0].name;
@@ -279,7 +281,7 @@ export default function BreadCustomizePage() {
         </div>
 
         <h1 className="custom-title">Build Your <em>{product.name}</em></h1>
-        <p className="custom-subtitle">Handcrafted excellence, tailored to your celebration.</p>
+        <p className="custom-subtitle">{heroSubtitle}</p>
 
         <div className="custom-layout">
           <div className="steps-container">
@@ -440,7 +442,7 @@ export default function BreadCustomizePage() {
           <div className="order-sidebar">
             <div className="order-card shadow-premium">
               <div className="order-card-header">
-                <div className="order-card-title">Your Bespoke Cake</div>
+                <div className="order-card-title">{orderTitle}</div>
               </div>
 
               <div className="order-preview">

@@ -64,12 +64,103 @@ const createOptionFromSegment = (segment, templateKey) => {
       createPresetChoice("2 Tiers", 500),
       createPresetChoice("3 Tiers", 1200),
     ];
+  } else if (segment.key === "size") {
+    if (templateKey === "PIZZA") {
+      choices = [
+        createPresetChoice("Personal", 0),
+        createPresetChoice("Medium", 200),
+        createPresetChoice("Large", 400),
+        createPresetChoice("XL", 650),
+      ];
+    } else if (templateKey === "BREAD") {
+      choices = [
+        createPresetChoice("Small Loaf", 0),
+        createPresetChoice("Classic Loaf", 120),
+        createPresetChoice("Family Loaf", 260),
+      ];
+    } else if (templateKey === "CUPCAKE") {
+      choices = [
+        createPresetChoice("Mini", 0),
+        createPresetChoice("Classic", 80),
+        createPresetChoice("Jumbo", 160),
+      ];
+    }
+  } else if (segment.key === "shape") {
+    if (templateKey === "PIZZA") {
+      choices = [createPresetChoice("Round", 0), createPresetChoice("Square", 0)];
+    } else if (templateKey === "BREAD") {
+      choices = [
+        createPresetChoice("Classic Loaf", 0),
+        createPresetChoice("Baguette", 40),
+        createPresetChoice("Boule", 60),
+        createPresetChoice("Rolls", 80),
+      ];
+    }
+  } else if (segment.key === "crust") {
+    choices = [
+      createPresetChoice("Thin Crust", 0),
+      createPresetChoice("Classic", 0),
+      createPresetChoice("Stuffed", 250),
+    ];
+  } else if (segment.key === "sauce") {
+    choices = [
+      createPresetChoice("Tomato Basil", 0),
+      createPresetChoice("BBQ", 50),
+      createPresetChoice("White Garlic", 60),
+      createPresetChoice("Pesto", 70),
+    ];
+  } else if (segment.key === "cheese") {
+    choices = [
+      createPresetChoice("Light", 0),
+      createPresetChoice("Regular", 0),
+      createPresetChoice("Extra", 150),
+    ];
+  } else if (segment.key === "spice") {
+    choices = [
+      createPresetChoice("Mild", 0),
+      createPresetChoice("Spicy", 30),
+      createPresetChoice("Extra Hot", 60),
+    ];
+  } else if (segment.key === "bake") {
+    choices = [
+      createPresetChoice("Light Bake", 0),
+      createPresetChoice("Golden Bake", 20),
+      createPresetChoice("Extra Crisp", 40),
+    ];
+  } else if (segment.key === "glaze") {
+    choices = [
+      createPresetChoice("No Glaze", 0),
+      createPresetChoice("Egg Wash", 20),
+      createPresetChoice("Honey Glaze", 40),
+    ];
+  } else if (segment.key === "sliced") {
+    choices = [createPresetChoice("Whole", 0), createPresetChoice("Sliced", 0)];
+  } else if (segment.key === "flavor") {
+    choices = [
+      createPresetChoice("Vanilla", 0),
+      createPresetChoice("Chocolate", 0),
+      createPresetChoice("Red Velvet", 40),
+      createPresetChoice("Strawberry", 40),
+    ];
+  } else if (segment.key === "frosting_flavor") {
+    choices = [
+      createPresetChoice("Vanilla", 0),
+      createPresetChoice("Chocolate", 0),
+      createPresetChoice("Cream Cheese", 30),
+      createPresetChoice("Strawberry", 30),
+    ];
+  } else if (segment.key === "layers") {
+    choices = [
+      createPresetChoice("Classic Swirl", 0),
+      createPresetChoice("Double Swirl", 60),
+      createPresetChoice("Sky High", 120),
+    ];
   } else if (segment.key === "frosting_color") {
     choices = [
       "Classic White", "Lavender Mist", "Soft Pink", "Mint Green", 
       "Lemon Sorbet", "Chocolate Ganache", "Caramel Cream"
     ].map(color => createPresetChoice(color, 0));
-  } else if (segment.key === "toppings") {
+  } else if (segment.key === "toppings" || segment.key === "topping") {
     choices = presetToppings.map((topping) => createPresetChoice(topping.name, topping.extraPrice));
   } else if (segment.key === "message") {
       choices = [createPresetChoice("Personalized Message", 0)];
@@ -80,7 +171,7 @@ const createOptionFromSegment = (segment, templateKey) => {
     required: segment.key === "size" || segment.key === "tiers",
     perLayer: false,
     templateKey: segment.key,
-    maxSelections: segment.key === "toppings" ? "5" : "1",
+    maxSelections: (segment.key === "toppings" || segment.key === "topping") ? "5" : "1",
     choices: choices,
   };
 };
@@ -1393,7 +1484,7 @@ export default function BakeryDashboard() {
                   
                   <button
                     type="button"
-                    className="btn-outline-sm"
+                    className="btn-outline-sm recipe-add-btn"
                     onClick={() => {
                       setIngredientForm(prev => ({
                         ...prev,

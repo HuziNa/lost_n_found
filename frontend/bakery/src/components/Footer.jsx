@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="footer-ornament"></div>
       <div className="footer-top">
         <div className="footer-col">
-          <div className="footer-logo">La Bake Maison</div>
+          <div className="footer-logo">The Artisan Bakeries</div>
           <div className="footer-desc">
             A heritage of fine baking, delivering unparalleled taste and elegance
             to your most cherished moments.
@@ -33,14 +33,14 @@ export default function Footer() {
         <div className="footer-col">
           <div className="footer-heading">Connect</div>
           <ul className="footer-links">
-            <li><a href="#">Instagram @labakemaison</a></li>
+            <li><a href="#">Instagram @theartisanbakeries</a></li>
             <li><a href="#">Facebook</a></li>
             <li><a href="#">Pinterest</a></li>
           </ul>
         </div>
       </div>
       <div className="footer-bottom">
-        <div className="footer-copy">© 2026 La Bake Maison. All rights reserved.</div>
+        <div className="footer-copy">© 2026 The Artisan Bakeries. All rights reserved.</div>
       </div>
     </footer>
   );

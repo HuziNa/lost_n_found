@@ -13,7 +13,9 @@ export const CUSTOMIZER_TEMPLATES = {
   CUPCAKE: {
     label: "Cupcake",
     segments: [
+      { key: "size", name: "Size", layout: "grid", updatesSVG: true },
       { key: "flavor", name: "Base Flavor", layout: "buttons", updatesSVG: true },
+      { key: "frosting_flavor", name: "Frosting Flavor", layout: "buttons", updatesSVG: true },
       { key: "frosting_color", name: "Frosting Color", layout: "swatches", updatesSVG: true },
       { key: "toppings", name: "Toppings", layout: "grid_check", updatesSVG: true },
     ],
@@ -22,9 +24,11 @@ export const CUSTOMIZER_TEMPLATES = {
     label: "Pizza",
     segments: [
       { key: "size", name: "Size", layout: "grid", updatesSVG: true },
+      { key: "shape", name: "Shape", layout: "buttons", updatesSVG: true },
       { key: "crust", name: "Crust Type", layout: "buttons", updatesSVG: true },
       { key: "sauce", name: "Sauce", layout: "buttons", updatesSVG: true },
       { key: "cheese", name: "Cheese Level", layout: "buttons", updatesSVG: true },
+      { key: "spice", name: "Spice Level", layout: "buttons", updatesSVG: true },
       { key: "toppings", name: "Toppings", layout: "grid_check", updatesSVG: true },
     ],
   },
@@ -32,6 +36,9 @@ export const CUSTOMIZER_TEMPLATES = {
     label: "Bread",
     segments: [
       { key: "size", name: "Loaf Size", layout: "grid", updatesSVG: true },
+      { key: "shape", name: "Bread Shape", layout: "buttons", updatesSVG: true },
+      { key: "bake", name: "Bake Level", layout: "buttons", updatesSVG: true },
+      { key: "glaze", name: "Glaze Finish", layout: "buttons", updatesSVG: true },
       { key: "topping", name: "Toppings (Seeds/Herbs)", layout: "grid_check", updatesSVG: true },
       { key: "sliced", name: "Sliced/Whole", layout: "buttons", updatesSVG: false },
     ],
