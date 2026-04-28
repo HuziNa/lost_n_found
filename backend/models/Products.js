@@ -115,5 +115,9 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+productSchema.index({ bakeryId: 1, categoryId: 1 });
+productSchema.index({ name: 1 });
+productSchema.index({ isActive: 1 });
+
 export default mongoose.model("Product", productSchema);
 export { productOptionSchema, optionChoiceSchema, productIngredientSchema, nutritionSchema };

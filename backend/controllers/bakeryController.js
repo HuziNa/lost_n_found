@@ -8,6 +8,7 @@ import ProductOption from "../models/ProductOption.js";
 import Product from "../models/Products.js";
 import Review from "../models/Review.js";
 import User from "../models/User.js";
+import Voucher from "../models/Voucher.js";
 
 const PRODUCT_TYPES = ["FIXED", "CUSTOMIZABLE"];
 
@@ -305,6 +306,118 @@ export const updateBakeryProfile = async (req, res) => {
       message: "Error updating bakery profile.",
       error: error.message,
     });
+  }
+};
+
+export const listBakeryVouchers = async (req, res) => {
+  try {
+    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
+    if (!user || !user.bakeryManaged) {
+      return res.status(404).json({ message: "Bakery not found for this owner." });
+    }
+
+    const vouchers = await Voucher.find({ bakeryId: user.bakeryManaged._id }).lean();
+
+    return res.status(200).json({
+      message: "Bakery vouchers fetched successfully.",
+      vouchers: vouchers.map((voucher) => ({
+        id: toIdString(voucher._id),
+        code: voucher.code,
+        description: voucher.description,
+        discountType: voucher.discountType,
+        discountValue: voucher.discountValue,
+        minOrderAmount: voucher.minOrderAmount,
+        expiresAt: voucher.expiresAt,
+        isActive: voucher.isActive,
+        createdAt: voucher.createdAt,
+        updatedAt: voucher.updatedAt,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching vouchers.", error: error.message });
+  }
+};
+
+export const createBakeryVoucher = async (req, res) => {
+  try {
+    const {
+      code,
+      description,
+      discountType,
+      discountValue,
+      minOrderAmount,
+      expiresAt,
+      isActive,
+    } = req.body;
+
+    if (!code || !discountType || discountValue === undefined) {
+      return res.status(400).json({
+        message: "code, discountType, and discountValue are required.",
+      });
+    }
+
+    const normalizedType = String(discountType).trim().toLowerCase();
+    if (!["fixed", "percent"].includes(normalizedType)) {
+      return res.status(400).json({ message: "discountType must be fixed or percent." });
+    }
+
+    const numericDiscountValue = Number(discountValue);
+    if (!Number.isFinite(numericDiscountValue) || numericDiscountValue <= 0) {
+      return res.status(400).json({ message: "discountValue must be a positive number." });
+    }
+
+    const numericMinOrder = Number(minOrderAmount || 0);
+    if (!Number.isFinite(numericMinOrder) || numericMinOrder < 0) {
+      return res.status(400).json({ message: "minOrderAmount must be 0 or greater." });
+    }
+
+    const normalizedCode = String(code).trim().toUpperCase();
+    if (!normalizedCode) {
+      return res.status(400).json({ message: "code cannot be empty." });
+    }
+
+    let parsedExpiresAt;
+    if (expiresAt !== undefined && expiresAt !== null && String(expiresAt).trim() !== "") {
+      parsedExpiresAt = new Date(expiresAt);
+      if (Number.isNaN(parsedExpiresAt.getTime())) {
+        return res.status(400).json({ message: "expiresAt must be a valid date." });
+      }
+    }
+
+    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
+    if (!user || !user.bakeryManaged) {
+      return res.status(404).json({ message: "Bakery not found for this owner." });
+    }
+
+    const voucher = await Voucher.create({
+      bakeryId: user.bakeryManaged._id,
+      code: normalizedCode,
+      description: String(description || "").trim(),
+      discountType: normalizedType,
+      discountValue: numericDiscountValue,
+      minOrderAmount: numericMinOrder,
+      expiresAt: parsedExpiresAt,
+      isActive: isActive === undefined ? true : !!isActive,
+    });
+
+    return res.status(201).json({
+      message: "Voucher created successfully.",
+      voucher: {
+        id: toIdString(voucher._id),
+        code: voucher.code,
+        description: voucher.description,
+        discountType: voucher.discountType,
+        discountValue: voucher.discountValue,
+        minOrderAmount: voucher.minOrderAmount,
+        expiresAt: voucher.expiresAt,
+        isActive: voucher.isActive,
+      },
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "A voucher with this code already exists for your bakery." });
+    }
+    return res.status(500).json({ message: "Error creating voucher.", error: error.message });
   }
 };
 
