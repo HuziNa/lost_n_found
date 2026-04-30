@@ -16,6 +16,8 @@ import {
   listBakeryReviews,
   listBakeryVouchers,
   createBakeryVoucher,
+  updateBakeryVoucher,
+  deleteBakeryVoucher,
   updateBakeryProfile,
   updateBakeryOrderStatus,
   updateBakeryProduct,
@@ -72,5 +74,7 @@ router.delete("/products/:productId", deleteBakeryProduct);
 
 router.get("/vouchers", listBakeryVouchers);
 router.post("/vouchers", createBakeryVoucher);
+router.patch("/vouchers/:voucherId", updateBakeryVoucher);
+router.delete("/vouchers/:voucherId", deleteBakeryVoucher);
 
 export default router;

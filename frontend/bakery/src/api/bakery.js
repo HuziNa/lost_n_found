@@ -90,3 +90,22 @@ export const createBakeryReview = async (payload) =>
     method: "POST",
     body: payload,
   });
+
+export const getBakeryVouchers = async () => apiRequest("/bakery/vouchers");
+
+export const createBakeryVoucher = async (payload) =>
+  apiRequest("/bakery/vouchers", {
+    method: "POST",
+    body: payload,
+  });
+
+export const updateBakeryVoucher = async (voucherId, payload) =>
+  apiRequest(`/bakery/vouchers/${voucherId}`, {
+    method: "PATCH",
+    body: payload,
+  });
+
+export const deleteBakeryVoucher = async (voucherId) =>
+  apiRequest(`/bakery/vouchers/${voucherId}`, {
+    method: "DELETE",
+  });

@@ -376,17 +376,17 @@ export default function CustomizerSVG({ type, selections, product }) {
               {toppingList.flatMap((t, tIdx) => {
                 const positions = isSquare
                   ? [
-                      { x: -90, y: -90 }, { x: 90, y: -90 }, { x: -90, y: 90 }, { x: 90, y: 90 },
-                      { x: 0, y: -105 }, { x: 0, y: 105 }, { x: -105, y: 0 }, { x: 105, y: 0 },
-                      { x: -55, y: -55 }, { x: 55, y: -55 }, { x: -55, y: 55 }, { x: 55, y: 55 },
-                      { x: 0, y: 0 }
-                    ]
+                    { x: -90, y: -90 }, { x: 90, y: -90 }, { x: -90, y: 90 }, { x: 90, y: 90 },
+                    { x: 0, y: -105 }, { x: 0, y: 105 }, { x: -105, y: 0 }, { x: 105, y: 0 },
+                    { x: -55, y: -55 }, { x: 55, y: -55 }, { x: -55, y: 55 }, { x: 55, y: 55 },
+                    { x: 0, y: 0 }
+                  ]
                   : [
-                      { x: 0, y: -110 }, { x: 78, y: -78 }, { x: 110, y: 0 }, { x: 78, y: 78 },
-                      { x: 0, y: 110 }, { x: -78, y: 78 }, { x: -110, y: 0 }, { x: -78, y: -78 },
-                      { x: 0, y: -60 }, { x: 60, y: 0 }, { x: 0, y: 60 }, { x: -60, y: 0 },
-                      { x: 0, y: 0 }
-                    ];
+                    { x: 0, y: -110 }, { x: 78, y: -78 }, { x: 110, y: 0 }, { x: 78, y: 78 },
+                    { x: 0, y: 110 }, { x: -78, y: 78 }, { x: -110, y: 0 }, { x: -78, y: -78 },
+                    { x: 0, y: -60 }, { x: 60, y: 0 }, { x: 0, y: 60 }, { x: -60, y: 0 },
+                    { x: 0, y: 0 }
+                  ];
                 const startIndex = (tIdx * 2) % positions.length;
                 const perTopping = Math.min(3, positions.length);
                 return Array.from({ length: perTopping }).map((_, pIdx) => {

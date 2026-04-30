@@ -15,6 +15,10 @@ import {
   updateBakeryProduct,
   updateBakeryIngredient,
   deleteBakeryIngredient,
+  getBakeryVouchers,
+  createBakeryVoucher,
+  updateBakeryVoucher,
+  deleteBakeryVoucher,
 } from "../api/bakery";
 import BakerySidebar from "../components/BakerySidebar";
 import { Icon } from "../components/customize/Icons";
@@ -210,6 +214,20 @@ export default function BakeryDashboard() {
   const [productModal, setProductModal] = useState({ open: false, mode: "create", product: null });
   const [deleteModal, setDeleteModal] = useState({ open: false, product: null });
   const [ingredientDelModal, setIngredientDelModal] = useState({ open: false, ingredient: null });
+  
+  // Voucher states
+  const [voucherViewModalOpen, setVoucherViewModalOpen] = useState(false);
+  const [voucherModal, setVoucherModal] = useState({ open: false, mode: "create", voucher: null });
+  const [voucherDelModal, setVoucherDelModal] = useState({ open: false, voucher: null });
+  const [voucherForm, setVoucherForm] = useState({
+    code: "",
+    description: "",
+    discountType: "fixed",
+    discountValue: "",
+    minOrderAmount: "",
+    expiresAt: "",
+    isActive: true,
+  });
   const [ingredientForm, setIngredientForm] = useState({
     id: null,
     name: "",
@@ -304,6 +322,12 @@ export default function BakeryDashboard() {
   const reviewsQuery = useQuery({
     queryKey: ["bakeryOwnerReviews", bakeryId],
     queryFn: () => getBakeryReviews(bakeryId),
+    enabled: !!bakeryId,
+  });
+
+  const vouchersQuery = useQuery({
+    queryKey: ["bakeryVouchers", bakeryId],
+    queryFn: () => getBakeryVouchers(),
     enabled: !!bakeryId,
   });
 
@@ -402,6 +426,39 @@ export default function BakeryDashboard() {
     },
     onError: (error) => {
       setFormError(error?.data?.message || "Unable to update bakery profile.");
+    },
+  });
+
+  const createVoucherMutation = useMutation({
+    mutationFn: createBakeryVoucher,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryVouchers"] });
+      setVoucherModal({ open: false, mode: "create", voucher: null });
+      showActionToast("Voucher created.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to create voucher.");
+    },
+  });
+
+  const updateVoucherMutation = useMutation({
+    mutationFn: ({ voucherId, payload }) => updateBakeryVoucher(voucherId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryVouchers"] });
+      setVoucherModal({ open: false, mode: "create", voucher: null });
+      showActionToast("Voucher updated.");
+    },
+    onError: (error) => {
+      setFormError(error?.data?.message || "Unable to update voucher.");
+    },
+  });
+
+  const deleteVoucherMutation = useMutation({
+    mutationFn: deleteBakeryVoucher,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bakeryVouchers"] });
+      setVoucherDelModal({ open: false, voucher: null });
+      showActionToast("Voucher deleted.");
     },
   });
 
@@ -764,6 +821,52 @@ export default function BakeryDashboard() {
     });
   };
 
+  const handleVoucherSubmit = (event) => {
+    event.preventDefault();
+    setFormError("");
+    const payload = {
+      code: voucherForm.code,
+      description: voucherForm.description,
+      discountType: voucherForm.discountType,
+      discountValue: voucherForm.discountValue,
+      minOrderAmount: voucherForm.minOrderAmount,
+      expiresAt: voucherForm.expiresAt,
+      isActive: voucherForm.isActive,
+    };
+
+    if (voucherModal.mode === "edit" && voucherModal.voucher) {
+      updateVoucherMutation.mutate({ voucherId: voucherModal.voucher.id, payload });
+    } else {
+      createVoucherMutation.mutate(payload);
+    }
+  };
+
+  const openVoucherModal = (mode = "create", voucher = null) => {
+    setFormError("");
+    if (mode === "edit" && voucher) {
+      setVoucherForm({
+        code: voucher.code || "",
+        description: voucher.description || "",
+        discountType: voucher.discountType || "fixed",
+        discountValue: voucher.discountValue || "",
+        minOrderAmount: voucher.minOrderAmount || "",
+        expiresAt: voucher.expiresAt ? new Date(voucher.expiresAt).toISOString().split('T')[0] : "",
+        isActive: voucher.isActive !== false,
+      });
+    } else {
+      setVoucherForm({
+        code: "",
+        description: "",
+        discountType: "fixed",
+        discountValue: "",
+        minOrderAmount: "",
+        expiresAt: "",
+        isActive: true,
+      });
+    }
+    setVoucherModal({ open: true, mode, voucher });
+  };
+
   const filteredOrders = orders;
 
   return (
@@ -796,10 +899,14 @@ export default function BakeryDashboard() {
         <div className="bakery-content">
           {activeTab === "overview" && (
             <div className="dashboard-grid">
-              <div className="stat-card-gold">
-                <span className="card-label">Daily Revenue</span>
-                <span className="card-value">Rs {Number(analytics.totalRevenue || 0).toLocaleString()}</span>
-                <span className="card-trend">Last 30 days</span>
+              <div className="stat-card-gold" style={{ display: 'flex', flexDirection: 'column' }}>
+                <span className="card-label">Voucher Codes</span>
+                <span className="card-value" style={{ fontSize: '20px', margin: '8px 0 16px' }}>Manage discount codes</span>
+                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                  <button className="btn-sage" style={{ flex: 1, padding: '8px 4px', fontSize: '10px' }} onClick={() => setVoucherViewModalOpen(true)}>View</button>
+                  <button className="btn-outline" style={{ flex: 1, padding: '8px 4px', fontSize: '10px' }} onClick={() => openVoucherModal('create')}>Add</button>
+                  <button className="btn-outline" style={{ flex: 1, padding: '8px 4px', fontSize: '10px' }} onClick={() => setVoucherViewModalOpen(true)}>Edit</button>
+                </div>
               </div>
               <div className="stat-card-gold">
                 <span className="card-label">Active Orders</span>
@@ -808,20 +915,7 @@ export default function BakeryDashboard() {
                   {ordersByStatus.pending || 0} pending / {ordersByStatus.completed || 0} completed
                 </span>
               </div>
-              <div className="chart-placeholder">
-                <div className="chart-header">
-                  <h3>Revenue Trends</h3>
-                  <div className="chart-period">Last 7 Days</div>
-                </div>
-                <div className="chart-visual">
-                  {/* Visual placeholder for a graph */}
-                  <div className="mock-bar-container">
-                    {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
-                      <div key={i} className="mock-bar" style={{ height: `${h}%` }}></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+
             </div>
           )}
 
@@ -2032,6 +2126,113 @@ export default function BakeryDashboard() {
           </div>
         </div>
       )}
+
+      {voucherViewModalOpen && (
+        <div className="auth-overlay" onClick={() => setVoucherViewModalOpen(false)}>
+          <div className="auth-modal dashboard-modal" style={{ width: '600px', maxWidth: '90vw' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3>Voucher Codes</h3>
+              <button className="btn-outline-sm" onClick={() => { setVoucherViewModalOpen(false); openVoucherModal('create'); }}>Add Voucher</button>
+            </div>
+            {vouchersQuery.isLoading && <p>Loading vouchers...</p>}
+            {vouchersQuery.isError && <p>Error loading vouchers.</p>}
+            {vouchersQuery.data && vouchersQuery.data.vouchers && vouchersQuery.data.vouchers.length === 0 && (
+              <p>No vouchers found.</p>
+            )}
+            {vouchersQuery.data && vouchersQuery.data.vouchers && vouchersQuery.data.vouchers.length > 0 && (
+              <div style={{ display: 'grid', gap: '12px', maxHeight: '400px', overflowY: 'auto' }}>
+                {vouchersQuery.data.vouchers.map(v => (
+                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', border: '1px solid var(--border-gold)', background: 'var(--cream)', alignItems: 'center' }}>
+                    <div>
+                      <strong style={{ fontSize: '14px', color: 'var(--gold-dark)' }}>{v.code}</strong>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
+                        {v.discountType === 'fixed' ? `Rs ${v.discountValue} off` : `${v.discountValue}% off`}
+                        {v.minOrderAmount > 0 && ` on orders over Rs ${v.minOrderAmount}`}
+                      </div>
+                      <div style={{ fontSize: '11px', color: v.isActive ? 'var(--sage-dark)' : 'var(--rose-dark)' }}>
+                        {v.isActive ? 'Active' : 'Inactive'} {v.expiresAt && `• Expires ${new Date(v.expiresAt).toLocaleDateString()}`}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button className="btn-outline-sm" onClick={() => { setVoucherViewModalOpen(false); openVoucherModal('edit', v); }}>Edit</button>
+                      <button className="btn-outline-sm" style={{ color: 'var(--rose-dark)', borderColor: 'var(--rose-dark)' }} onClick={() => { setVoucherViewModalOpen(false); setVoucherDelModal({ open: true, voucher: v }); }}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button className="btn-outline" style={{ marginTop: '20px', width: '100%' }} onClick={() => setVoucherViewModalOpen(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {voucherModal.open && (
+        <div className="auth-overlay" onClick={() => setVoucherModal({ open: false, mode: "create", voucher: null })}>
+          <div className="auth-modal dashboard-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{voucherModal.mode === "create" ? "Add Voucher" : "Edit Voucher"}</h3>
+            <form onSubmit={handleVoucherSubmit}>
+              <div className="auth-field">
+                <label>Voucher Code</label>
+                <input type="text" value={voucherForm.code} onChange={e => setVoucherForm({...voucherForm, code: e.target.value})} required placeholder="e.g. SUMMER10" style={{ textTransform: 'uppercase' }} />
+              </div>
+              <div className="auth-field">
+                <label>Description</label>
+                <input type="text" value={voucherForm.description} onChange={e => setVoucherForm({...voucherForm, description: e.target.value})} placeholder="Optional description" />
+              </div>
+              <div className="auth-field">
+                <label>Discount Type</label>
+                <select value={voucherForm.discountType} onChange={e => setVoucherForm({...voucherForm, discountType: e.target.value})}>
+                  <option value="fixed">Fixed Amount (Rs)</option>
+                  <option value="percent">Percentage (%)</option>
+                </select>
+              </div>
+              <div className="auth-field">
+                <label>Discount Value</label>
+                <input type="number" value={voucherForm.discountValue} onChange={e => setVoucherForm({...voucherForm, discountValue: e.target.value})} required min="0" placeholder={voucherForm.discountType === 'fixed' ? 'e.g. 150' : 'e.g. 10'} />
+              </div>
+              <div className="auth-field">
+                <label>Min Order Amount</label>
+                <input type="number" value={voucherForm.minOrderAmount} onChange={e => setVoucherForm({...voucherForm, minOrderAmount: e.target.value})} min="0" placeholder="e.g. 1000 (Optional)" />
+              </div>
+              <div className="auth-field">
+                <label>Expires At</label>
+                <input type="date" value={voucherForm.expiresAt} onChange={e => setVoucherForm({...voucherForm, expiresAt: e.target.value})} />
+              </div>
+              <div className="auth-field">
+                <label>Status</label>
+                <select value={voucherForm.isActive ? "true" : "false"} onChange={e => setVoucherForm({...voucherForm, isActive: e.target.value === "true"})}>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+              {formError && <div className="auth-error">{formError}</div>}
+              <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                <button className="btn-primary" type="submit" disabled={createVoucherMutation.isPending || updateVoucherMutation.isPending}>
+                  {createVoucherMutation.isPending || updateVoucherMutation.isPending ? "Saving..." : "Save Voucher"}
+                </button>
+                <button className="btn-outline" type="button" onClick={() => setVoucherModal({ open: false, mode: "create", voucher: null })}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {voucherDelModal.open && (
+        <div className="auth-overlay" onClick={() => setVoucherDelModal({ open: false, voucher: null })}>
+          <div className="auth-modal dashboard-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Voucher</h3>
+            <p>Are you sure you want to delete the voucher "{voucherDelModal.voucher?.code}"? This action cannot be undone.</p>
+            {formError && <div className="auth-error">{formError}</div>}
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              <button className="btn-primary" onClick={() => deleteVoucherMutation.mutate(voucherDelModal.voucher?.id)} disabled={deleteVoucherMutation.isPending}>
+                {deleteVoucherMutation.isPending ? "Deleting..." : "Confirm Delete"}
+              </button>
+              <button className="btn-outline" onClick={() => setVoucherDelModal({ open: false, voucher: null })}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

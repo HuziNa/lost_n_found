@@ -1914,3 +1914,68 @@ export const listBakeryReviews = async (req, res) => {
     });
   }
 };
+
+
+// API: PATCH /api/bakery/vouchers/:voucherId
+export const updateBakeryVoucher = async (req, res) => {
+  try {
+    const { voucherId } = req.params;
+    if (!isValidObjectId(voucherId)) {
+      return res.status(400).json({ message: "Invalid voucher ID." });
+    }
+    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
+    if (!user || !user.bakeryManaged) {
+      return res.status(404).json({ message: "Bakery not found for this owner." });
+    }
+
+    const updates = { ...req.body };
+    if (updates.code) updates.code = updates.code.toUpperCase();
+    if (updates.discountValue !== undefined) updates.discountValue = Number(updates.discountValue);
+    if (updates.minOrderAmount !== undefined) updates.minOrderAmount = Number(updates.minOrderAmount);
+    if (updates.expiresAt !== undefined) updates.expiresAt = updates.expiresAt ? new Date(updates.expiresAt) : null;
+
+    const voucher = await Voucher.findOneAndUpdate(
+      { _id: voucherId, bakeryId: user.bakeryManaged._id },
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!voucher) {
+      return res.status(404).json({ message: "Voucher not found." });
+    }
+
+    return res.status(200).json({
+      message: "Voucher updated successfully.",
+      voucher: { id: toIdString(voucher._id), ...voucher.toObject() }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error updating voucher.", error: error.message });
+  }
+};
+
+// API: DELETE /api/bakery/vouchers/:voucherId
+export const deleteBakeryVoucher = async (req, res) => {
+  try {
+    const { voucherId } = req.params;
+    if (!isValidObjectId(voucherId)) {
+      return res.status(400).json({ message: "Invalid voucher ID." });
+    }
+    const user = await User.findById(req.authUser.id).populate("bakeryManaged");
+    if (!user || !user.bakeryManaged) {
+      return res.status(404).json({ message: "Bakery not found for this owner." });
+    }
+
+    const voucher = await Voucher.findOneAndDelete({
+      _id: voucherId,
+      bakeryId: user.bakeryManaged._id,
+    });
+
+    if (!voucher) {
+      return res.status(404).json({ message: "Voucher not found." });
+    }
+
+    return res.status(200).json({ message: "Voucher deleted successfully." });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deleting voucher.", error: error.message });
+  }
+};
