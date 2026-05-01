@@ -1229,6 +1229,7 @@ export default function BakeryDashboard() {
                           </td>
                           <td>
                             <select
+                              className="btn-outline-xs order-status-select"
                               value={order.status}
                               onClick={(e) => e.stopPropagation()}
                               onChange={(event) =>
