@@ -9,7 +9,6 @@ import Product from "../models/Products.js";
 import Review from "../models/Review.js";
 import User from "../models/User.js";
 import Voucher from "../models/Voucher.js";
-import { ensureGlobalCategories } from "../utils/globalCategories.js";
 
 const PRODUCT_TYPES = ["FIXED", "CUSTOMIZABLE"];
 
