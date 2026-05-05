@@ -23,6 +23,7 @@ import {
   updateBakeryProduct,
   updateBakeryIngredient,
   deleteBakeryIngredient,
+  validateBakeryVoucher,
 } from "../controllers/bakeryController.js";
 import {
   requireAuth,
@@ -49,6 +50,9 @@ router.get("/categories/public/:bakeryId", listPublicBakeryCategories);
 
 // Customer review submission endpoint.
 router.post("/reviews", requireAuth, requireCustomer, createBakeryReview);
+
+// Public voucher validation endpoint.
+router.get("/vouchers/validate/:code", validateBakeryVoucher);
 
 router.use(requireAuth, requireBakeryOwner);
 

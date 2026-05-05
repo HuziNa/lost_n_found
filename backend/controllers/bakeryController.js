@@ -1979,3 +1979,61 @@ export const deleteBakeryVoucher = async (req, res) => {
     return res.status(500).json({ message: "Error deleting voucher.", error: error.message });
   }
 };
+
+// API: GET /api/bakery/vouchers/validate/:code
+// - Public endpoint (no session required)
+// - Query param: bakeryId (required)
+// Returns:
+// - 200 with voucher details if valid
+export const validateBakeryVoucher = async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { bakeryId } = req.query;
+
+    if (!code || !bakeryId) {
+      return res.status(400).json({
+        message: "Voucher code and bakeryId are required.",
+      });
+    }
+
+    if (!isValidObjectId(bakeryId)) {
+      return res.status(400).json({
+        message: "bakeryId must be a valid id.",
+      });
+    }
+
+    const voucher = await Voucher.findOne({
+      code: String(code).trim().toUpperCase(),
+      bakeryId,
+      isActive: true,
+    });
+
+    if (!voucher) {
+      return res.status(404).json({
+        message: "Invalid or inactive voucher code.",
+      });
+    }
+
+    if (voucher.expiresAt && voucher.expiresAt < new Date()) {
+      return res.status(400).json({
+        message: "This voucher has expired.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Voucher validated successfully.",
+      voucher: {
+        code: voucher.code,
+        discountType: voucher.discountType,
+        discountValue: voucher.discountValue,
+        minOrderAmount: voucher.minOrderAmount,
+      },
+    });
+  } catch (error) {
+    console.error("[Bakery Controller] validateBakeryVoucher Error:", error);
+    return res.status(500).json({
+      message: "Error validating voucher.",
+      error: error.message,
+    });
+  }
+};
