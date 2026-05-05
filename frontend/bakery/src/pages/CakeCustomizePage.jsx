@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getBakeryMenuProduct } from "../api/bakery";
+import { getBakeryMenuProduct, validateVoucher } from "../api/bakery";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import { getTemplateByCategory } from "../constants/customizerTemplates";
@@ -43,6 +43,9 @@ export default function CakeCustomizePage() {
   const [customMessage, setCustomMessage] = useState("");
   const [selectedFont, setSelectedFont] = useState("Inter");
   const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState("");
+  const [voucherSuccess, setVoucherSuccess] = useState("");
 
   // Filter segments to only show configured ones
   const displayedSegments = useMemo(() => {
@@ -144,8 +147,27 @@ export default function CakeCustomizePage() {
 
   const displayPrice = useMemo(() => {
     if (!product) return 0;
-    return Number(product.basePrice || 0) + extraPrice;
-  }, [product, extraPrice]);
+    const baseTotal = Number(product.basePrice || 0) + extraPrice;
+    
+    if (appliedVoucher) {
+      if (appliedVoucher.discountType === "percent") {
+        return Math.max(0, baseTotal * (1 - appliedVoucher.discountValue / 100));
+      } else {
+        return Math.max(0, baseTotal - appliedVoucher.discountValue);
+      }
+    }
+    
+    return baseTotal;
+  }, [product, extraPrice, appliedVoucher]);
+
+  const discountAmount = useMemo(() => {
+    if (!product || !appliedVoucher) return 0;
+    const baseTotal = Number(product.basePrice || 0) + extraPrice;
+    if (appliedVoucher.discountType === "percent") {
+      return baseTotal * (appliedVoucher.discountValue / 100);
+    }
+    return Math.min(baseTotal, appliedVoucher.discountValue);
+  }, [product, extraPrice, appliedVoucher]);
 
   const getChoiceSummary = (optionKey) => {
     const selections = selectedOptions[optionKey] || [];
@@ -223,13 +245,31 @@ export default function CakeCustomizePage() {
       productId: product.id,
       bakeryId: product.bakeryId,
       name: product.name,
-      detail: "Customized order",
+      detail: `Customized order${appliedVoucher ? ` (Voucher: ${appliedVoucher.code})` : ""}`,
       price: displayPrice,
       icon: "cake",
       selectedOptions: selections,
+      voucherApplied: appliedVoucher ? appliedVoucher.code : null,
     });
 
     navigate(-1);
+  };
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    setVoucherError("");
+    setVoucherSuccess("");
+
+    try {
+      const response = await validateVoucher(voucherCode, product.bakeryId);
+      if (response.voucher) {
+        setAppliedVoucher(response.voucher);
+        setVoucherSuccess(response.message || "Voucher applied!");
+      }
+    } catch (err) {
+      setAppliedVoucher(null);
+      setVoucherError(err.data?.message || "Invalid voucher code.");
+    }
   };
 
   const handleShareDesign = async () => {
@@ -489,10 +529,18 @@ export default function CakeCustomizePage() {
                     placeholder="Voucher code"
                     aria-label="Voucher code"
                   />
-                  <button type="button" className="voucher-btn">
+                  <button type="button" className="voucher-btn" onClick={handleApplyVoucher}>
                     Apply
                   </button>
                 </div>
+                {voucherError && <div className="voucher-msg error" style={{ color: "red", fontSize: "0.85rem", marginTop: "4px" }}>{voucherError}</div>}
+                {voucherSuccess && <div className="voucher-msg success" style={{ color: "green", fontSize: "0.85rem", marginTop: "4px" }}>{voucherSuccess}</div>}
+                {appliedVoucher && (
+                  <div className="order-line extra discount">
+                    <span className="line-label">Voucher Discount ({appliedVoucher.code})</span>
+                    <span className="line-price" style={{ color: "green" }}>- {formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="order-total">
                   <span>Total Amount</span>
                   <span>{formatCurrency(displayPrice)}</span>
