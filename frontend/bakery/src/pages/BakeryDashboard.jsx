@@ -1613,6 +1613,7 @@ export default function BakeryDashboard() {
             <h3>Delete Ingredient</h3>
             <p>Are you sure you want to delete {ingredientDelModal.ingredient?.name}?</p>
             <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              
               <button
                 className="btn-primary"
                 onClick={() => deleteIngredientMutation.mutate(ingredientDelModal.ingredient?.id)}

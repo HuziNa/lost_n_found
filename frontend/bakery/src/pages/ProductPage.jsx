@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getBakeryMenuProduct } from "../api/bakery";
 import { useApp } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
+import { getProductImageWithCategoryFallback } from "../utils/categoryImages";
 import "../styles/product.css";
 
 const AllergenIcon = ({ name, path }) => (
@@ -16,9 +17,6 @@ const AllergenIcon = ({ name, path }) => (
     <span className="allergen-name">{name}</span>
   </div>
 );
-
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1509409137281-5a36f620dddf?w=1200&q=80&auto=format&fit=crop";
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -98,7 +96,7 @@ export default function ProductPage() {
         <div className="product-column product-left">
           <div className="product-image-wrapper">
             <img
-              src={product.imageUrl || DEFAULT_IMAGE}
+              src={getProductImageWithCategoryFallback(product)}
               alt={product.name}
               className="product-main-image"
             />
