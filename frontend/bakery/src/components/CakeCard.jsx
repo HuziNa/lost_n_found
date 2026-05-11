@@ -1,8 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=600&q=80&auto=format&fit=crop";
+import { getProductImageWithCategoryFallback } from "../utils/categoryImages";
 
 export default function CakeCard({ product }) {
   const navigate = useNavigate();
@@ -18,7 +16,7 @@ export default function CakeCard({ product }) {
         }}
       >
         <img
-          src={product.imageUrl || FALLBACK_IMAGE}
+          src={getProductImageWithCategoryFallback(product)}
           alt={product.name}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />

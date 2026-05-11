@@ -51,8 +51,13 @@ export default function CheckoutPage() {
 
   const bakeryId        = state.cart[0]?.bakeryId;
   const selectedDelivery = deliveryOptions.find(o => o.id === deliveryOption);
-  const deliveryFee     = selectedDelivery?.price ?? 150;
   const subtotal        = state.cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
+  let deliveryFee       = selectedDelivery?.price ?? 150;
+
+  if (deliveryOption === "pickup" || subtotal >= 2000) {
+    deliveryFee = 0;
+  }
+
   const finalTotal      = subtotal + deliveryFee;
 
   // ── Build the complete payload ─────────────────────────────────────────────

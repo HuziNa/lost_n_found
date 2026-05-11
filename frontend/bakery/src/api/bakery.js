@@ -109,3 +109,6 @@ export const deleteBakeryVoucher = async (voucherId) =>
   apiRequest(`/bakery/vouchers/${voucherId}`, {
     method: "DELETE",
   });
+
+export const validateVoucher = async (code, bakeryId) =>
+  apiRequest(`/bakery/vouchers/validate/${code}?bakeryId=${bakeryId}`);
